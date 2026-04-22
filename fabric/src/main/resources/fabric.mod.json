@@ -12,6 +12,7 @@
     "issues": "https://github.com/FuzjaJadrowa/LocatorBar/issues"
   },
   "license": "GPL-3.0",
+  "icon": "assets/locatorbar/textures/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [

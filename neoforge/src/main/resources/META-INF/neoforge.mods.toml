@@ -9,6 +9,7 @@ version = "${version}"
 displayName = "Locator Bar"
 authors = "FuzjaJadrowa"
 displayURL = "https://fuzjajadrowa.pl"
+logoFile = "assets/locatorbar/textures/icon.png"
 description = '''
 Reworked concept of a player locator bar for Minecraft. Simple, clean bar at the top of your screen.
 '''
