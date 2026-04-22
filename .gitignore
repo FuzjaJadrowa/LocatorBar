@@ -52,6 +52,8 @@ $RECYCLE.BIN/
 *.msp
 *.lnk
 .gradle
+.gradle-user
+.gradle-user-alt
 build/
 gradle-app.setting
 .gradletasknamecache
@@ -59,3 +61,4 @@ gradle-app.setting
 run/
 runs/
 !gradle-wrapper.jar
+garbagedeleter.ps1

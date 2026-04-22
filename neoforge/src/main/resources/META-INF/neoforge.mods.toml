@@ -1,0 +1,31 @@
+modLoader = "javafml"
+loaderVersion = "[2,)"
+issueTrackerURL = "https://github.com/FuzjaJadrowa/LocatorBar/issues"
+license = "GPL-3.0"
+
+[[mods]]
+modId = "locatorbar"
+version = "${version}"
+displayName = "Locator Bar"
+authors = "FuzjaJadrowa"
+displayURL = "https://fuzjajadrowa.pl"
+description = '''
+Reworked concept of a player locator bar for Minecraft. Simple, clean bar at the top of your screen.
+'''
+
+[[dependencies.locatorbar]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.locatorbar]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[mixins]]
+config = "locatorbar.mixins.json"
