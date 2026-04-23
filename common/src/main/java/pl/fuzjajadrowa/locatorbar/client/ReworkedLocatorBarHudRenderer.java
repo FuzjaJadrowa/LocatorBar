@@ -2,24 +2,25 @@ package pl.fuzjajadrowa.locatorbar.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.component.LodestoneTracker;
 import pl.fuzjajadrowa.locatorbar.LocatorBar;
-import pl.fuzjajadrowa.locatorbar.waypoint.LodestoneWaypointData;
+import pl.fuzjajadrowa.locatorbar.waypoint.WaypointData;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 public final class ReworkedLocatorBarHudRenderer {
@@ -57,10 +58,7 @@ public final class ReworkedLocatorBarHudRenderer {
     private static final int ICON_DOT_SIZE = ICON_TEXTURE_SIZE - (ICON_MARGIN * 2);
     private static final int DIRECTION_MARKER_SIZE = 12;
     private static final int DIRECTION_OVERFLOW = 2;
-    private static final int WAYPOINT_MARKER_SIZE = BAR_TEXTURE_HEIGHT + 12;
-    private static final int WAYPOINT_TOP_OVERFLOW = 8;
-    private static final int WAYPOINT_BOTTOM_OVERFLOW = 4;
-    private static final int PLAYER_HEAD_MARKER_SIZE = WAYPOINT_MARKER_SIZE;
+    private static final int PLAYER_HEAD_MARKER_SIZE = BAR_TEXTURE_HEIGHT + 8;
     private static final int PLAYER_HEAD_OVERFLOW = 2;
     private static final int PLAYER_HEAD_TEXTURE_SIZE = 64;
     private static final int PLAYER_HEAD_U = 8;
@@ -71,6 +69,11 @@ public final class ReworkedLocatorBarHudRenderer {
     private static final float PLAYER_FADE_TO_MIN_DISTANCE = 400.0F;
     private static final float PLAYER_HIDE_DISTANCE = 450.0F;
     private static final float PLAYER_MIN_ALPHA = 0.2F;
+    private static final int WAYPOINT_TEXTURE_SIZE = 36;
+    private static final int WAYPOINT_MARKER_SIZE = 15;
+    private static final int WAYPOINT_TOP_OVERFLOW = Math.round(WAYPOINT_MARKER_SIZE * (8.0F / WAYPOINT_TEXTURE_SIZE));
+    private static final int WAYPOINT_BOTTOM_OVERFLOW = Math.round(WAYPOINT_MARKER_SIZE * (4.0F / WAYPOINT_TEXTURE_SIZE));
+    private static final int WAYPOINT_TEXT_COLOR = 0x101010;
 
     private ReworkedLocatorBarHudRenderer() {
     }
@@ -95,20 +98,24 @@ public final class ReworkedLocatorBarHudRenderer {
 
         float yaw = wrapTo180(player.getYRot());
         float centerX = x + (BAR_TEXTURE_WIDTH / 2.0F);
-        int waypointMarkerY = y - WAYPOINT_TOP_OVERFLOW;
         int directionMarkerY = y - DIRECTION_OVERFLOW + ((BAR_TEXTURE_HEIGHT + (DIRECTION_OVERFLOW * 2) - DIRECTION_MARKER_SIZE) / 2);
         int headMarkerY = y - PLAYER_HEAD_OVERFLOW + ((BAR_TEXTURE_HEIGHT + (PLAYER_HEAD_OVERFLOW * 2) - PLAYER_HEAD_MARKER_SIZE) / 2);
-        int scissorTopOverflow = Math.max(Math.max(DIRECTION_OVERFLOW, PLAYER_HEAD_OVERFLOW), WAYPOINT_TOP_OVERFLOW);
-        int scissorBottomOverflow = Math.max(Math.max(DIRECTION_OVERFLOW, PLAYER_HEAD_OVERFLOW), WAYPOINT_BOTTOM_OVERFLOW);
+        int waypointMarkerY = y - WAYPOINT_TOP_OVERFLOW;
+        int scissorOverflow = Math.max(
+                Math.max(DIRECTION_OVERFLOW, PLAYER_HEAD_OVERFLOW),
+                Math.max(WAYPOINT_TOP_OVERFLOW, WAYPOINT_BOTTOM_OVERFLOW)
+        );
 
-        guiGraphics.enableScissor(x, y - scissorTopOverflow, x + BAR_TEXTURE_WIDTH, y + BAR_TEXTURE_HEIGHT + scissorBottomOverflow);
+        guiGraphics.enableScissor(x, y - scissorOverflow, x + BAR_TEXTURE_WIDTH, y + BAR_TEXTURE_HEIGHT + scissorOverflow);
         renderDirectionMarker(guiGraphics, NORTH, 180.0F, yaw, centerX, directionMarkerY);
         renderDirectionMarker(guiGraphics, SOUTH, 0.0F, yaw, centerX, directionMarkerY);
         renderDirectionMarker(guiGraphics, EAST, -90.0F, yaw, centerX, directionMarkerY);
         renderDirectionMarker(guiGraphics, WEST, 90.0F, yaw, centerX, directionMarkerY);
 
+        int fallbackIndex = 1;
         for (WaypointMarker marker : collectWaypointMarkers(player)) {
-            renderWaypointMarker(guiGraphics, minecraft, marker, yaw, centerX, waypointMarkerY);
+            int displayNumber = marker.index() > 0 ? marker.index() : fallbackIndex++;
+            renderWaypointMarker(guiGraphics, marker, displayNumber, yaw, centerX, waypointMarkerY);
         }
 
         for (PlayerHeadMarker marker : collectPlayerHeadMarkers(player)) {
@@ -132,12 +139,14 @@ public final class ReworkedLocatorBarHudRenderer {
         }
 
         float normalized = relative / HALF_VIEW_ANGLE;
-        int markerX = Math.round(centerX + normalized * (BAR_TEXTURE_WIDTH / 2.0F) - (DIRECTION_MARKER_SIZE / 2.0F));
+        float markerX = quantizeToHalfPixel(centerX + normalized * (BAR_TEXTURE_WIDTH / 2.0F) - (DIRECTION_MARKER_SIZE / 2.0F));
 
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(markerX, markerY, 0.0F);
         guiGraphics.blit(
                 texture,
-                markerX,
-                markerY,
+                0,
+                0,
                 DIRECTION_MARKER_SIZE,
                 DIRECTION_MARKER_SIZE,
                 ICON_MARGIN,
@@ -147,12 +156,13 @@ public final class ReworkedLocatorBarHudRenderer {
                 ICON_TEXTURE_SIZE,
                 ICON_TEXTURE_SIZE
         );
+        guiGraphics.pose().popPose();
     }
 
     private static void renderWaypointMarker(
             GuiGraphics guiGraphics,
-            Minecraft minecraft,
             WaypointMarker marker,
+            int displayNumber,
             float playerYaw,
             float centerX,
             int markerY
@@ -163,36 +173,37 @@ public final class ReworkedLocatorBarHudRenderer {
         }
 
         float normalized = relative / HALF_VIEW_ANGLE;
-        int markerX = Math.round(centerX + normalized * (BAR_TEXTURE_WIDTH / 2.0F) - (WAYPOINT_MARKER_SIZE / 2.0F));
-
-        float red = ((marker.color() >> 16) & 0xFF) / 255.0F;
-        float green = ((marker.color() >> 8) & 0xFF) / 255.0F;
-        float blue = (marker.color() & 0xFF) / 255.0F;
+        float markerX = quantizeToHalfPixel(centerX + normalized * (BAR_TEXTURE_WIDTH / 2.0F) - (WAYPOINT_MARKER_SIZE / 2.0F));
+        float red = ((marker.rgbColor() >> 16) & 0xFF) / 255.0F;
+        float green = ((marker.rgbColor() >> 8) & 0xFF) / 255.0F;
+        float blue = (marker.rgbColor() & 0xFF) / 255.0F;
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.setShaderColor(red, green, blue, 1.0F);
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(markerX, markerY, 0.0F);
         guiGraphics.blit(
                 WAYPOINT,
-                markerX,
-                markerY,
+                0,
+                0,
                 WAYPOINT_MARKER_SIZE,
                 WAYPOINT_MARKER_SIZE,
-                ICON_MARGIN,
-                ICON_MARGIN,
-                ICON_DOT_SIZE,
-                ICON_DOT_SIZE,
-                ICON_TEXTURE_SIZE,
-                ICON_TEXTURE_SIZE
+                0,
+                0,
+                WAYPOINT_TEXTURE_SIZE,
+                WAYPOINT_TEXTURE_SIZE,
+                WAYPOINT_TEXTURE_SIZE,
+                WAYPOINT_TEXTURE_SIZE
         );
+        guiGraphics.pose().popPose();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.disableBlend();
 
-        String label = Integer.toString(marker.id());
-        int textColor = hasBrightColor(marker.color()) ? 0x101010 : 0xFFFFFF;
-        int textX = markerX + (WAYPOINT_MARKER_SIZE - minecraft.font.width(label)) / 2;
-        int textY = markerY + (WAYPOINT_MARKER_SIZE - minecraft.font.lineHeight) / 2;
-        guiGraphics.drawString(minecraft.font, label, textX, textY, textColor, false);
+        String text = Integer.toString(displayNumber);
+        int textX = Math.round(markerX + (WAYPOINT_MARKER_SIZE - Minecraft.getInstance().font.width(text)) / 2.0F);
+        int textY = markerY + ((WAYPOINT_MARKER_SIZE - Minecraft.getInstance().font.lineHeight) / 2);
+        guiGraphics.drawString(Minecraft.getInstance().font, text, textX, textY, WAYPOINT_TEXT_COLOR, false);
+        RenderSystem.disableBlend();
     }
 
     private static void renderPlayerHeadMarker(
@@ -208,15 +219,17 @@ public final class ReworkedLocatorBarHudRenderer {
         }
 
         float normalized = relative / HALF_VIEW_ANGLE;
-        int markerX = Math.round(centerX + normalized * (BAR_TEXTURE_WIDTH / 2.0F) - (PLAYER_HEAD_MARKER_SIZE / 2.0F));
+        float markerX = quantizeToHalfPixel(centerX + normalized * (BAR_TEXTURE_WIDTH / 2.0F) - (PLAYER_HEAD_MARKER_SIZE / 2.0F));
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, marker.alpha());
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(markerX, markerY, 0.0F);
         guiGraphics.blit(
                 marker.skinTexture(),
-                markerX,
-                markerY,
+                0,
+                0,
                 PLAYER_HEAD_MARKER_SIZE,
                 PLAYER_HEAD_MARKER_SIZE,
                 PLAYER_HEAD_U,
@@ -228,8 +241,8 @@ public final class ReworkedLocatorBarHudRenderer {
         );
         guiGraphics.blit(
                 marker.skinTexture(),
-                markerX,
-                markerY,
+                0,
+                0,
                 PLAYER_HEAD_MARKER_SIZE,
                 PLAYER_HEAD_MARKER_SIZE,
                 PLAYER_HEAD_HAT_U,
@@ -239,40 +252,69 @@ public final class ReworkedLocatorBarHudRenderer {
                 PLAYER_HEAD_TEXTURE_SIZE,
                 PLAYER_HEAD_TEXTURE_SIZE
         );
+        guiGraphics.pose().popPose();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.disableBlend();
     }
 
     private static List<WaypointMarker> collectWaypointMarkers(Player localPlayer) {
-        UUID playerId = localPlayer.getUUID();
-        Inventory inventory = localPlayer.getInventory();
-        Map<Integer, WaypointMarker> waypointById = new LinkedHashMap<>();
+        List<WaypointMarker> markers = new ArrayList<>();
+        UUID localPlayerId = localPlayer.getUUID();
 
-        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
-            Optional<LodestoneWaypointData.WaypointInfo> optionalInfo = LodestoneWaypointData.getOwnedWaypoint(inventory.getItem(slot), playerId);
-            if (optionalInfo.isEmpty()) {
-                continue;
-            }
-
-            LodestoneWaypointData.WaypointInfo info = optionalInfo.get();
-            if (!info.target().dimension().equals(localPlayer.level().dimension())) {
-                continue;
-            }
-
-            double dx = info.target().pos().getX() + 0.5D - localPlayer.getX();
-            double dz = info.target().pos().getZ() + 0.5D - localPlayer.getZ();
-            if (dx * dx + dz * dz < 1.0E-6D) {
-                continue;
-            }
-
-            float directionYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
-            waypointById.putIfAbsent(
-                    info.id(),
-                    new WaypointMarker(info.id(), wrapTo180(directionYaw), waypointColor(info.owner(), info.id()))
-            );
+        for (ItemStack stack : localPlayer.getInventory().items) {
+            addWaypointMarker(markers, stack, localPlayer, localPlayerId);
+        }
+        for (ItemStack stack : localPlayer.getInventory().offhand) {
+            addWaypointMarker(markers, stack, localPlayer, localPlayerId);
         }
 
-        return new ArrayList<>(waypointById.values());
+        markers.sort(
+                Comparator.comparingInt((WaypointMarker marker) -> marker.index() > 0 ? marker.index() : Integer.MAX_VALUE)
+                        .thenComparing(WaypointMarker::waypointId)
+        );
+        return markers;
+    }
+
+    private static void addWaypointMarker(List<WaypointMarker> markers, ItemStack stack, Player localPlayer, UUID localPlayerId) {
+        LodestoneTracker tracker = stack.get(DataComponents.LODESTONE_TRACKER);
+        if (tracker == null || tracker.target().isEmpty()) {
+            return;
+        }
+
+        UUID owner = WaypointData.getOwner(stack);
+        if (owner != null && !owner.equals(localPlayerId)) {
+            return;
+        }
+
+        GlobalPos target = tracker.target().get();
+        if (!target.dimension().equals(localPlayer.level().dimension())) {
+            return;
+        }
+
+        double dx = target.pos().getX() + 0.5D - localPlayer.getX();
+        double dz = target.pos().getZ() + 0.5D - localPlayer.getZ();
+        if (dx * dx + dz * dz < 1.0E-6D) {
+            return;
+        }
+
+        UUID waypointId = WaypointData.getWaypointId(stack);
+        if (waypointId == null) {
+            String fallbackSeed = target.dimension().location() + "|" + target.pos().toShortString();
+            waypointId = UUID.nameUUIDFromBytes(fallbackSeed.getBytes(StandardCharsets.UTF_8));
+        }
+
+        int index = WaypointData.getWaypointIndex(stack);
+        int color = colorFromWaypointId(waypointId);
+        float directionYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+        markers.add(new WaypointMarker(waypointId, wrapTo180(directionYaw), color, index));
+    }
+
+    private static int colorFromWaypointId(UUID waypointId) {
+        long hash = waypointId.getMostSignificantBits() ^ waypointId.getLeastSignificantBits();
+        float hue = (hash & 0xFFFFL) / 65535.0F;
+        float saturation = 0.65F + (((hash >>> 16) & 0xFFL) / 255.0F) * 0.25F;
+        float value = 0.8F + (((hash >>> 24) & 0xFFL) / 255.0F) * 0.2F;
+        return Mth.hsvToRgb(hue, saturation, value);
     }
 
     private static List<PlayerHeadMarker> collectPlayerHeadMarkers(Player localPlayer) {
@@ -342,26 +384,6 @@ public final class ReworkedLocatorBarHudRenderer {
         return 0.0F;
     }
 
-    private static int waypointColor(UUID owner, int waypointId) {
-        int hash = owner.hashCode() * 31 + waypointId * 374761393;
-        hash ^= hash >>> 13;
-        hash *= 1274126177;
-        hash ^= hash >>> 16;
-
-        float hue = (hash & 0xFFFF) / 65535.0F;
-        float saturation = 0.65F + (((hash >>> 16) & 0xFF) / 255.0F) * 0.25F;
-        float value = 0.85F + (((hash >>> 24) & 0x7F) / 127.0F) * 0.10F;
-        return Mth.hsvToRgb(hue, saturation, value);
-    }
-
-    private static boolean hasBrightColor(int color) {
-        float red = ((color >> 16) & 0xFF) / 255.0F;
-        float green = ((color >> 8) & 0xFF) / 255.0F;
-        float blue = (color & 0xFF) / 255.0F;
-        float luminance = 0.2126F * red + 0.7152F * green + 0.0722F * blue;
-        return luminance > 0.6F;
-    }
-
     private static float horizontalDistance(Player localPlayer, Player otherPlayer) {
         double dx = otherPlayer.getX() - localPlayer.getX();
         double dz = otherPlayer.getZ() - localPlayer.getZ();
@@ -378,9 +400,13 @@ public final class ReworkedLocatorBarHudRenderer {
         return wrapped;
     }
 
-    private record PlayerHeadMarker(ResourceLocation skinTexture, float directionYaw, float alpha) {
+    private static float quantizeToHalfPixel(float value) {
+        return Math.round(value * 2.0F) / 2.0F;
     }
 
-    private record WaypointMarker(int id, float directionYaw, int color) {
+    private record WaypointMarker(UUID waypointId, float directionYaw, int rgbColor, int index) {
+    }
+
+    private record PlayerHeadMarker(ResourceLocation skinTexture, float directionYaw, float alpha) {
     }
 }

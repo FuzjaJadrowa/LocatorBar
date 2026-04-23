@@ -1,7 +1,7 @@
 package pl.fuzjajadrowa.locatorbar.mixin;
 
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CompassItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
@@ -9,21 +9,26 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import pl.fuzjajadrowa.locatorbar.waypoint.LodestoneWaypointData;
+import pl.fuzjajadrowa.locatorbar.waypoint.WaypointData;
 
 @Mixin(CompassItem.class)
-public final class CompassItemMixin {
+public abstract class CompassItemMixin {
     @Inject(method = "useOn", at = @At("RETURN"))
-    private void locatorbar$assignWaypointOnLodestoneLink(UseOnContext context, CallbackInfoReturnable<InteractionResult> cir) {
+    private void locatorbar$setWaypointMetadata(UseOnContext context, CallbackInfoReturnable<InteractionResult> cir) {
         if (!cir.getReturnValue().consumesAction()) {
             return;
         }
 
-        if (!(context.getPlayer() instanceof ServerPlayer serverPlayer)) {
+        Player player = context.getPlayer();
+        if (player == null) {
             return;
         }
 
         ItemStack stack = context.getItemInHand();
-        LodestoneWaypointData.assignWaypointDataIfNeeded(stack, serverPlayer);
+        if (stack.isEmpty()) {
+            return;
+        }
+
+        WaypointData.ensureWaypointData(stack, player);
     }
 }
