@@ -50,7 +50,6 @@ public final class ReworkedLocatorBarHudRenderer {
     );
     private static final int BAR_TEXTURE_WIDTH = 102;
     private static final int BAR_TEXTURE_HEIGHT = 10;
-    private static final int TOP_MARGIN = 5;
     private static final float VIEW_ANGLE = 90.0F;
     private static final float HALF_VIEW_ANGLE = VIEW_ANGLE / 2.0F;
     private static final int ICON_TEXTURE_SIZE = 36;
@@ -61,19 +60,15 @@ public final class ReworkedLocatorBarHudRenderer {
     private static final int PLAYER_HEAD_MARKER_SIZE = BAR_TEXTURE_HEIGHT + 8;
     private static final int PLAYER_HEAD_OVERFLOW = 2;
     private static final int PLAYER_HEAD_TEXTURE_SIZE = 64;
-    private static final int PLAYER_HEAD_U = 8;
-    private static final int PLAYER_HEAD_V = 8;
-    private static final int PLAYER_HEAD_HAT_U = 40;
-    private static final int PLAYER_HEAD_HAT_V = 8;
     private static final float PLAYER_FADE_START_DISTANCE = 100.0F;
     private static final float PLAYER_FADE_TO_MIN_DISTANCE = 400.0F;
     private static final float PLAYER_HIDE_DISTANCE = 450.0F;
     private static final float PLAYER_MIN_ALPHA = 0.2F;
     private static final int WAYPOINT_TEXTURE_SIZE = 36;
-    private static final int WAYPOINT_MARKER_SIZE = 15;
+    private static final int WAYPOINT_MARKER_SIZE = 14;
     private static final int WAYPOINT_TOP_OVERFLOW = Math.round(WAYPOINT_MARKER_SIZE * (8.0F / WAYPOINT_TEXTURE_SIZE));
     private static final int WAYPOINT_BOTTOM_OVERFLOW = Math.round(WAYPOINT_MARKER_SIZE * (4.0F / WAYPOINT_TEXTURE_SIZE));
-    private static final int WAYPOINT_TEXT_COLOR = 0x101010;
+    private static final float WAYPOINT_TEXT_SCALE = 0.75F;
 
     private ReworkedLocatorBarHudRenderer() {
     }
@@ -88,7 +83,7 @@ public final class ReworkedLocatorBarHudRenderer {
         }
 
         int x = (minecraft.getWindow().getGuiScaledWidth() - BAR_TEXTURE_WIDTH) / 2;
-        int y = TOP_MARGIN;
+        int y = 5;
         guiGraphics.blit(LOCATOR_BAR_BACKGROUND, x, y, 0, 0, BAR_TEXTURE_WIDTH, BAR_TEXTURE_HEIGHT, BAR_TEXTURE_WIDTH, BAR_TEXTURE_HEIGHT);
 
         Player player = minecraft.player;
@@ -123,6 +118,7 @@ public final class ReworkedLocatorBarHudRenderer {
         }
 
         guiGraphics.disableScissor();
+        renderCoordinatesText(guiGraphics, player, centerX, y + BAR_TEXTURE_HEIGHT + 3);
     }
 
     private static void renderDirectionMarker(
@@ -173,7 +169,7 @@ public final class ReworkedLocatorBarHudRenderer {
         }
 
         float normalized = relative / HALF_VIEW_ANGLE;
-        float markerX = quantizeToHalfPixel(centerX + normalized * (BAR_TEXTURE_WIDTH / 2.0F) - (WAYPOINT_MARKER_SIZE / 2.0F));
+        float markerX = centerX + normalized * (BAR_TEXTURE_WIDTH / 2.0F) - (WAYPOINT_MARKER_SIZE / 2.0F);
         float red = ((marker.rgbColor() >> 16) & 0xFF) / 255.0F;
         float green = ((marker.rgbColor() >> 8) & 0xFF) / 255.0F;
         float blue = (marker.rgbColor() & 0xFF) / 255.0F;
@@ -196,13 +192,19 @@ public final class ReworkedLocatorBarHudRenderer {
                 WAYPOINT_TEXTURE_SIZE,
                 WAYPOINT_TEXTURE_SIZE
         );
-        guiGraphics.pose().popPose();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
         String text = Integer.toString(displayNumber);
-        int textX = Math.round(markerX + (WAYPOINT_MARKER_SIZE - Minecraft.getInstance().font.width(text)) / 2.0F);
-        int textY = markerY + ((WAYPOINT_MARKER_SIZE - Minecraft.getInstance().font.lineHeight) / 2);
-        guiGraphics.drawString(Minecraft.getInstance().font, text, textX, textY, WAYPOINT_TEXT_COLOR, false);
+        float textWidth = Minecraft.getInstance().font.width(text) * WAYPOINT_TEXT_SCALE;
+        float textHeight = Minecraft.getInstance().font.lineHeight * WAYPOINT_TEXT_SCALE;
+        float textX = ((WAYPOINT_MARKER_SIZE - textWidth) / 2.0F) + 0.45F;
+        float textY = (WAYPOINT_MARKER_SIZE - textHeight) / 2.0F;
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(textX, textY, 0.1F);
+        guiGraphics.pose().scale(WAYPOINT_TEXT_SCALE, WAYPOINT_TEXT_SCALE, 1.0F);
+        guiGraphics.drawString(Minecraft.getInstance().font, text, 0, 0, 0xFFFFFF, false);
+        guiGraphics.pose().popPose();
+        guiGraphics.pose().popPose();
         RenderSystem.disableBlend();
     }
 
@@ -232,8 +234,8 @@ public final class ReworkedLocatorBarHudRenderer {
                 0,
                 PLAYER_HEAD_MARKER_SIZE,
                 PLAYER_HEAD_MARKER_SIZE,
-                PLAYER_HEAD_U,
-                PLAYER_HEAD_V,
+                8,
+                8,
                 8,
                 8,
                 PLAYER_HEAD_TEXTURE_SIZE,
@@ -245,8 +247,8 @@ public final class ReworkedLocatorBarHudRenderer {
                 0,
                 PLAYER_HEAD_MARKER_SIZE,
                 PLAYER_HEAD_MARKER_SIZE,
-                PLAYER_HEAD_HAT_U,
-                PLAYER_HEAD_HAT_V,
+                40,
+                8,
                 8,
                 8,
                 PLAYER_HEAD_TEXTURE_SIZE,
@@ -255,6 +257,12 @@ public final class ReworkedLocatorBarHudRenderer {
         guiGraphics.pose().popPose();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.disableBlend();
+    }
+
+    private static void renderCoordinatesText(GuiGraphics guiGraphics, Player player, float centerX, int textY) {
+        String coordsText = "(" + player.getBlockX() + " " + player.getBlockY() + " " + player.getBlockZ() + ")";
+        int textX = Math.round(centerX - (Minecraft.getInstance().font.width(coordsText) / 2.0F));
+        guiGraphics.drawString(Minecraft.getInstance().font, coordsText, textX, textY, 0xFFFFFF, false);
     }
 
     private static List<WaypointMarker> collectWaypointMarkers(Player localPlayer) {
