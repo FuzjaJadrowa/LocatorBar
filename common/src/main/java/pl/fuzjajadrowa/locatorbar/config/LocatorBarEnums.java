@@ -65,4 +65,23 @@ public final class LocatorBarEnums {
             return this == XYZ ? XZ : XYZ;
         }
     }
+
+    public enum DaysDisplayOrder {
+        DAYS_UNDER_COORDS("Days under coords"),
+        COORDS_UNDER_DAYS("Coords under days");
+
+        private final String label;
+
+        DaysDisplayOrder(String label) {
+            this.label = label;
+        }
+
+        public String label() {
+            return label;
+        }
+
+        public DaysDisplayOrder next() {
+            return this == DAYS_UNDER_COORDS ? COORDS_UNDER_DAYS : DAYS_UNDER_COORDS;
+        }
+    }
 }
