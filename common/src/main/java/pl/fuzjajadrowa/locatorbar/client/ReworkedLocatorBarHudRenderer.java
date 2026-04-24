@@ -15,6 +15,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.LodestoneTracker;
 import pl.fuzjajadrowa.locatorbar.LocatorBar;
+import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig;
 import pl.fuzjajadrowa.locatorbar.waypoint.WaypointData;
 
 import java.nio.charset.StandardCharsets;
@@ -74,6 +75,10 @@ public final class ReworkedLocatorBarHudRenderer {
     }
 
     public static void render(GuiGraphics guiGraphics) {
+        if (!LocatorBarConfig.isEnabled()) {
+            return;
+        }
+
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.options.hideGui) {
             return;

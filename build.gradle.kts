@@ -17,6 +17,7 @@ subprojects {
 
     repositories {
         maven("https://maven.fabricmc.net/")
+        maven("https://maven.terraformersmc.com/releases/")
         maven("https://maven.architectury.dev/")
         maven("https://maven.neoforged.net/releases")
         mavenCentral()
