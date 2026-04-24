@@ -59,17 +59,15 @@ public final class ReworkedLocatorBarHudRenderer {
     private static final int ICON_DOT_SIZE = ICON_TEXTURE_SIZE - (ICON_MARGIN * 2);
     private static final int BASE_DIRECTION_MARKER_SIZE = 12;
     private static final int BASE_DIRECTION_OVERFLOW = 2;
-    private static final int BASE_PLAYER_HEAD_MARKER_SIZE = BAR_TEXTURE_HEIGHT + 8;
+    private static final int BASE_PLAYER_HEAD_MARKER_SIZE = 12;
     private static final int BASE_PLAYER_HEAD_OVERFLOW = 2;
     private static final int PLAYER_HEAD_TEXTURE_SIZE = 64;
     private static final float PLAYER_FADE_START_DISTANCE = 100.0F;
     private static final float PLAYER_FADE_TO_MIN_DISTANCE = 400.0F;
     private static final float PLAYER_HIDE_DISTANCE = 450.0F;
-    private static final float PLAYER_MIN_ALPHA = 0.2F;
+    private static final float PLAYER_MIN_ALPHA = 0.00001F;
     private static final int WAYPOINT_TEXTURE_SIZE = 36;
     private static final int BASE_WAYPOINT_MARKER_SIZE = 14;
-    private static final int BASE_WAYPOINT_TOP_OVERFLOW = Math.round(BASE_WAYPOINT_MARKER_SIZE * (8.0F / WAYPOINT_TEXTURE_SIZE));
-    private static final int BASE_WAYPOINT_BOTTOM_OVERFLOW = Math.round(BASE_WAYPOINT_MARKER_SIZE * (4.0F / WAYPOINT_TEXTURE_SIZE));
     private static final float WAYPOINT_TEXT_SCALE = 0.75F;
 
     private ReworkedLocatorBarHudRenderer() {
@@ -285,6 +283,7 @@ public final class ReworkedLocatorBarHudRenderer {
         RenderSystem.disableBlend();
         return true;
     }
+
 
     private static void renderPlayerHeadMarker(
             GuiGraphics guiGraphics,

@@ -3,7 +3,9 @@
   "package": "pl.fuzjajadrowa.locatorbar.mixin",
   "compatibilityLevel": "JAVA_21",
   "minVersion": "0.8",
-  "client": [],
+  "client": [
+    "client.OptionsScreenMixin"
+  ],
   "mixins": [
     "CompassItemMixin"
   ],
