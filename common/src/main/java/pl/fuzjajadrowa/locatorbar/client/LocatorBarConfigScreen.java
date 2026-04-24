@@ -26,12 +26,12 @@ public final class LocatorBarConfigScreen extends Screen {
         int controlsY = this.height - 28;
 
         styleButton = Button.builder(styleButtonText(), button -> cycleStyle())
-                .bounds(centerX + 50, 76, 90, 20)
+                .bounds(centerX + 20, 54, 90, 20)
                 .build();
         addRenderableWidget(styleButton);
 
         addRenderableWidget(
-                Button.builder(Component.literal("Back"), button -> onClose())
+                Button.builder(Component.literal("Close"), button -> onClose())
                         .bounds(centerX - 150, controlsY, 70, 20)
                         .build()
         );
@@ -61,10 +61,10 @@ public final class LocatorBarConfigScreen extends Screen {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
         int centerX = this.width / 2;
-        guiGraphics.drawCenteredString(this.font, Component.literal("Locator bar config"), centerX, 15, 0xFFFFFF);
-        guiGraphics.drawString(this.font, Component.literal("1. General"), centerX - 140, 48, 0xFFFFFF, false);
-        guiGraphics.drawString(this.font, Component.literal("Locator bar style"), centerX - 140, 82, 0xFFFFFF, false);
-        guiGraphics.drawString(this.font, Component.literal("Page 1/1"), centerX + 86, this.height - 40, 0xA0A0A0, false);
+        guiGraphics.drawCenteredString(this.font, Component.literal("Locator bar config"), centerX, 14, 0xFFFFFF);
+        guiGraphics.drawCenteredString(this.font, Component.literal("1. General"), centerX, 34, 0xFFFFFF);
+        guiGraphics.drawString(this.font, Component.literal("Locator bar style"), centerX - 110, 60, 0xFFFFFF, false);
+        guiGraphics.drawString(this.font, Component.literal("Page 1/1"), centerX + 91, this.height - 40, 0xA0A0A0, false);
     }
 
     @Override
