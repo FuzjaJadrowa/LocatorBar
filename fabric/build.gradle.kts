@@ -39,7 +39,6 @@ dependencies {
     minecraft("net.minecraft:minecraft:${rootProject.property("minecraft_version")}")
     mappings(loom.officialMojangMappings())
     modImplementation("net.fabricmc:fabric-loader:${rootProject.property("fabric_loader_version")}")
-    modImplementation("net.fabricmc.fabric-api:fabric-api:${rootProject.property("fabric_api_version")}")
     modCompileOnly("com.terraformersmc:modmenu:${rootProject.property("modmenu_version")}")
 
     val commonDependency = add("common", project(mapOf("path" to ":common", "configuration" to "namedElements")))

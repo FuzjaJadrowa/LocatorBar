@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "pl.fuzjajadrowa.locatorbar.fabric.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "minVersion": "0.8",
+  "client": [
+    "client.GuiMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
