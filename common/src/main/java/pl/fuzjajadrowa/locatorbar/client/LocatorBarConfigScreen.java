@@ -1,8 +1,14 @@
 package pl.fuzjajadrowa.locatorbar.client;
 
+import com.google.common.collect.ImmutableList;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ContainerObjectSelectionList;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig;
@@ -11,6 +17,7 @@ import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.DaysDisplayOrder;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.LocatorBarOffset;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.LocatorBarStyle;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -56,6 +63,8 @@ public final class LocatorBarConfigScreen extends Screen {
     private int selectedMaxVisibleWaypoints;
     private int page = 0;
 
+    private ConfigList list;
+
     private ConfigSlider scaleSlider;
     private ConfigSlider viewAngleSlider;
     private Button styleButton;
@@ -78,7 +87,6 @@ public final class LocatorBarConfigScreen extends Screen {
 
     private Button previousPageButton;
     private Button nextPageButton;
-    private int pageIndicatorCenterX;
 
     public LocatorBarConfigScreen(Screen parent) {
         super(Component.translatable("locatorbar.config.title"));
@@ -106,113 +114,66 @@ public final class LocatorBarConfigScreen extends Screen {
     protected void init() {
         int centerX = this.width / 2;
         int controlsY = this.height - 28;
-        int controlX = centerX + 20;
         int footerTotalWidth = DONE_BUTTON_WIDTH + FOOTER_SECTION_GAP + PAGE_NAV_WIDTH;
         int footerStartX = centerX - (footerTotalWidth / 2);
         int doneX = footerStartX;
         int pageNavX = doneX + DONE_BUTTON_WIDTH + FOOTER_SECTION_GAP;
-        this.pageIndicatorCenterX = pageNavX + (PAGE_NAV_WIDTH / 2);
 
-        styleButton = Button.builder(styleButtonText(), button -> cycleStyle()).bounds(controlX, 54, 120, 20).build();
-        addRenderableWidget(styleButton);
+        int listHeight = this.height - 90;
+        this.list = new ConfigList(this.minecraft, this.width, listHeight, 50, 25);
+        this.addRenderableWidget(this.list);
 
-        scaleSlider = new ConfigSlider(controlX, 80, 120, 20, Component.translatable("locatorbar.config.field.scale"),
+        styleButton = Button.builder(styleButtonText(), button -> cycleStyle()).bounds(0, 0, 120, 20).build();
+
+        scaleSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.scale"),
                 SCALE_MIN, SCALE_MAX, SCALE_STEP, selectedScale,
-                value -> {
-                    selectedScale = value;
-                    applyAndSave();
-                },
+                value -> { selectedScale = value; applyAndSave(); },
                 value -> String.format(Locale.ROOT, "%.2fx", value));
-        addRenderableWidget(scaleSlider);
 
-        offsetButton = Button.builder(offsetButtonText(), button -> cycleOffset()).bounds(controlX, 106, 120, 20).build();
-        addRenderableWidget(offsetButton);
+        offsetButton = Button.builder(offsetButtonText(), button -> cycleOffset()).bounds(0, 0, 120, 20).build();
 
-        viewAngleSlider = new ConfigSlider(controlX, 132, 120, 20, Component.translatable("locatorbar.config.field.view_angle"),
+        viewAngleSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.view_angle"),
                 VIEW_ANGLE_MIN, VIEW_ANGLE_MAX, VIEW_ANGLE_STEP, selectedViewAngle,
-                value -> {
-                    selectedViewAngle = value;
-                    applyAndSave();
-                },
+                value -> { selectedViewAngle = value; applyAndSave(); },
                 value -> Integer.toString(Math.round(value)) + "\u00b0");
-        addRenderableWidget(viewAngleSlider);
 
-        showCoordinatesButton = Button.builder(showCoordinatesButtonText(), button -> toggleShowCoordinates())
-                .bounds(controlX, 158, 120, 20).build();
-        addRenderableWidget(showCoordinatesButton);
+        showCoordinatesButton = Button.builder(showCoordinatesButtonText(), button -> toggleShowCoordinates()).bounds(0, 0, 120, 20).build();
+        coordinatesFormatButton = Button.builder(coordinatesFormatButtonText(), button -> cycleCoordinatesFormat()).bounds(0, 0, 120, 20).build();
+        showDaysButton = Button.builder(showDaysButtonText(), button -> toggleShowDays()).bounds(0, 0, 120, 20).build();
+        daysDisplayOrderButton = Button.builder(daysDisplayOrderButtonText(), button -> cycleDaysDisplayOrder()).bounds(0, 0, 120, 20).build();
 
-        coordinatesFormatButton = Button.builder(coordinatesFormatButtonText(), button -> cycleCoordinatesFormat())
-                .bounds(controlX, 184, 120, 20).build();
-        addRenderableWidget(coordinatesFormatButton);
+        showWorldDirectionsButton = Button.builder(showWorldDirectionsButtonText(), button -> toggleShowWorldDirections()).bounds(0, 0, 120, 20).build();
 
-        showDaysButton = Button.builder(showDaysButtonText(), button -> toggleShowDays())
-                .bounds(controlX, 210, 120, 20).build();
-        addRenderableWidget(showDaysButton);
-
-        daysDisplayOrderButton = Button.builder(daysDisplayOrderButtonText(), button -> cycleDaysDisplayOrder())
-                .bounds(controlX, 236, 120, 20).build();
-        addRenderableWidget(daysDisplayOrderButton);
-
-        showWorldDirectionsButton = Button.builder(showWorldDirectionsButtonText(), button -> toggleShowWorldDirections())
-                .bounds(controlX, 54, 120, 20).build();
-        addRenderableWidget(showWorldDirectionsButton);
-
-        worldDirectionsScaleSlider = new ConfigSlider(controlX, 80, 120, 20, Component.translatable("locatorbar.config.field.directions_size"),
+        worldDirectionsScaleSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.directions_size"),
                 MARKER_SCALE_MIN, MARKER_SCALE_MAX, MARKER_SCALE_STEP, selectedWorldDirectionsScale,
-                value -> {
-                    selectedWorldDirectionsScale = value;
-                    applyAndSave();
-                },
+                value -> { selectedWorldDirectionsScale = value; applyAndSave(); },
                 value -> String.format(Locale.ROOT, "%.2fx", value));
-        addRenderableWidget(worldDirectionsScaleSlider);
 
-        showPlayerHeadsButton = Button.builder(showPlayerHeadsButtonText(), button -> toggleShowPlayerHeads())
-                .bounds(controlX, 106, 120, 20).build();
-        addRenderableWidget(showPlayerHeadsButton);
+        showPlayerHeadsButton = Button.builder(showPlayerHeadsButtonText(), button -> toggleShowPlayerHeads()).bounds(0, 0, 120, 20).build();
 
-        playerHeadsScaleSlider = new ConfigSlider(controlX, 132, 120, 20, Component.translatable("locatorbar.config.field.heads_size"),
+        playerHeadsScaleSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.heads_size"),
                 MARKER_SCALE_MIN, MARKER_SCALE_MAX, MARKER_SCALE_STEP, selectedPlayerHeadsScale,
-                value -> {
-                    selectedPlayerHeadsScale = value;
-                    applyAndSave();
-                },
+                value -> { selectedPlayerHeadsScale = value; applyAndSave(); },
                 value -> String.format(Locale.ROOT, "%.2fx", value));
-        addRenderableWidget(playerHeadsScaleSlider);
 
-        playerHeadOutlineButton = Button.builder(playerHeadOutlineButtonText(), button -> togglePlayerHeadOutline())
-                .bounds(controlX, 158, 120, 20).build();
-        addRenderableWidget(playerHeadOutlineButton);
+        playerHeadOutlineButton = Button.builder(playerHeadOutlineButtonText(), button -> togglePlayerHeadOutline()).bounds(0, 0, 120, 20).build();
 
-        maxVisiblePlayersSlider = new ConfigSlider(controlX, 184, 120, 20, Component.translatable("locatorbar.config.field.max_players"),
+        maxVisiblePlayersSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.max_players"),
                 MAX_PLAYERS_MIN, MAX_PLAYERS_MAX, 1.0F, selectedMaxVisiblePlayers,
-                value -> {
-                    selectedMaxVisiblePlayers = Math.round(value);
-                    applyAndSave();
-                },
+                value -> { selectedMaxVisiblePlayers = Math.round(value); applyAndSave(); },
                 value -> Integer.toString(Math.round(value)));
-        addRenderableWidget(maxVisiblePlayersSlider);
 
-        showWaypointsButton = Button.builder(showWaypointsButtonText(), button -> toggleShowWaypoints())
-                .bounds(controlX, 54, 120, 20).build();
-        addRenderableWidget(showWaypointsButton);
+        showWaypointsButton = Button.builder(showWaypointsButtonText(), button -> toggleShowWaypoints()).bounds(0, 0, 120, 20).build();
 
-        waypointsScaleSlider = new ConfigSlider(controlX, 80, 120, 20, Component.translatable("locatorbar.config.field.waypoints_size"),
+        waypointsScaleSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.waypoints_size"),
                 MARKER_SCALE_MIN, MARKER_SCALE_MAX, MARKER_SCALE_STEP, selectedWaypointsScale,
-                value -> {
-                    selectedWaypointsScale = value;
-                    applyAndSave();
-                },
+                value -> { selectedWaypointsScale = value; applyAndSave(); },
                 value -> String.format(Locale.ROOT, "%.2fx", value));
-        addRenderableWidget(waypointsScaleSlider);
 
-        maxVisibleWaypointsSlider = new ConfigSlider(controlX, 106, 120, 20, Component.translatable("locatorbar.config.field.max_waypoints"),
+        maxVisibleWaypointsSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.max_waypoints"),
                 MAX_WAYPOINTS_MIN, MAX_WAYPOINTS_MAX, 1.0F, selectedMaxVisibleWaypoints,
-                value -> {
-                    selectedMaxVisibleWaypoints = Math.round(value);
-                    applyAndSave();
-                },
+                value -> { selectedMaxVisibleWaypoints = Math.round(value); applyAndSave(); },
                 value -> Integer.toString(Math.round(value)));
-        addRenderableWidget(maxVisibleWaypointsSlider);
 
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> onClose())
                 .bounds(doneX, controlsY, DONE_BUTTON_WIDTH, 20).build());
@@ -232,10 +193,10 @@ public final class LocatorBarConfigScreen extends Screen {
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
         int centerX = this.width / 2;
-        int leftLabelX = centerX - 138;
         Component pageTitle = switch (page) {
             case 0 -> Component.translatable("locatorbar.config.page.general");
             case 1 -> Component.translatable("locatorbar.config.page.markers");
@@ -243,33 +204,7 @@ public final class LocatorBarConfigScreen extends Screen {
         };
 
         guiGraphics.drawCenteredString(this.font, Component.translatable("locatorbar.config.header"), centerX, 14, 0xFFFFFF);
-        guiGraphics.drawCenteredString(this.font, pageTitle, centerX, 34, 0xFFFFFF);
-
-        if (page == 0) {
-            guiGraphics.drawString(this.font, Component.translatable("locatorbar.config.field.style"), leftLabelX, 60, 0xFFFFFF, false);
-            guiGraphics.drawString(this.font, Component.translatable("locatorbar.config.field.scale"), leftLabelX, 86, 0xFFFFFF, false);
-            guiGraphics.drawString(this.font, Component.translatable("locatorbar.config.field.offset"), leftLabelX, 112, 0xFFFFFF, false);
-            guiGraphics.drawString(this.font, Component.translatable("locatorbar.config.field.view_angle"), leftLabelX, 138, 0xFFFFFF, false);
-            guiGraphics.drawString(this.font, Component.translatable("locatorbar.config.field.show_coordinates"), leftLabelX, 164, 0xFFFFFF, false);
-            guiGraphics.drawString(this.font, Component.translatable("locatorbar.config.field.coordinates_format"), leftLabelX, 190, 0xFFFFFF, false);
-            guiGraphics.drawString(this.font, Component.translatable("locatorbar.config.field.show_days"), leftLabelX, 216, 0xFFFFFF, false);
-            guiGraphics.drawString(this.font, Component.translatable("locatorbar.config.field.days_display_order"), leftLabelX, 242, 0xFFFFFF, false);
-        } else if (page == 1) {
-            guiGraphics.drawString(this.font, Component.translatable("locatorbar.config.field.show_world_directions"), leftLabelX, 60, 0xFFFFFF, false);
-            guiGraphics.drawString(this.font, Component.translatable("locatorbar.config.field.directions_size"), leftLabelX, 86, 0xFFFFFF, false);
-            guiGraphics.drawString(this.font, Component.translatable("locatorbar.config.field.show_player_heads"), leftLabelX, 112, 0xFFFFFF, false);
-            guiGraphics.drawString(this.font, Component.translatable("locatorbar.config.field.heads_size"), leftLabelX, 138, 0xFFFFFF, false);
-            guiGraphics.drawString(this.font, Component.translatable("locatorbar.config.field.head_outline"), leftLabelX, 164, 0xFFFFFF, false);
-            guiGraphics.drawString(this.font, Component.translatable("locatorbar.config.field.max_visible_players"), leftLabelX, 190, 0xFFFFFF, false);
-        } else {
-            guiGraphics.drawString(this.font, Component.translatable("locatorbar.config.field.show_waypoints"), leftLabelX, 60, 0xFFFFFF, false);
-            guiGraphics.drawString(this.font, Component.translatable("locatorbar.config.field.waypoints_size"), leftLabelX, 86, 0xFFFFFF, false);
-            guiGraphics.drawString(this.font, Component.translatable("locatorbar.config.field.max_visible_waypoints"), leftLabelX, 112, 0xFFFFFF, false);
-        }
-
-        Component pageText = Component.translatable("locatorbar.config.page_indicator", page + 1, TOTAL_PAGES);
-        int pageTextX = pageIndicatorCenterX - (this.font.width(pageText) / 2);
-        guiGraphics.drawString(this.font, pageText, pageTextX, this.height - 40, 0xA0A0A0, false);
+        guiGraphics.drawCenteredString(this.font, pageTitle, centerX, 30, 0xFFFFFF);
     }
 
     @Override
@@ -415,29 +350,31 @@ public final class LocatorBarConfigScreen extends Screen {
     }
 
     private void updatePageState() {
-        boolean firstPage = page == 0;
-        boolean secondPage = page == 1;
-        boolean thirdPage = page == 2;
+        if (this.list != null) {
+            this.list.clearList();
 
-        styleButton.visible = firstPage;
-        scaleSlider.visible = firstPage;
-        offsetButton.visible = firstPage;
-        viewAngleSlider.visible = firstPage;
-        showCoordinatesButton.visible = firstPage;
-        coordinatesFormatButton.visible = firstPage;
-        showDaysButton.visible = firstPage;
-        daysDisplayOrderButton.visible = firstPage;
-
-        showWorldDirectionsButton.visible = secondPage;
-        worldDirectionsScaleSlider.visible = secondPage;
-        showPlayerHeadsButton.visible = secondPage;
-        playerHeadsScaleSlider.visible = secondPage;
-        playerHeadOutlineButton.visible = secondPage;
-        maxVisiblePlayersSlider.visible = secondPage;
-
-        showWaypointsButton.visible = thirdPage;
-        waypointsScaleSlider.visible = thirdPage;
-        maxVisibleWaypointsSlider.visible = thirdPage;
+            if (page == 0) {
+                this.list.addEntry(Component.translatable("locatorbar.config.field.style"), styleButton);
+                this.list.addEntry(Component.translatable("locatorbar.config.field.scale"), scaleSlider);
+                this.list.addEntry(Component.translatable("locatorbar.config.field.offset"), offsetButton);
+                this.list.addEntry(Component.translatable("locatorbar.config.field.view_angle"), viewAngleSlider);
+                this.list.addEntry(Component.translatable("locatorbar.config.field.show_coordinates"), showCoordinatesButton);
+                this.list.addEntry(Component.translatable("locatorbar.config.field.coordinates_format"), coordinatesFormatButton);
+                this.list.addEntry(Component.translatable("locatorbar.config.field.show_days"), showDaysButton);
+                this.list.addEntry(Component.translatable("locatorbar.config.field.days_display_order"), daysDisplayOrderButton);
+            } else if (page == 1) {
+                this.list.addEntry(Component.translatable("locatorbar.config.field.show_world_directions"), showWorldDirectionsButton);
+                this.list.addEntry(Component.translatable("locatorbar.config.field.directions_size"), worldDirectionsScaleSlider);
+                this.list.addEntry(Component.translatable("locatorbar.config.field.show_player_heads"), showPlayerHeadsButton);
+                this.list.addEntry(Component.translatable("locatorbar.config.field.heads_size"), playerHeadsScaleSlider);
+                this.list.addEntry(Component.translatable("locatorbar.config.field.head_outline"), playerHeadOutlineButton);
+                this.list.addEntry(Component.translatable("locatorbar.config.field.max_visible_players"), maxVisiblePlayersSlider);
+            } else {
+                this.list.addEntry(Component.translatable("locatorbar.config.field.show_waypoints"), showWaypointsButton);
+                this.list.addEntry(Component.translatable("locatorbar.config.field.waypoints_size"), waypointsScaleSlider);
+                this.list.addEntry(Component.translatable("locatorbar.config.field.max_visible_waypoints"), maxVisibleWaypointsSlider);
+            }
+        }
 
         previousPageButton.active = page > 0;
         nextPageButton.active = page < TOTAL_PAGES - 1;
@@ -472,6 +409,64 @@ public final class LocatorBarConfigScreen extends Screen {
     private void nextPage() {
         page = Math.min(TOTAL_PAGES - 1, page + 1);
         updatePageState();
+    }
+
+    private final class ConfigList extends ContainerObjectSelectionList<ConfigList.Entry> {
+        public ConfigList(Minecraft minecraft, int width, int height, int y, int itemHeight) {
+            super(minecraft, width, height, y, itemHeight);
+        }
+
+        public void clearList() {
+            this.clearEntries();
+            this.setScrollAmount(0);
+        }
+
+        public void addEntry(Component label, AbstractWidget widget) {
+            super.addEntry(new Entry(label, widget));
+        }
+
+        @Override
+        public int getRowWidth() {
+            return 340;
+        }
+
+        @Override
+        protected int getScrollbarPosition() {
+            return this.width / 2 + 160;
+        }
+
+        class Entry extends ContainerObjectSelectionList.Entry<Entry> {
+            private final Component label;
+            private final AbstractWidget widget;
+            private final List<AbstractWidget> children;
+
+            public Entry(Component label, AbstractWidget widget) {
+                this.label = label;
+                this.widget = widget;
+                this.children = ImmutableList.of(widget);
+            }
+
+            @Override
+            public void render(GuiGraphics guiGraphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean isMouseOver, float partialTick) {
+                int centerY = top + (height - LocatorBarConfigScreen.this.font.lineHeight) / 2;
+
+                guiGraphics.drawString(LocatorBarConfigScreen.this.font, label, LocatorBarConfigScreen.this.width / 2 - 138, centerY, 0xFFFFFF, false);
+
+                widget.setX(LocatorBarConfigScreen.this.width / 2 + 20);
+                widget.setY(top);
+                widget.render(guiGraphics, mouseX, mouseY, partialTick);
+            }
+
+            @Override
+            public List<? extends NarratableEntry> narratables() {
+                return this.children;
+            }
+
+            @Override
+            public List<? extends GuiEventListener> children() {
+                return this.children;
+            }
+        }
     }
 
     private static final class ConfigSlider extends AbstractSliderButton {

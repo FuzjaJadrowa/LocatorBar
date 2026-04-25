@@ -1,5 +1,5 @@
 {
-  "locatorbar.options.button": "Locator Bar",
+  "locatorbar.options.button": "Locator Bar...",
   "locatorbar.option.on": "On",
   "locatorbar.option.off": "Off",
 
@@ -22,7 +22,6 @@
   "locatorbar.config.page.general": "1. General",
   "locatorbar.config.page.markers": "2. Markers",
   "locatorbar.config.page.waypoints": "3. Waypoints",
-  "locatorbar.config.page_indicator": "Page %s/%s",
   "locatorbar.config.slider_value": "%1$s: %2$s",
 
   "locatorbar.config.field.style": "Locator bar style",
