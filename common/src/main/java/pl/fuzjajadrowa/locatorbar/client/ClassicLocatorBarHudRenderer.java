@@ -25,6 +25,10 @@ import java.util.List;
 import java.util.UUID;
 
 public final class ClassicLocatorBarHudRenderer {
+    private static final ResourceLocation CLASSIC_LOCATOR_BAR_BACKGROUND = ResourceLocation.fromNamespaceAndPath(
+            LocatorBar.MOD_ID,
+            "textures/gui/classic_locator_bar_background.png"
+    );
     private static final ResourceLocation NORTH = ResourceLocation.fromNamespaceAndPath(
             LocatorBar.MOD_ID,
             "textures/gui/north.png"
@@ -50,6 +54,8 @@ public final class ClassicLocatorBarHudRenderer {
     private static final int ICON_TEXTURE_SIZE = 36;
     private static final int ICON_MARGIN = 4;
     private static final int ICON_DOT_SIZE = ICON_TEXTURE_SIZE - (ICON_MARGIN * 2);
+    private static final float CLASSIC_DIRECTIONS_DEFAULT_SCALE = 0.7F;
+    private static final float CLASSIC_PLAYER_HEADS_DEFAULT_SCALE = 0.7F;
     private static final int BASE_DIRECTION_MARKER_SIZE = 12;
     private static final int BASE_DIRECTION_OVERFLOW = 2;
     private static final int BASE_PLAYER_HEAD_MARKER_SIZE = 12;
@@ -60,8 +66,9 @@ public final class ClassicLocatorBarHudRenderer {
     private static final float PLAYER_HIDE_DISTANCE = 330.0F;
     private static final float PLAYER_MIN_ALPHA = 0.010F;
     private static final int WAYPOINT_TEXTURE_SIZE = 36;
-    private static final int BASE_WAYPOINT_MARKER_SIZE = 14;
+    private static final int BASE_WAYPOINT_MARKER_SIZE = 10;
     private static final float WAYPOINT_TEXT_SCALE = 0.75F;
+    private static final int WAYPOINT_Y_OFFSET = 2;
 
     private ClassicLocatorBarHudRenderer() {
     }
@@ -76,10 +83,19 @@ public final class ClassicLocatorBarHudRenderer {
             return;
         }
 
-        float halfViewAngle = 180.0F;
-        int directionMarkerSize = Math.max(4, Math.round(BASE_DIRECTION_MARKER_SIZE * LocatorBarConfig.getWorldDirectionsScale()));
-        int playerHeadMarkerSize = Math.max(6, Math.round(BASE_PLAYER_HEAD_MARKER_SIZE * LocatorBarConfig.getPlayerHeadsScale()));
-        int waypointMarkerSize = Math.max(6, Math.round(BASE_WAYPOINT_MARKER_SIZE * LocatorBarConfig.getWaypointsScale()));
+        float halfViewAngle = 45.0F;
+        int directionMarkerSize = Math.max(
+                4,
+                Math.round(BASE_DIRECTION_MARKER_SIZE * LocatorBarConfig.getWorldDirectionsScale() * CLASSIC_DIRECTIONS_DEFAULT_SCALE)
+        );
+        int playerHeadMarkerSize = Math.max(
+                6,
+                Math.round(BASE_PLAYER_HEAD_MARKER_SIZE * LocatorBarConfig.getPlayerHeadsScale() * CLASSIC_PLAYER_HEADS_DEFAULT_SCALE)
+        );
+        int waypointMarkerSize = Math.max(
+                6,
+                Math.round(BASE_WAYPOINT_MARKER_SIZE * LocatorBarConfig.getWaypointsScale())
+        );
         int waypointTopOverflow = Math.round(waypointMarkerSize * (8.0F / WAYPOINT_TEXTURE_SIZE));
         int waypointBottomOverflow = Math.round(waypointMarkerSize * (4.0F / WAYPOINT_TEXTURE_SIZE));
         int directionOverflow = Math.max(BASE_DIRECTION_OVERFLOW, ((directionMarkerSize - BAR_TEXTURE_HEIGHT) / 2) + BASE_DIRECTION_OVERFLOW);
@@ -94,15 +110,16 @@ public final class ClassicLocatorBarHudRenderer {
         if (player == null) {
             return;
         }
+        boolean vanillaExperienceBarVisible = isVanillaExperienceBarVisible(minecraft, player);
 
         float yaw = wrapTo180(player.getYRot());
         float centerX = BAR_TEXTURE_WIDTH / 2.0F;
         int directionMarkerY = -directionOverflow + ((BAR_TEXTURE_HEIGHT + (directionOverflow * 2) - directionMarkerSize) / 2);
         int headMarkerY = -playerHeadOverflow + ((BAR_TEXTURE_HEIGHT + (playerHeadOverflow * 2) - playerHeadMarkerSize) / 2);
-        int waypointMarkerY = -waypointTopOverflow;
+        int waypointMarkerY = -waypointTopOverflow - WAYPOINT_Y_OFFSET;
         int scissorOverflow = Math.max(
                 Math.max(directionOverflow, playerHeadOverflow),
-                Math.max(waypointTopOverflow, waypointBottomOverflow)
+                Math.max(waypointTopOverflow + WAYPOINT_Y_OFFSET, waypointBottomOverflow)
         );
 
         int scissorTop = y - scissorOverflow;
@@ -110,6 +127,20 @@ public final class ClassicLocatorBarHudRenderer {
         guiGraphics.enableScissor(x, scissorTop, x + BAR_TEXTURE_WIDTH, scissorBottom);
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(x, y, 0.0F);
+
+        if (!vanillaExperienceBarVisible) {
+            guiGraphics.blit(
+                    CLASSIC_LOCATOR_BAR_BACKGROUND,
+                    0,
+                    0,
+                    0,
+                    0,
+                    BAR_TEXTURE_WIDTH,
+                    BAR_TEXTURE_HEIGHT,
+                    BAR_TEXTURE_WIDTH,
+                    BAR_TEXTURE_HEIGHT
+            );
+        }
 
         if (LocatorBarConfig.isShowWorldDirections()) {
             renderDirectionMarker(guiGraphics, NORTH, 180.0F, yaw, halfViewAngle, centerX, directionMarkerY, directionMarkerSize);
@@ -482,6 +513,10 @@ public final class ClassicLocatorBarHudRenderer {
 
     private static float quantizeToHalfPixel(float value) {
         return Math.round(value * 2.0F) / 2.0F;
+    }
+
+    private static boolean isVanillaExperienceBarVisible(Minecraft minecraft, Player player) {
+        return minecraft.gameMode != null && minecraft.gameMode.hasExperience() && !player.isSpectator();
     }
 
     private record WaypointMarker(UUID waypointId, float directionYaw, int rgbColor, int index, String symbol) {
