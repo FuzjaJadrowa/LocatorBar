@@ -17,7 +17,36 @@
 2. Drop the downloaded mod into your `mods` folder.
 3. Launch the game. The mod is now installed, and you can config it in Minecraft options.
 ## Features
-- do uzupelnienia
+<details>
+  <summary><strong>🧭 Locator Bar</strong></summary>
+
+  The mod adds a locator bar that helps you read a direction at a glance.
+  You can also show coordinates and in-game day counter under the bar.
+  World direction markers (N, S, E, W) can be shown directly on the bar.
+
+  There are multiple bar styles:
+  - Reworked style (custom top HUD style)
+  - Classic style (vanilla-like style near the XP bar).
+</details>
+
+<details>
+  <summary><strong>😀 Players</strong></summary>
+
+  Other players are shown as head markers on the locator bar, so you can quickly see where they are.
+
+  A player marker is hidden when:
+  - the player is crouching
+  - the player wears a carved pumpkin
+  - the player wears a mob head
+</details>
+
+<details>
+  <summary><strong>📍 Waypoints</strong></summary>
+  The waypoint system is based on paired lodestone compasses in your inventory.
+  These compasses create waypoint markers on the locator bar and point you toward their target location.
+  This gives you a simple navigation system without opening maps or extra screens.
+</details>
+
 ## Credits
 - This project is an implementation of TIDZIMI idea for locator bar.
 ## License
