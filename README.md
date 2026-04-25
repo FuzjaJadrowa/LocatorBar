@@ -6,7 +6,8 @@
   <p><strong>Locator Bar</strong> implements the reworked concept of a player locator bar for Minecraft. Simple, clean bar at the top of your screen.</p>
 
   <p>
-    <a href="https://github.com/FuzjaJadrowa/LocatorBar/actions/workflows/fabric-neoforge-build.yml"><img src="https://github.com/FuzjaJadrowa/LocatorBar/actions/workflows/fabric-neoforge-build.yml/badge.svg" alt="Fabric-Neoforge build" /></a>
+    <a href="https://github.com/FuzjaJadrowa/LocatorBar/actions/workflows/fabric-build.yml"><img src="https://github.com/FuzjaJadrowa/LocatorBar/actions/workflows/fabric-build.yml/badge.svg" alt="Fabric build" /></a>
+    <a href="https://github.com/FuzjaJadrowa/LocatorBar/actions/workflows/neoforge-build.yml"><img src="https://github.com/FuzjaJadrowa/LocatorBar/actions/workflows/neoforge-build.yml/badge.svg" alt="NeoForge build" /></a>
   </p>
 </div>
 
@@ -14,8 +15,9 @@
 
 ## How to install?
 1. Ensure you are using a correct version of the mod loader.
-2. Drop the downloaded mod into your `mods` folder.
-3. Launch the game. The mod is now installed, and you can config it in Minecraft options.
+2. Download the correct jar for your loader: `*-fabric-*.jar` or `*-neoforge-*.jar`.
+3. Drop the downloaded mod into your `mods` folder.
+4. Launch the game. The mod is now installed, and you can config it in Minecraft options.
 ## Features
 <details>
   <summary><strong>🧭 Locator Bar</strong></summary>

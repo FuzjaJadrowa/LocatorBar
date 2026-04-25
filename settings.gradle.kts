@@ -9,6 +9,5 @@ pluginManagement {
 
 rootProject.name = "locatorbar"
 
-include("common")
 include("fabric")
 include("neoforge")

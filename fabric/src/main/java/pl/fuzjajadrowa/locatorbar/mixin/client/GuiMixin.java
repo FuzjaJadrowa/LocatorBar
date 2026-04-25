@@ -1,4 +1,4 @@
-package pl.fuzjajadrowa.locatorbar.fabric.mixin.client;
+package pl.fuzjajadrowa.locatorbar.mixin.client;
 
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.Gui;

@@ -1,10 +1,14 @@
 {
   "required": true,
-  "package": "pl.fuzjajadrowa.locatorbar.fabric.mixin",
+  "package": "pl.fuzjajadrowa.locatorbar.mixin",
   "compatibilityLevel": "JAVA_21",
   "minVersion": "0.8",
   "client": [
+    "client.OptionsScreenMixin",
     "client.GuiMixin"
+  ],
+  "mixins": [
+    "CompassItemMixin"
   ],
   "injectors": {
     "defaultRequire": 1

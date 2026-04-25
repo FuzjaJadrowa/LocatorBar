@@ -1,4 +1,4 @@
-name: Fabric-NeoForge Build
+name: Fabric Build
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Fabric-NeoForge Build
+    name: Fabric Build
     runs-on: windows-latest
 
     steps:
@@ -24,12 +24,12 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build Fabric + NeoForge Universal Jar
-        run: .\gradlew.bat clean multiloaderJar --no-daemon
+      - name: Build Fabric
+        run: .\gradlew.bat clean :fabric:remapJar --no-daemon
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: locatorbar-fabric-neoforge
-          path: build/libs/*fabric-neoforge*.jar
+          name: locatorbar-fabric
+          path: fabric/build/libs/*-fabric-*.jar
           if-no-files-found: error

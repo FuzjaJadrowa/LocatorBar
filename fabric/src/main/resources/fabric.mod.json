@@ -26,8 +26,7 @@
     ]
   },
   "mixins": [
-    "locatorbar.mixins.json",
-    "locatorbar.fabric.mixins.json"
+    "locatorbar.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.19.2",
