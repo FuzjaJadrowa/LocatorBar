@@ -42,6 +42,7 @@
 
 <details>
   <summary><strong>📍 Waypoints</strong></summary>
+
   The waypoint system is based on paired lodestone compasses in your inventory.
   These compasses create waypoint markers on the locator bar and point you toward their target location.
   This gives you a simple navigation system without opening maps or extra screens.
