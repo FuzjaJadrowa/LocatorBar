@@ -26,7 +26,7 @@ public abstract class OptionsScreenMixin extends Screen {
     @Inject(method = "init", at = @At("TAIL"))
     private void locatorbar$addConfigShortcut(CallbackInfo ci) {
         this.locatorbar$button = addRenderableWidget(
-                Button.builder(Component.literal("Locator Bar"), button -> {
+                Button.builder(Component.translatable("locatorbar.options.button"), button -> {
                     if (this.minecraft != null) {
                         this.minecraft.setScreen(new LocatorBarConfigScreen(this));
                     }

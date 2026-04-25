@@ -1,0 +1,49 @@
+{
+  "locatorbar.options.button": "Locator Bar",
+  "locatorbar.option.on": "On",
+  "locatorbar.option.off": "Off",
+
+  "locatorbar.style.reworked": "Reworked",
+  "locatorbar.style.classic": "Classic",
+  "locatorbar.style.off": "Off",
+
+  "locatorbar.offset.center": "Center",
+  "locatorbar.offset.left": "Left",
+  "locatorbar.offset.right": "Right",
+
+  "locatorbar.coordinates_format.xyz": "XYZ",
+  "locatorbar.coordinates_format.xz": "XZ",
+
+  "locatorbar.days_order.days_under_coords": "Days under coords",
+  "locatorbar.days_order.coords_under_days": "Coords under days",
+
+  "locatorbar.config.title": "Locator bar",
+  "locatorbar.config.header": "Locator bar config",
+  "locatorbar.config.page.general": "1. General",
+  "locatorbar.config.page.markers": "2. Markers",
+  "locatorbar.config.page.waypoints": "3. Waypoints",
+  "locatorbar.config.page_indicator": "Page %s/%s",
+  "locatorbar.config.slider_value": "%1$s: %2$s",
+
+  "locatorbar.config.field.style": "Locator bar style",
+  "locatorbar.config.field.scale": "Locator bar scale",
+  "locatorbar.config.field.offset": "Locator bar offset",
+  "locatorbar.config.field.view_angle": "View angle",
+  "locatorbar.config.field.show_coordinates": "Show coordinates",
+  "locatorbar.config.field.coordinates_format": "Coordinates format",
+  "locatorbar.config.field.show_days": "Show days",
+  "locatorbar.config.field.days_display_order": "Days display order",
+
+  "locatorbar.config.field.show_world_directions": "Show world directions",
+  "locatorbar.config.field.directions_size": "Directions size",
+  "locatorbar.config.field.show_player_heads": "Show player heads",
+  "locatorbar.config.field.heads_size": "Heads size",
+  "locatorbar.config.field.head_outline": "Head outline",
+  "locatorbar.config.field.max_players": "Max players",
+  "locatorbar.config.field.max_visible_players": "Max visible players",
+
+  "locatorbar.config.field.show_waypoints": "Show waypoints",
+  "locatorbar.config.field.waypoints_size": "Waypoints size",
+  "locatorbar.config.field.max_waypoints": "Max waypoints",
+  "locatorbar.config.field.max_visible_waypoints": "Max visible waypoints"
+}

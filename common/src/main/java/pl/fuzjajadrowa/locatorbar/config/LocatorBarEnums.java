@@ -5,18 +5,18 @@ public final class LocatorBarEnums {
     }
 
     public enum LocatorBarStyle {
-        REWORKED("Reworked"),
-        CLASSIC("Classic"),
-        OFF("Off");
+        REWORKED("locatorbar.style.reworked"),
+        CLASSIC("locatorbar.style.classic"),
+        OFF("locatorbar.style.off");
 
-        private final String label;
+        private final String translationKey;
 
-        LocatorBarStyle(String label) {
-            this.label = label;
+        LocatorBarStyle(String translationKey) {
+            this.translationKey = translationKey;
         }
 
-        public String label() {
-            return label;
+        public String translationKey() {
+            return translationKey;
         }
 
         public LocatorBarStyle next() {
@@ -29,18 +29,18 @@ public final class LocatorBarEnums {
     }
 
     public enum LocatorBarOffset {
-        CENTER("Center"),
-        LEFT("Left"),
-        RIGHT("Right");
+        CENTER("locatorbar.offset.center"),
+        LEFT("locatorbar.offset.left"),
+        RIGHT("locatorbar.offset.right");
 
-        private final String label;
+        private final String translationKey;
 
-        LocatorBarOffset(String label) {
-            this.label = label;
+        LocatorBarOffset(String translationKey) {
+            this.translationKey = translationKey;
         }
 
-        public String label() {
-            return label;
+        public String translationKey() {
+            return translationKey;
         }
 
         public LocatorBarOffset next() {
@@ -53,17 +53,17 @@ public final class LocatorBarEnums {
     }
 
     public enum CoordinatesFormat {
-        XYZ("XYZ"),
-        XZ("XZ");
+        XYZ("locatorbar.coordinates_format.xyz"),
+        XZ("locatorbar.coordinates_format.xz");
 
-        private final String label;
+        private final String translationKey;
 
-        CoordinatesFormat(String label) {
-            this.label = label;
+        CoordinatesFormat(String translationKey) {
+            this.translationKey = translationKey;
         }
 
-        public String label() {
-            return label;
+        public String translationKey() {
+            return translationKey;
         }
 
         public CoordinatesFormat next() {
@@ -72,17 +72,17 @@ public final class LocatorBarEnums {
     }
 
     public enum DaysDisplayOrder {
-        DAYS_UNDER_COORDS("Days under coords"),
-        COORDS_UNDER_DAYS("Coords under days");
+        DAYS_UNDER_COORDS("locatorbar.days_order.days_under_coords"),
+        COORDS_UNDER_DAYS("locatorbar.days_order.coords_under_days");
 
-        private final String label;
+        private final String translationKey;
 
-        DaysDisplayOrder(String label) {
-            this.label = label;
+        DaysDisplayOrder(String translationKey) {
+            this.translationKey = translationKey;
         }
 
-        public String label() {
-            return label;
+        public String translationKey() {
+            return translationKey;
         }
 
         public DaysDisplayOrder next() {
