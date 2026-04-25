@@ -24,7 +24,7 @@ side = "BOTH"
 [[dependencies.locatorbar]]
 modId = "minecraft"
 type = "required"
-versionRange = "[1.21.1,1.21.6)"
+versionRange = "[1.21.1,1.21.2)"
 ordering = "NONE"
 side = "BOTH"
 
