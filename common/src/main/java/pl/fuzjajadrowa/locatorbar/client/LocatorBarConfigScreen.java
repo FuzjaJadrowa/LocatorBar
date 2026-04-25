@@ -30,6 +30,11 @@ public final class LocatorBarConfigScreen extends Screen {
     private static final int MAX_PLAYERS_MAX = 64;
     private static final int MAX_WAYPOINTS_MIN = 1;
     private static final int MAX_WAYPOINTS_MAX = 64;
+    private static final int DONE_BUTTON_WIDTH = 90;
+    private static final int FOOTER_SECTION_GAP = 28;
+    private static final int PAGE_BUTTON_WIDTH = 30;
+    private static final int PAGE_BUTTON_GAP = 6;
+    private static final int PAGE_NAV_WIDTH = (PAGE_BUTTON_WIDTH * 2) + PAGE_BUTTON_GAP;
 
     private final Screen parent;
     private LocatorBarStyle selectedStyle;
@@ -73,6 +78,7 @@ public final class LocatorBarConfigScreen extends Screen {
 
     private Button previousPageButton;
     private Button nextPageButton;
+    private int pageIndicatorCenterX;
 
     public LocatorBarConfigScreen(Screen parent) {
         super(Component.literal("Locator bar"));
@@ -101,6 +107,11 @@ public final class LocatorBarConfigScreen extends Screen {
         int centerX = this.width / 2;
         int controlsY = this.height - 28;
         int controlX = centerX + 20;
+        int footerTotalWidth = DONE_BUTTON_WIDTH + FOOTER_SECTION_GAP + PAGE_NAV_WIDTH;
+        int footerStartX = centerX - (footerTotalWidth / 2);
+        int doneX = footerStartX;
+        int pageNavX = doneX + DONE_BUTTON_WIDTH + FOOTER_SECTION_GAP;
+        this.pageIndicatorCenterX = pageNavX + (PAGE_NAV_WIDTH / 2);
 
         styleButton = Button.builder(styleButtonText(), button -> cycleStyle()).bounds(controlX, 54, 120, 20).build();
         addRenderableWidget(styleButton);
@@ -204,14 +215,14 @@ public final class LocatorBarConfigScreen extends Screen {
         addRenderableWidget(maxVisibleWaypointsSlider);
 
         addRenderableWidget(Button.builder(Component.literal("Done"), button -> onClose())
-                .bounds(centerX - 35, controlsY, 70, 20).build());
+                .bounds(doneX, controlsY, DONE_BUTTON_WIDTH, 20).build());
 
         previousPageButton = Button.builder(Component.literal("<"), button -> previousPage())
-                .bounds(centerX + 80, controlsY, 30, 20).build();
+                .bounds(pageNavX, controlsY, PAGE_BUTTON_WIDTH, 20).build();
         addRenderableWidget(previousPageButton);
 
         nextPageButton = Button.builder(Component.literal(">"), button -> nextPage())
-                .bounds(centerX + 116, controlsY, 30, 20).build();
+                .bounds(pageNavX + PAGE_BUTTON_WIDTH + PAGE_BUTTON_GAP, controlsY, PAGE_BUTTON_WIDTH, 20).build();
         addRenderableWidget(nextPageButton);
 
         updatePageState();
@@ -256,7 +267,9 @@ public final class LocatorBarConfigScreen extends Screen {
             guiGraphics.drawString(this.font, Component.literal("Max visible waypoints"), leftLabelX, 112, 0xFFFFFF, false);
         }
 
-        guiGraphics.drawString(this.font, Component.literal("Page " + (page + 1) + "/" + TOTAL_PAGES), centerX + 91, this.height - 40, 0xA0A0A0, false);
+        String pageText = "Page " + (page + 1) + "/" + TOTAL_PAGES;
+        int pageTextX = pageIndicatorCenterX - (this.font.width(pageText) / 2);
+        guiGraphics.drawString(this.font, Component.literal(pageText), pageTextX, this.height - 40, 0xA0A0A0, false);
     }
 
     @Override
