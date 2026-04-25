@@ -374,18 +374,19 @@ public final class LocatorBarConfigScreen extends Screen {
 
     private void updateControlStates() {
         boolean styleEnabled = selectedStyle != LocatorBarStyle.OFF;
-        boolean canChangeCoordinatesFormat = styleEnabled && selectedShowCoordinates;
-        boolean canChangeDaysOrder = styleEnabled && selectedShowCoordinates && selectedShowDays;
+        boolean classicStyle = selectedStyle == LocatorBarStyle.CLASSIC;
+        boolean canChangeCoordinatesFormat = styleEnabled && !classicStyle && selectedShowCoordinates;
+        boolean canChangeDaysOrder = styleEnabled && !classicStyle && selectedShowCoordinates && selectedShowDays;
         boolean canChangeDirectionScale = styleEnabled && selectedShowWorldDirections;
         boolean canChangeHeadSettings = styleEnabled && selectedShowPlayerHeads;
         boolean canChangeWaypoints = styleEnabled && selectedShowWaypoints;
 
-        scaleSlider.active = styleEnabled;
-        offsetButton.active = styleEnabled;
-        viewAngleSlider.active = styleEnabled;
-        showCoordinatesButton.active = styleEnabled;
+        scaleSlider.active = styleEnabled && !classicStyle;
+        offsetButton.active = styleEnabled && !classicStyle;
+        viewAngleSlider.active = styleEnabled && !classicStyle;
+        showCoordinatesButton.active = styleEnabled && !classicStyle;
         coordinatesFormatButton.active = canChangeCoordinatesFormat;
-        showDaysButton.active = styleEnabled;
+        showDaysButton.active = styleEnabled && !classicStyle;
         daysDisplayOrderButton.active = canChangeDaysOrder;
 
         showWorldDirectionsButton.active = styleEnabled;

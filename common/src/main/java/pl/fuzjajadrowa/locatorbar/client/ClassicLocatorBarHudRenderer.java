@@ -16,8 +16,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.LodestoneTracker;
 import pl.fuzjajadrowa.locatorbar.LocatorBar;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig;
-import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.CoordinatesFormat;
-import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.DaysDisplayOrder;
 import pl.fuzjajadrowa.locatorbar.waypoint.WaypointData;
 
 import java.nio.charset.StandardCharsets;
@@ -26,11 +24,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
-public final class ReworkedLocatorBarHudRenderer {
-    private static final ResourceLocation LOCATOR_BAR_BACKGROUND = ResourceLocation.fromNamespaceAndPath(
-            LocatorBar.MOD_ID,
-            "textures/gui/reworked_locator_bar_background.png"
-    );
+public final class ClassicLocatorBarHudRenderer {
     private static final ResourceLocation NORTH = ResourceLocation.fromNamespaceAndPath(
             LocatorBar.MOD_ID,
             "textures/gui/north.png"
@@ -51,9 +45,8 @@ public final class ReworkedLocatorBarHudRenderer {
             LocatorBar.MOD_ID,
             "textures/gui/waypoint.png"
     );
-    private static final int BAR_TEXTURE_WIDTH = 102;
-    private static final int BAR_TEXTURE_HEIGHT = 10;
-    private static final int BAR_MARGIN = 5;
+    private static final int BAR_TEXTURE_WIDTH = 182;
+    private static final int BAR_TEXTURE_HEIGHT = 5;
     private static final int ICON_TEXTURE_SIZE = 36;
     private static final int ICON_MARGIN = 4;
     private static final int ICON_DOT_SIZE = ICON_TEXTURE_SIZE - (ICON_MARGIN * 2);
@@ -70,7 +63,7 @@ public final class ReworkedLocatorBarHudRenderer {
     private static final int BASE_WAYPOINT_MARKER_SIZE = 14;
     private static final float WAYPOINT_TEXT_SCALE = 0.75F;
 
-    private ReworkedLocatorBarHudRenderer() {
+    private ClassicLocatorBarHudRenderer() {
     }
 
     public static void render(GuiGraphics guiGraphics) {
@@ -83,10 +76,7 @@ public final class ReworkedLocatorBarHudRenderer {
             return;
         }
 
-        float scale = LocatorBarConfig.getScale();
-        float halfViewAngle = LocatorBarConfig.getViewAngle() / 2.0F;
-        int scaledBarWidth = Math.max(1, Math.round(BAR_TEXTURE_WIDTH * scale));
-        int scaledBarHeight = Math.max(1, Math.round(BAR_TEXTURE_HEIGHT * scale));
+        float halfViewAngle = 180.0F;
         int directionMarkerSize = Math.max(4, Math.round(BASE_DIRECTION_MARKER_SIZE * LocatorBarConfig.getWorldDirectionsScale()));
         int playerHeadMarkerSize = Math.max(6, Math.round(BASE_PLAYER_HEAD_MARKER_SIZE * LocatorBarConfig.getPlayerHeadsScale()));
         int waypointMarkerSize = Math.max(6, Math.round(BASE_WAYPOINT_MARKER_SIZE * LocatorBarConfig.getWaypointsScale()));
@@ -96,13 +86,9 @@ public final class ReworkedLocatorBarHudRenderer {
         int playerHeadOverflow = Math.max(BASE_PLAYER_HEAD_OVERFLOW, ((playerHeadMarkerSize - BAR_TEXTURE_HEIGHT) / 2) + BASE_PLAYER_HEAD_OVERFLOW);
 
         int screenWidth = minecraft.getWindow().getGuiScaledWidth();
-        int x = switch (LocatorBarConfig.getOffset()) {
-            case LEFT -> BAR_MARGIN;
-            case RIGHT -> screenWidth - scaledBarWidth - BAR_MARGIN;
-            case CENTER -> (screenWidth - scaledBarWidth) / 2;
-        };
-        x = Math.max(0, x);
-        int y = 5;
+        int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+        int x = (screenWidth - BAR_TEXTURE_WIDTH) / 2;
+        int y = screenHeight - 29;
 
         Player player = minecraft.player;
         if (player == null) {
@@ -119,14 +105,12 @@ public final class ReworkedLocatorBarHudRenderer {
                 Math.max(waypointTopOverflow, waypointBottomOverflow)
         );
 
-        int scissorTop = y - Math.round(scissorOverflow * scale);
-        int scissorBottom = y + Math.round((BAR_TEXTURE_HEIGHT + scissorOverflow) * scale);
-        guiGraphics.enableScissor(x, scissorTop, x + scaledBarWidth, scissorBottom);
+        int scissorTop = y - scissorOverflow;
+        int scissorBottom = y + BAR_TEXTURE_HEIGHT + scissorOverflow;
+        guiGraphics.enableScissor(x, scissorTop, x + BAR_TEXTURE_WIDTH, scissorBottom);
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(x, y, 0.0F);
-        guiGraphics.pose().scale(scale, scale, 1.0F);
 
-        guiGraphics.blit(LOCATOR_BAR_BACKGROUND, 0, 0, 0, 0, BAR_TEXTURE_WIDTH, BAR_TEXTURE_HEIGHT, BAR_TEXTURE_WIDTH, BAR_TEXTURE_HEIGHT);
         if (LocatorBarConfig.isShowWorldDirections()) {
             renderDirectionMarker(guiGraphics, NORTH, 180.0F, yaw, halfViewAngle, centerX, directionMarkerY, directionMarkerSize);
             renderDirectionMarker(guiGraphics, SOUTH, 0.0F, yaw, halfViewAngle, centerX, directionMarkerY, directionMarkerSize);
@@ -181,15 +165,6 @@ public final class ReworkedLocatorBarHudRenderer {
 
         guiGraphics.pose().popPose();
         guiGraphics.disableScissor();
-        if (LocatorBarConfig.isShowCoordinates() || LocatorBarConfig.isShowDays()) {
-            renderInfoText(
-                    guiGraphics,
-                    player,
-                    x + (scaledBarWidth / 2.0F),
-                    y + scaledBarHeight + Math.round(3.0F * scale),
-                    scale
-            );
-        }
     }
 
     private static void renderDirectionMarker(
@@ -352,50 +327,6 @@ public final class ReworkedLocatorBarHudRenderer {
                 PLAYER_HEAD_TEXTURE_SIZE,
                 PLAYER_HEAD_TEXTURE_SIZE
         );
-    }
-
-    private static void renderInfoText(GuiGraphics guiGraphics, Player player, float centerX, int startY, float scale) {
-        String coordsText = null;
-        if (LocatorBarConfig.isShowCoordinates()) {
-            if (LocatorBarConfig.getCoordinatesFormat() == CoordinatesFormat.XZ) {
-                coordsText = "(" + player.getBlockX() + " " + player.getBlockZ() + ")";
-            } else {
-                coordsText = "(" + player.getBlockX() + " " + player.getBlockY() + " " + player.getBlockZ() + ")";
-            }
-        }
-
-        String daysText = null;
-        if (LocatorBarConfig.isShowDays()) {
-            long days = player.level().getDayTime() / 24000L;
-            daysText = "Day " + days;
-        }
-
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().scale(scale, scale, 1.0F);
-        float scaledCenterX = centerX / scale;
-        int scaledStartY = Math.round(startY / scale);
-        int lineStep = Minecraft.getInstance().font.lineHeight + 1;
-
-        if (coordsText != null && daysText != null) {
-            if (LocatorBarConfig.getDaysDisplayOrder() == DaysDisplayOrder.DAYS_UNDER_COORDS) {
-                drawCenteredText(guiGraphics, coordsText, scaledCenterX, scaledStartY);
-                drawCenteredText(guiGraphics, daysText, scaledCenterX, scaledStartY + lineStep);
-            } else {
-                drawCenteredText(guiGraphics, daysText, scaledCenterX, scaledStartY);
-                drawCenteredText(guiGraphics, coordsText, scaledCenterX, scaledStartY + lineStep);
-            }
-        } else if (coordsText != null) {
-            drawCenteredText(guiGraphics, coordsText, scaledCenterX, scaledStartY);
-        } else if (daysText != null) {
-            drawCenteredText(guiGraphics, daysText, scaledCenterX, scaledStartY);
-        }
-
-        guiGraphics.pose().popPose();
-    }
-
-    private static void drawCenteredText(GuiGraphics guiGraphics, String text, float centerX, int y) {
-        int textX = Math.round(centerX - (Minecraft.getInstance().font.width(text) / 2.0F));
-        guiGraphics.drawString(Minecraft.getInstance().font, text, textX, y, 0xFFFFFF, false);
     }
 
     private static List<WaypointMarker> collectWaypointMarkers(Player localPlayer) {

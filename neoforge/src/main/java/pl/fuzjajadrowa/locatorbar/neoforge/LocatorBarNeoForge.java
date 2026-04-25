@@ -8,7 +8,7 @@ import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import pl.fuzjajadrowa.locatorbar.LocatorBar;
 import pl.fuzjajadrowa.locatorbar.client.LocatorBarConfigScreen;
-import pl.fuzjajadrowa.locatorbar.client.ReworkedLocatorBarHudRenderer;
+import pl.fuzjajadrowa.locatorbar.client.LocatorBarHudRenderer;
 
 @Mod(LocatorBar.MOD_ID)
 public final class LocatorBarNeoForge {
@@ -19,6 +19,6 @@ public final class LocatorBarNeoForge {
     }
 
     private void onRenderGui(RenderGuiEvent.Post event) {
-        ReworkedLocatorBarHudRenderer.render(event.getGuiGraphics());
+        LocatorBarHudRenderer.render(event.getGuiGraphics());
     }
 }

@@ -6,6 +6,7 @@ public final class LocatorBarEnums {
 
     public enum LocatorBarStyle {
         REWORKED("Reworked"),
+        CLASSIC("Classic"),
         OFF("Off");
 
         private final String label;
@@ -19,7 +20,11 @@ public final class LocatorBarEnums {
         }
 
         public LocatorBarStyle next() {
-            return this == REWORKED ? OFF : REWORKED;
+            return switch (this) {
+                case REWORKED -> CLASSIC;
+                case CLASSIC -> OFF;
+                case OFF -> REWORKED;
+            };
         }
     }
 

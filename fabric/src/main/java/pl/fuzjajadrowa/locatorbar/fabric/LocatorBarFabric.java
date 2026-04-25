@@ -4,7 +4,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import pl.fuzjajadrowa.locatorbar.LocatorBar;
-import pl.fuzjajadrowa.locatorbar.client.ReworkedLocatorBarHudRenderer;
+import pl.fuzjajadrowa.locatorbar.client.LocatorBarHudRenderer;
 
 public final class LocatorBarFabric implements ModInitializer, ClientModInitializer {
     @Override
@@ -14,6 +14,6 @@ public final class LocatorBarFabric implements ModInitializer, ClientModInitiali
 
     @Override
     public void onInitializeClient() {
-        HudRenderCallback.EVENT.register((guiGraphics, tickCounter) -> ReworkedLocatorBarHudRenderer.render(guiGraphics));
+        HudRenderCallback.EVENT.register((guiGraphics, tickCounter) -> LocatorBarHudRenderer.render(guiGraphics));
     }
 }
