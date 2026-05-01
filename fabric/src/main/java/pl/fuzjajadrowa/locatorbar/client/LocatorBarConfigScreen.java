@@ -135,7 +135,7 @@ public final class LocatorBarConfigScreen extends Screen {
         viewAngleSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.view_angle"),
                 VIEW_ANGLE_MIN, VIEW_ANGLE_MAX, VIEW_ANGLE_STEP, selectedViewAngle,
                 value -> { selectedViewAngle = value; applyAndSave(); },
-                value -> Integer.toString(Math.round(value)) + "\u00b0");
+                value -> Math.round(value) + "\u00b0");
 
         showCoordinatesButton = Button.builder(showCoordinatesButtonText(), button -> toggleShowCoordinates()).bounds(0, 0, 120, 20).build();
         coordinatesFormatButton = Button.builder(coordinatesFormatButtonText(), button -> cycleCoordinatesFormat()).bounds(0, 0, 120, 20).build();
@@ -430,8 +430,7 @@ public final class LocatorBarConfigScreen extends Screen {
             return 340;
         }
 
-        @Override
-        protected int getScrollbarPosition() {
+        private int getScrollbarPosition() {
             return this.width / 2 + 160;
         }
 

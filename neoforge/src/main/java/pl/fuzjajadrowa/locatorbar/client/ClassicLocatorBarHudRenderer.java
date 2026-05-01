@@ -3,6 +3,7 @@ package pl.fuzjajadrowa.locatorbar.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.component.DataComponents;
@@ -130,6 +131,7 @@ public final class ClassicLocatorBarHudRenderer {
 
         if (!vanillaExperienceBarVisible) {
             guiGraphics.blit(
+                    RenderType::guiTextured,
                     CLASSIC_LOCATOR_BAR_BACKGROUND,
                     0,
                     0,
@@ -219,13 +221,14 @@ public final class ClassicLocatorBarHudRenderer {
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(markerX, markerY, 0.0F);
         guiGraphics.blit(
+                RenderType::guiTextured,
                 texture,
                 0,
                 0,
-                directionMarkerSize,
-                directionMarkerSize,
                 ICON_MARGIN,
                 ICON_MARGIN,
+                directionMarkerSize,
+                directionMarkerSize,
                 ICON_DOT_SIZE,
                 ICON_DOT_SIZE,
                 ICON_TEXTURE_SIZE,
@@ -261,20 +264,20 @@ public final class ClassicLocatorBarHudRenderer {
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(markerX, markerY, 0.0F);
         guiGraphics.blit(
+                RenderType::guiTextured,
                 WAYPOINT,
                 0,
                 0,
-                waypointMarkerSize,
-                waypointMarkerSize,
                 0,
                 0,
+                waypointMarkerSize,
+                waypointMarkerSize,
                 WAYPOINT_TEXTURE_SIZE,
                 WAYPOINT_TEXTURE_SIZE,
                 WAYPOINT_TEXTURE_SIZE,
                 WAYPOINT_TEXTURE_SIZE
         );
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-
         float dynamicTextScale = WAYPOINT_TEXT_SCALE * (waypointMarkerSize / (float) BASE_WAYPOINT_MARKER_SIZE);
         float textWidth = Minecraft.getInstance().font.width(displayText) * dynamicTextScale;
         float textHeight = Minecraft.getInstance().font.lineHeight * dynamicTextScale;
@@ -323,7 +326,6 @@ public final class ClassicLocatorBarHudRenderer {
             drawOffset = border;
             drawSize = Math.max(1, markerSize - (border * 2));
         }
-
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, marker.alpha());
         blitPlayerHead(guiGraphics, marker.skinTexture(), drawOffset, drawOffset, drawSize);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
@@ -333,26 +335,28 @@ public final class ClassicLocatorBarHudRenderer {
 
     private static void blitPlayerHead(GuiGraphics guiGraphics, ResourceLocation texture, int x, int y, int size) {
         guiGraphics.blit(
+                RenderType::guiTextured,
                 texture,
                 x,
                 y,
-                size,
-                size,
                 8,
                 8,
+                size,
+                size,
                 8,
                 8,
                 PLAYER_HEAD_TEXTURE_SIZE,
                 PLAYER_HEAD_TEXTURE_SIZE
         );
         guiGraphics.blit(
+                RenderType::guiTextured,
                 texture,
                 x,
                 y,
-                size,
-                size,
                 40,
                 8,
+                size,
+                size,
                 8,
                 8,
                 PLAYER_HEAD_TEXTURE_SIZE,

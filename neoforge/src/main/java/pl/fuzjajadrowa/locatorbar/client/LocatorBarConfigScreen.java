@@ -430,8 +430,7 @@ public final class LocatorBarConfigScreen extends Screen {
             return 340;
         }
 
-        @Override
-        protected int getScrollbarPosition() {
+        private int getScrollbarPosition() {
             return this.width / 2 + 160;
         }
 

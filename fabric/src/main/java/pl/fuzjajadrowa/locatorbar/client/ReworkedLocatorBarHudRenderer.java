@@ -3,6 +3,7 @@ package pl.fuzjajadrowa.locatorbar.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.component.DataComponents;
@@ -126,7 +127,7 @@ public final class ReworkedLocatorBarHudRenderer {
         guiGraphics.pose().translate(x, y, 0.0F);
         guiGraphics.pose().scale(scale, scale, 1.0F);
 
-        guiGraphics.blit(LOCATOR_BAR_BACKGROUND, 0, 0, 0, 0, BAR_TEXTURE_WIDTH, BAR_TEXTURE_HEIGHT, BAR_TEXTURE_WIDTH, BAR_TEXTURE_HEIGHT);
+        guiGraphics.blit(RenderType::guiTextured, LOCATOR_BAR_BACKGROUND, 0, 0, 0, 0, BAR_TEXTURE_WIDTH, BAR_TEXTURE_HEIGHT, BAR_TEXTURE_WIDTH, BAR_TEXTURE_HEIGHT);
         if (LocatorBarConfig.isShowWorldDirections()) {
             renderDirectionMarker(guiGraphics, NORTH, 180.0F, yaw, halfViewAngle, centerX, directionMarkerY, directionMarkerSize);
             renderDirectionMarker(guiGraphics, SOUTH, 0.0F, yaw, halfViewAngle, centerX, directionMarkerY, directionMarkerSize);
@@ -213,13 +214,14 @@ public final class ReworkedLocatorBarHudRenderer {
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(markerX, markerY, 0.0F);
         guiGraphics.blit(
+                RenderType::guiTextured,
                 texture,
                 0,
                 0,
-                directionMarkerSize,
-                directionMarkerSize,
                 ICON_MARGIN,
                 ICON_MARGIN,
+                directionMarkerSize,
+                directionMarkerSize,
                 ICON_DOT_SIZE,
                 ICON_DOT_SIZE,
                 ICON_TEXTURE_SIZE,
@@ -255,13 +257,14 @@ public final class ReworkedLocatorBarHudRenderer {
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(markerX, markerY, 0.0F);
         guiGraphics.blit(
+                RenderType::guiTextured,
                 WAYPOINT,
                 0,
                 0,
-                waypointMarkerSize,
-                waypointMarkerSize,
                 0,
                 0,
+                waypointMarkerSize,
+                waypointMarkerSize,
                 WAYPOINT_TEXTURE_SIZE,
                 WAYPOINT_TEXTURE_SIZE,
                 WAYPOINT_TEXTURE_SIZE,
@@ -327,26 +330,28 @@ public final class ReworkedLocatorBarHudRenderer {
 
     private static void blitPlayerHead(GuiGraphics guiGraphics, ResourceLocation texture, int x, int y, int size) {
         guiGraphics.blit(
+                RenderType::guiTextured,
                 texture,
                 x,
                 y,
-                size,
-                size,
                 8,
                 8,
+                size,
+                size,
                 8,
                 8,
                 PLAYER_HEAD_TEXTURE_SIZE,
                 PLAYER_HEAD_TEXTURE_SIZE
         );
         guiGraphics.blit(
+                RenderType::guiTextured,
                 texture,
                 x,
                 y,
-                size,
-                size,
                 40,
                 8,
+                size,
+                size,
                 8,
                 8,
                 PLAYER_HEAD_TEXTURE_SIZE,
