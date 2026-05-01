@@ -247,13 +247,8 @@ public final class ReworkedLocatorBarHudRenderer {
 
         float normalized = relative / halfViewAngle;
         float markerX = centerX + normalized * (BAR_TEXTURE_WIDTH / 2.0F) - (waypointMarkerSize / 2.0F);
-        float red = ((marker.rgbColor() >> 16) & 0xFF) / 255.0F;
-        float green = ((marker.rgbColor() >> 8) & 0xFF) / 255.0F;
-        float blue = (marker.rgbColor() & 0xFF) / 255.0F;
-
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.setShaderColor(red, green, blue, 1.0F);
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(markerX, markerY, 0.0F);
         guiGraphics.blit(
@@ -268,9 +263,9 @@ public final class ReworkedLocatorBarHudRenderer {
                 WAYPOINT_TEXTURE_SIZE,
                 WAYPOINT_TEXTURE_SIZE,
                 WAYPOINT_TEXTURE_SIZE,
-                WAYPOINT_TEXTURE_SIZE
+                WAYPOINT_TEXTURE_SIZE,
+                0xFF000000 | marker.rgbColor()
         );
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
         float dynamicTextScale = WAYPOINT_TEXT_SCALE * (waypointMarkerSize / (float) BASE_WAYPOINT_MARKER_SIZE);
         float textWidth = Minecraft.getInstance().font.width(displayText) * dynamicTextScale;
