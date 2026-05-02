@@ -16,7 +16,7 @@ import pl.fuzjajadrowa.locatorbar.client.LocatorBarHudRenderer;
 public final class LocatorBarNeoForge {
     public LocatorBarNeoForge(IEventBus modEventBus, ModContainer modContainer) {
         LocatorBar.init();
-        if (FMLEnvironment.dist == Dist.CLIENT) {
+        if (FMLEnvironment.getDist() == Dist.CLIENT) {
             ClientHooks.init(modContainer);
         }
     }

@@ -446,7 +446,9 @@ public final class LocatorBarConfigScreen extends Screen {
             }
 
             @Override
-            public void render(GuiGraphics guiGraphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean isMouseOver, float partialTick) {
+            public void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, boolean isMouseOver, float partialTick) {
+                int top = this.getContentY();
+                int height = this.getContentHeight();
                 int centerY = top + (height - LocatorBarConfigScreen.this.font.lineHeight) / 2;
 
                 guiGraphics.drawString(LocatorBarConfigScreen.this.font, label, LocatorBarConfigScreen.this.width / 2 - 138, centerY, 0xFFFFFF, false);
