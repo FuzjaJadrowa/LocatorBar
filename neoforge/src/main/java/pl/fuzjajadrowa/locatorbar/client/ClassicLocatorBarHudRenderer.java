@@ -279,7 +279,7 @@ public final class ClassicLocatorBarHudRenderer {
         guiGraphics.pose().pushMatrix();
         guiGraphics.pose().translate(textX, textY);
         guiGraphics.pose().scale(dynamicTextScale, dynamicTextScale);
-        guiGraphics.drawString(Minecraft.getInstance().font, displayText, 0, 0, 0xFFFFFF, false);
+        guiGraphics.drawString(Minecraft.getInstance().font, displayText, 0, 0, 0xFFFFFFFF, false);
         guiGraphics.pose().popMatrix();
         guiGraphics.pose().popMatrix();
         return true;

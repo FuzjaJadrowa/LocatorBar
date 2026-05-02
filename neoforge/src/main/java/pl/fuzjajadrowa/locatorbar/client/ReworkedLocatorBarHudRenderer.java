@@ -272,7 +272,7 @@ public final class ReworkedLocatorBarHudRenderer {
         guiGraphics.pose().pushMatrix();
         guiGraphics.pose().translate(textX, textY);
         guiGraphics.pose().scale(dynamicTextScale, dynamicTextScale);
-        guiGraphics.drawString(Minecraft.getInstance().font, displayText, 0, 0, 0xFFFFFF, false);
+        guiGraphics.drawString(Minecraft.getInstance().font, displayText, 0, 0, 0xFFFFFFFF, false);
         guiGraphics.pose().popMatrix();
         guiGraphics.pose().popMatrix();
         return true;
@@ -389,7 +389,7 @@ public final class ReworkedLocatorBarHudRenderer {
 
     private static void drawCenteredText(GuiGraphics guiGraphics, String text, float centerX, int y) {
         int textX = Math.round(centerX - (Minecraft.getInstance().font.width(text) / 2.0F));
-        guiGraphics.drawString(Minecraft.getInstance().font, text, textX, y, 0xFFFFFF, false);
+        guiGraphics.drawString(Minecraft.getInstance().font, text, textX, y, 0xFFFFFFFF, false);
     }
 
     private static List<WaypointMarker> collectWaypointMarkers(Player localPlayer) {

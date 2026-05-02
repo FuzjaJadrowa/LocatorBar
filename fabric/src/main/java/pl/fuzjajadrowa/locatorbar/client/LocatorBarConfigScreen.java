@@ -192,7 +192,7 @@ public final class LocatorBarConfigScreen extends Screen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+        this.renderTransparentBackground(guiGraphics);
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
@@ -203,8 +203,8 @@ public final class LocatorBarConfigScreen extends Screen {
             default -> Component.translatable("locatorbar.config.page.waypoints");
         };
 
-        guiGraphics.drawCenteredString(this.font, Component.translatable("locatorbar.config.header"), centerX, 14, 0xFFFFFF);
-        guiGraphics.drawCenteredString(this.font, pageTitle, centerX, 30, 0xFFFFFF);
+        guiGraphics.drawCenteredString(this.font, Component.translatable("locatorbar.config.header"), centerX, 14, 0xFFFFFFFF);
+        guiGraphics.drawCenteredString(this.font, pageTitle, centerX, 30, 0xFFFFFFFF);
     }
 
     @Override
@@ -451,7 +451,7 @@ public final class LocatorBarConfigScreen extends Screen {
                 int height = this.getContentHeight();
                 int centerY = top + (height - LocatorBarConfigScreen.this.font.lineHeight) / 2;
 
-                guiGraphics.drawString(LocatorBarConfigScreen.this.font, label, LocatorBarConfigScreen.this.width / 2 - 138, centerY, 0xFFFFFF, false);
+                guiGraphics.drawString(LocatorBarConfigScreen.this.font, label, LocatorBarConfigScreen.this.width / 2 - 138, centerY, 0xFFFFFFFF, false);
 
                 widget.setX(LocatorBarConfigScreen.this.width / 2 + 20);
                 widget.setY(top);
