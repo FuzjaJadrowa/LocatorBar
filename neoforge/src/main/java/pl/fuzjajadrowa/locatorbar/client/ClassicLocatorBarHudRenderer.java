@@ -1,7 +1,7 @@
 package pl.fuzjajadrowa.locatorbar.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.component.DataComponents;
@@ -74,7 +74,7 @@ public final class ClassicLocatorBarHudRenderer {
     private ClassicLocatorBarHudRenderer() {
     }
 
-    public static void render(GuiGraphics guiGraphics) {
+    public static void render(GuiGraphicsExtractor guiGraphics) {
         if (!LocatorBarConfig.isEnabled()) {
             return;
         }
@@ -201,7 +201,7 @@ public final class ClassicLocatorBarHudRenderer {
     }
 
     private static void renderDirectionMarker(
-            GuiGraphics guiGraphics,
+            GuiGraphicsExtractor guiGraphics,
             Identifier texture,
             float directionYaw,
             float playerYaw,
@@ -238,7 +238,7 @@ public final class ClassicLocatorBarHudRenderer {
     }
 
     private static boolean renderWaypointMarker(
-            GuiGraphics guiGraphics,
+            GuiGraphicsExtractor guiGraphics,
             WaypointMarker marker,
             String displayText,
             float playerYaw,
@@ -279,7 +279,7 @@ public final class ClassicLocatorBarHudRenderer {
         guiGraphics.pose().pushMatrix();
         guiGraphics.pose().translate(textX, textY);
         guiGraphics.pose().scale(dynamicTextScale, dynamicTextScale);
-        guiGraphics.drawString(Minecraft.getInstance().font, displayText, 0, 0, 0xFFFFFFFF, false);
+        guiGraphics.text(Minecraft.getInstance().font, displayText, 0, 0, 0xFFFFFFFF, false);
         guiGraphics.pose().popMatrix();
         guiGraphics.pose().popMatrix();
         return true;
@@ -287,7 +287,7 @@ public final class ClassicLocatorBarHudRenderer {
 
 
     private static void renderPlayerHeadMarker(
-            GuiGraphics guiGraphics,
+            GuiGraphicsExtractor guiGraphics,
             PlayerHeadMarker marker,
             float playerYaw,
             float halfViewAngle,
@@ -322,7 +322,7 @@ public final class ClassicLocatorBarHudRenderer {
         guiGraphics.pose().popMatrix();
     }
 
-    private static void blitPlayerHead(GuiGraphics guiGraphics, Identifier texture, int x, int y, int size, int tint) {
+    private static void blitPlayerHead(GuiGraphicsExtractor guiGraphics, Identifier texture, int x, int y, int size, int tint) {
         guiGraphics.blit(
                 RenderPipelines.GUI_TEXTURED,
                 texture,

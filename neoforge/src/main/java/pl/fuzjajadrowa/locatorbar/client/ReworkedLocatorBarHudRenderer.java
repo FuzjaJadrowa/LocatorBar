@@ -1,7 +1,7 @@
 package pl.fuzjajadrowa.locatorbar.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.component.DataComponents;
@@ -74,7 +74,7 @@ public final class ReworkedLocatorBarHudRenderer {
     private ReworkedLocatorBarHudRenderer() {
     }
 
-    public static void render(GuiGraphics guiGraphics) {
+    public static void render(GuiGraphicsExtractor guiGraphics) {
         if (!LocatorBarConfig.isEnabled()) {
             return;
         }
@@ -194,7 +194,7 @@ public final class ReworkedLocatorBarHudRenderer {
     }
 
     private static void renderDirectionMarker(
-            GuiGraphics guiGraphics,
+            GuiGraphicsExtractor guiGraphics,
             Identifier texture,
             float directionYaw,
             float playerYaw,
@@ -231,7 +231,7 @@ public final class ReworkedLocatorBarHudRenderer {
     }
 
     private static boolean renderWaypointMarker(
-            GuiGraphics guiGraphics,
+            GuiGraphicsExtractor guiGraphics,
             WaypointMarker marker,
             String displayText,
             float playerYaw,
@@ -272,7 +272,7 @@ public final class ReworkedLocatorBarHudRenderer {
         guiGraphics.pose().pushMatrix();
         guiGraphics.pose().translate(textX, textY);
         guiGraphics.pose().scale(dynamicTextScale, dynamicTextScale);
-        guiGraphics.drawString(Minecraft.getInstance().font, displayText, 0, 0, 0xFFFFFFFF, false);
+        guiGraphics.text(Minecraft.getInstance().font, displayText, 0, 0, 0xFFFFFFFF, false);
         guiGraphics.pose().popMatrix();
         guiGraphics.pose().popMatrix();
         return true;
@@ -280,7 +280,7 @@ public final class ReworkedLocatorBarHudRenderer {
 
 
     private static void renderPlayerHeadMarker(
-            GuiGraphics guiGraphics,
+            GuiGraphicsExtractor guiGraphics,
             PlayerHeadMarker marker,
             float playerYaw,
             float halfViewAngle,
@@ -315,7 +315,7 @@ public final class ReworkedLocatorBarHudRenderer {
         guiGraphics.pose().popMatrix();
     }
 
-    private static void blitPlayerHead(GuiGraphics guiGraphics, Identifier texture, int x, int y, int size, int tint) {
+    private static void blitPlayerHead(GuiGraphicsExtractor guiGraphics, Identifier texture, int x, int y, int size, int tint) {
         guiGraphics.blit(
                 RenderPipelines.GUI_TEXTURED,
                 texture,
@@ -348,7 +348,7 @@ public final class ReworkedLocatorBarHudRenderer {
         );
     }
 
-    private static void renderInfoText(GuiGraphics guiGraphics, Player player, float centerX, int startY, float scale) {
+    private static void renderInfoText(GuiGraphicsExtractor guiGraphics, Player player, float centerX, int startY, float scale) {
         String coordsText = null;
         if (LocatorBarConfig.isShowCoordinates()) {
             if (LocatorBarConfig.getCoordinatesFormat() == CoordinatesFormat.XZ) {
@@ -360,7 +360,7 @@ public final class ReworkedLocatorBarHudRenderer {
 
         String daysText = null;
         if (LocatorBarConfig.isShowDays()) {
-            long days = player.level().getDayTime() / 24000L;
+            long days = player.level().getOverworldClockTime() / 24000L;
             daysText = "Day " + days;
         }
 
@@ -387,9 +387,9 @@ public final class ReworkedLocatorBarHudRenderer {
         guiGraphics.pose().popMatrix();
     }
 
-    private static void drawCenteredText(GuiGraphics guiGraphics, String text, float centerX, int y) {
+    private static void drawCenteredText(GuiGraphicsExtractor guiGraphics, String text, float centerX, int y) {
         int textX = Math.round(centerX - (Minecraft.getInstance().font.width(text) / 2.0F));
-        guiGraphics.drawString(Minecraft.getInstance().font, text, textX, y, 0xFFFFFFFF, false);
+        guiGraphics.text(Minecraft.getInstance().font, text, textX, y, 0xFFFFFFFF, false);
     }
 
     private static List<WaypointMarker> collectWaypointMarkers(Player localPlayer) {

@@ -31,5 +31,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: locatorbar-neoforge
-          path: neoforge/build/libs/*-neoforge-*.jar
+          path: neoforge/build/libs/*-neoforge*.jar
           if-no-files-found: error

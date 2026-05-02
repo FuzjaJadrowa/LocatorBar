@@ -2,7 +2,7 @@ package pl.fuzjajadrowa.locatorbar.client;
 
 import com.google.common.collect.ImmutableList;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -191,10 +191,10 @@ public final class LocatorBarConfigScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderTransparentBackground(guiGraphics);
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.extractTransparentBackground(guiGraphics);
 
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 
         int centerX = this.width / 2;
         Component pageTitle = switch (page) {
@@ -203,8 +203,8 @@ public final class LocatorBarConfigScreen extends Screen {
             default -> Component.translatable("locatorbar.config.page.waypoints");
         };
 
-        guiGraphics.drawCenteredString(this.font, Component.translatable("locatorbar.config.header"), centerX, 14, 0xFFFFFFFF);
-        guiGraphics.drawCenteredString(this.font, pageTitle, centerX, 30, 0xFFFFFFFF);
+        guiGraphics.centeredText(this.font, Component.translatable("locatorbar.config.header"), centerX, 14, 0xFFFFFFFF);
+        guiGraphics.centeredText(this.font, pageTitle, centerX, 30, 0xFFFFFFFF);
     }
 
     @Override
@@ -446,16 +446,16 @@ public final class LocatorBarConfigScreen extends Screen {
             }
 
             @Override
-            public void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, boolean isMouseOver, float partialTick) {
+            public void extractContent(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, boolean isMouseOver, float partialTick) {
                 int top = this.getContentY();
                 int height = this.getContentHeight();
                 int centerY = top + (height - LocatorBarConfigScreen.this.font.lineHeight) / 2;
 
-                guiGraphics.drawString(LocatorBarConfigScreen.this.font, label, LocatorBarConfigScreen.this.width / 2 - 138, centerY, 0xFFFFFFFF, false);
+                guiGraphics.text(LocatorBarConfigScreen.this.font, label, LocatorBarConfigScreen.this.width / 2 - 138, centerY, 0xFFFFFFFF, false);
 
                 widget.setX(LocatorBarConfigScreen.this.width / 2 + 20);
                 widget.setY(top);
-                widget.render(guiGraphics, mouseX, mouseY, partialTick);
+                widget.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
             }
 
             @Override
