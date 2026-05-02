@@ -1,7 +1,6 @@
 plugins {
     base
-    id("dev.architectury.loom") version "1.14-SNAPSHOT" apply false
-    id("com.github.johnrengelman.shadow") version "8.1.1" apply false
+    id("dev.architectury.loom-no-remap") version "1.14-SNAPSHOT" apply false
 }
 
 group = providers.gradleProperty("maven_group").get()
@@ -20,5 +19,5 @@ subprojects {
 }
 
 tasks.named("build") {
-    dependsOn(":fabric:remapJar", ":neoforge:remapJar")
+    dependsOn(":fabric:jar", ":neoforge:jar")
 }

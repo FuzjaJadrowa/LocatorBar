@@ -1,6 +1,5 @@
 plugins {
-    id("dev.architectury.loom")
-    `maven-publish`
+    id("dev.architectury.loom-no-remap")
 }
 
 base {
@@ -17,7 +16,6 @@ loom {
 
 dependencies {
     minecraft("net.minecraft:minecraft:${rootProject.property("minecraft_version")}")
-    mappings(loom.officialMojangMappings())
     add("neoForge", "net.neoforged:neoforge:${rootProject.property("neoforge_version")}")
 }
 
@@ -31,19 +29,10 @@ tasks.processResources {
 
 java {
     withSourcesJar()
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 tasks.withType<JavaCompile>().configureEach {
-    options.release.set(21)
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            artifactId = base.archivesName.get()
-            from(components["java"])
-        }
-    }
+    options.release.set(25)
 }

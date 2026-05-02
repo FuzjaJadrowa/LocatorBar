@@ -1,6 +1,5 @@
 plugins {
-    id("dev.architectury.loom")
-    `maven-publish`
+    id("dev.architectury.loom-no-remap")
 }
 
 base {
@@ -17,9 +16,8 @@ loom {
 
 dependencies {
     minecraft("net.minecraft:minecraft:${rootProject.property("minecraft_version")}")
-    mappings(loom.officialMojangMappings())
-    modImplementation("net.fabricmc:fabric-loader:${rootProject.property("fabric_loader_version")}")
-    modCompileOnly("com.terraformersmc:modmenu:${rootProject.property("modmenu_version")}")
+    implementation("net.fabricmc:fabric-loader:${rootProject.property("fabric_loader_version")}")
+    compileOnly("com.terraformersmc:modmenu:${rootProject.property("modmenu_version")}")
 }
 
 tasks.processResources {
@@ -32,19 +30,10 @@ tasks.processResources {
 
 java {
     withSourcesJar()
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 tasks.withType<JavaCompile>().configureEach {
-    options.release.set(21)
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            artifactId = base.archivesName.get()
-            from(components["java"])
-        }
-    }
+    options.release.set(25)
 }
