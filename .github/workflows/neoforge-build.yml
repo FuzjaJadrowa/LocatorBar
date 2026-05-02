@@ -25,7 +25,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build NeoForge
-        run: .\gradlew.bat clean :neoforge:remapJar --no-daemon
+        run: .\gradlew.bat clean :neoforge:jar --no-daemon
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
