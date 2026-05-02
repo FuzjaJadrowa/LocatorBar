@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
@@ -28,27 +28,27 @@ import java.util.List;
 import java.util.UUID;
 
 public final class ReworkedLocatorBarHudRenderer {
-    private static final ResourceLocation LOCATOR_BAR_BACKGROUND = ResourceLocation.fromNamespaceAndPath(
+    private static final Identifier LOCATOR_BAR_BACKGROUND = Identifier.fromNamespaceAndPath(
             LocatorBar.MOD_ID,
             "textures/gui/reworked_locator_bar_background.png"
     );
-    private static final ResourceLocation NORTH = ResourceLocation.fromNamespaceAndPath(
+    private static final Identifier NORTH = Identifier.fromNamespaceAndPath(
             LocatorBar.MOD_ID,
             "textures/gui/north.png"
     );
-    private static final ResourceLocation SOUTH = ResourceLocation.fromNamespaceAndPath(
+    private static final Identifier SOUTH = Identifier.fromNamespaceAndPath(
             LocatorBar.MOD_ID,
             "textures/gui/south.png"
     );
-    private static final ResourceLocation EAST = ResourceLocation.fromNamespaceAndPath(
+    private static final Identifier EAST = Identifier.fromNamespaceAndPath(
             LocatorBar.MOD_ID,
             "textures/gui/east.png"
     );
-    private static final ResourceLocation WEST = ResourceLocation.fromNamespaceAndPath(
+    private static final Identifier WEST = Identifier.fromNamespaceAndPath(
             LocatorBar.MOD_ID,
             "textures/gui/west.png"
     );
-    private static final ResourceLocation WAYPOINT = ResourceLocation.fromNamespaceAndPath(
+    private static final Identifier WAYPOINT = Identifier.fromNamespaceAndPath(
             LocatorBar.MOD_ID,
             "textures/gui/waypoint.png"
     );
@@ -195,7 +195,7 @@ public final class ReworkedLocatorBarHudRenderer {
 
     private static void renderDirectionMarker(
             GuiGraphics guiGraphics,
-            ResourceLocation texture,
+            Identifier texture,
             float directionYaw,
             float playerYaw,
             float halfViewAngle,
@@ -323,7 +323,7 @@ public final class ReworkedLocatorBarHudRenderer {
         RenderSystem.disableBlend();
     }
 
-    private static void blitPlayerHead(GuiGraphics guiGraphics, ResourceLocation texture, int x, int y, int size) {
+    private static void blitPlayerHead(GuiGraphics guiGraphics, Identifier texture, int x, int y, int size) {
         guiGraphics.blit(
                 RenderType::guiTextured,
                 texture,
@@ -556,6 +556,6 @@ public final class ReworkedLocatorBarHudRenderer {
     private record WaypointMarker(UUID waypointId, float directionYaw, int rgbColor, int index, String symbol) {
     }
 
-    private record PlayerHeadMarker(ResourceLocation skinTexture, float directionYaw, float alpha, float distance) {
+    private record PlayerHeadMarker(Identifier skinTexture, float directionYaw, float alpha, float distance) {
     }
 }

@@ -4,7 +4,7 @@ plugins {
 }
 
 base {
-    archivesName.set("${rootProject.property("archives_name")}-${project.name}")
+    archivesName.set("${rootProject.property("archives_name")}-${project.name}+${rootProject.property("minecraft_version")}")
 }
 
 loom {
