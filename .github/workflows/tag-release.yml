@@ -27,7 +27,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build release artifacts
-        run: ./gradlew clean :fabric:remapJar :neoforge:remapJar --no-daemon
+        run: ./gradlew clean :fabric:jar :neoforge:jar --no-daemon
 
       - name: Upload CI artifacts
         uses: actions/upload-artifact@v4
