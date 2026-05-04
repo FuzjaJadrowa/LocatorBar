@@ -29,4 +29,4 @@ ordering = "NONE"
 side = "BOTH"
 
 [[mixins]]
-config = "locatorbar.mixins.json"
+config = "locatorbar.common.mixins.json"

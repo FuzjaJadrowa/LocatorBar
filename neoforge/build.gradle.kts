@@ -14,6 +14,13 @@ loom {
     }
 }
 
+sourceSets {
+    named("main") {
+        java.srcDir(project(":common").file("src/main/java"))
+        resources.srcDir(project(":common").file("src/main/resources"))
+    }
+}
+
 dependencies {
     minecraft("net.minecraft:minecraft:${rootProject.property("minecraft_version")}")
     add("neoForge", "net.neoforged:neoforge:${rootProject.property("neoforge_version")}")
