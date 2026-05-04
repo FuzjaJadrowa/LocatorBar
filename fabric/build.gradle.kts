@@ -7,6 +7,12 @@ base {
 }
 
 loom {
+    mods {
+        maybeCreate("locatorbar").apply {
+            sourceSet(sourceSets.main.get())
+            sourceSet("main", ":common")
+        }
+    }
     runs {
         named("client") {
             client()
@@ -24,6 +30,7 @@ sourceSets {
 dependencies {
     minecraft("net.minecraft:minecraft:${rootProject.property("minecraft_version")}")
     implementation("net.fabricmc:fabric-loader:${rootProject.property("fabric_loader_version")}")
+    implementation("net.fabricmc.fabric-api:fabric-api:${rootProject.property("fabric_api_version")}")
     compileOnly("com.terraformersmc:modmenu:${rootProject.property("modmenu_version")}")
 }
 

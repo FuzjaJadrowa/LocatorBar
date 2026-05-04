@@ -1,5 +1,6 @@
 plugins {
     `java-library`
+    id("net.fabricmc.fabric-loom-companion") version "1.14-SNAPSHOT"
 }
 
 java {
