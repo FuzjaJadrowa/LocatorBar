@@ -23,7 +23,7 @@ fun ProcessResources.properties(files: Iterable<String>, vararg properties: Pair
 }
 
 fun Project.versionedJavaSources(vararg roots: File) {
-    val generatedSources = layout.buildDirectory.dir("generated/stonecutter/main")
+    val generatedSources = layout.buildDirectory.dir("generated/preprocessed/main")
     val prepareSources = tasks.register("prepareVersionedJavaSources") {
         inputs.files(roots)
         outputs.dir(generatedSources)
