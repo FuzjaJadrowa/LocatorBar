@@ -2,7 +2,6 @@ package pl.fuzjajadrowa.locatorbar.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
@@ -123,11 +122,11 @@ public final class ReworkedLocatorBarHudRenderer {
         int scissorTop = y - Math.round(scissorOverflow * scale);
         int scissorBottom = y + Math.round((BAR_TEXTURE_HEIGHT + scissorOverflow) * scale);
         guiGraphics.enableScissor(x, scissorTop, x + scaledBarWidth, scissorBottom);
-        guiGraphics.pose().pushMatrix();
-        guiGraphics.pose().translate(x, y);
-        guiGraphics.pose().scale(scale, scale);
+        RenderCompat.push(guiGraphics);
+        RenderCompat.translate(guiGraphics, x, y);
+        RenderCompat.scale(guiGraphics, scale, scale);
 
-        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, LOCATOR_BAR_BACKGROUND, 0, 0, 0, 0, BAR_TEXTURE_WIDTH, BAR_TEXTURE_HEIGHT, BAR_TEXTURE_WIDTH, BAR_TEXTURE_HEIGHT);
+        RenderCompat.blit(guiGraphics, LOCATOR_BAR_BACKGROUND, 0, 0, 0, 0, BAR_TEXTURE_WIDTH, BAR_TEXTURE_HEIGHT, BAR_TEXTURE_WIDTH, BAR_TEXTURE_HEIGHT);
         if (LocatorBarConfig.isShowWorldDirections()) {
             renderDirectionMarker(guiGraphics, NORTH, 180.0F, yaw, halfViewAngle, centerX, directionMarkerY, directionMarkerSize);
             renderDirectionMarker(guiGraphics, SOUTH, 0.0F, yaw, halfViewAngle, centerX, directionMarkerY, directionMarkerSize);
@@ -180,7 +179,7 @@ public final class ReworkedLocatorBarHudRenderer {
             }
         }
 
-        guiGraphics.pose().popMatrix();
+        RenderCompat.pop(guiGraphics);
         guiGraphics.disableScissor();
         if (LocatorBarConfig.isShowCoordinates() || LocatorBarConfig.isShowDays()) {
             renderInfoText(
@@ -211,10 +210,10 @@ public final class ReworkedLocatorBarHudRenderer {
         float normalized = relative / halfViewAngle;
         float markerX = quantizeToHalfPixel(centerX + normalized * (BAR_TEXTURE_WIDTH / 2.0F) - (directionMarkerSize / 2.0F));
 
-        guiGraphics.pose().pushMatrix();
-        guiGraphics.pose().translate(markerX, markerY);
-        guiGraphics.blit(
-                RenderPipelines.GUI_TEXTURED,
+        RenderCompat.push(guiGraphics);
+        RenderCompat.translate(guiGraphics, markerX, markerY);
+        RenderCompat.blitRegion(
+                guiGraphics,
                 texture,
                 0,
                 0,
@@ -227,7 +226,7 @@ public final class ReworkedLocatorBarHudRenderer {
                 ICON_TEXTURE_SIZE,
                 ICON_TEXTURE_SIZE
         );
-        guiGraphics.pose().popMatrix();
+        RenderCompat.pop(guiGraphics);
     }
 
     private static boolean renderWaypointMarker(
@@ -247,10 +246,10 @@ public final class ReworkedLocatorBarHudRenderer {
 
         float normalized = relative / halfViewAngle;
         float markerX = centerX + normalized * (BAR_TEXTURE_WIDTH / 2.0F) - (waypointMarkerSize / 2.0F);
-        guiGraphics.pose().pushMatrix();
-        guiGraphics.pose().translate(markerX, markerY);
-        guiGraphics.blit(
-                RenderPipelines.GUI_TEXTURED,
+        RenderCompat.push(guiGraphics);
+        RenderCompat.translate(guiGraphics, markerX, markerY);
+        RenderCompat.blitTinted(
+                guiGraphics,
                 WAYPOINT,
                 0,
                 0,
@@ -270,12 +269,12 @@ public final class ReworkedLocatorBarHudRenderer {
         float textHeight = Minecraft.getInstance().font.lineHeight * dynamicTextScale;
         float textX = ((waypointMarkerSize - textWidth) / 2.0F) + 0.45F;
         float textY = (waypointMarkerSize - textHeight) / 2.0F;
-        guiGraphics.pose().pushMatrix();
-        guiGraphics.pose().translate(textX, textY);
-        guiGraphics.pose().scale(dynamicTextScale, dynamicTextScale);
-        guiGraphics.text(Minecraft.getInstance().font, displayText, 0, 0, 0xFFFFFFFF, false);
-        guiGraphics.pose().popMatrix();
-        guiGraphics.pose().popMatrix();
+        RenderCompat.push(guiGraphics);
+        RenderCompat.translate(guiGraphics, textX, textY);
+        RenderCompat.scale(guiGraphics, dynamicTextScale, dynamicTextScale);
+        RenderCompat.text(guiGraphics, displayText, 0, 0, 0xFFFFFFFF, false);
+        RenderCompat.pop(guiGraphics);
+        RenderCompat.pop(guiGraphics);
         return true;
     }
 
@@ -298,8 +297,8 @@ public final class ReworkedLocatorBarHudRenderer {
         float normalized = relative / halfViewAngle;
         float markerX = quantizeToHalfPixel(centerX + normalized * (BAR_TEXTURE_WIDTH / 2.0F) - (markerSize / 2.0F));
 
-        guiGraphics.pose().pushMatrix();
-        guiGraphics.pose().translate(markerX, markerY);
+        RenderCompat.push(guiGraphics);
+        RenderCompat.translate(guiGraphics, markerX, markerY);
 
         int drawOffset = 0;
         int drawSize = markerSize;
@@ -313,41 +312,8 @@ public final class ReworkedLocatorBarHudRenderer {
 
         int alpha = Math.max(0, Math.min(255, Math.round(marker.alpha() * 255.0F)));
         int tint = (alpha << 24) | 0x00FFFFFF;
-        blitPlayerHead(guiGraphics, marker.skinTexture(), drawOffset, drawOffset, drawSize, tint);
-        guiGraphics.pose().popMatrix();
-    }
-
-    private static void blitPlayerHead(GuiGraphicsExtractor guiGraphics, Identifier texture, int x, int y, int size, int tint) {
-        guiGraphics.blit(
-                RenderPipelines.GUI_TEXTURED,
-                texture,
-                x,
-                y,
-                8,
-                8,
-                size,
-                size,
-                8,
-                8,
-                PLAYER_HEAD_TEXTURE_SIZE,
-                PLAYER_HEAD_TEXTURE_SIZE,
-                tint
-        );
-        guiGraphics.blit(
-                RenderPipelines.GUI_TEXTURED,
-                texture,
-                x,
-                y,
-                40,
-                8,
-                size,
-                size,
-                8,
-                8,
-                PLAYER_HEAD_TEXTURE_SIZE,
-                PLAYER_HEAD_TEXTURE_SIZE,
-                tint
-        );
+        RenderCompat.blitPlayerHead(guiGraphics, marker.skinTexture(), drawOffset, drawOffset, drawSize, tint);
+        RenderCompat.pop(guiGraphics);
     }
 
     private static void renderInfoText(GuiGraphicsExtractor guiGraphics, Player player, float centerX, int startY, float scale) {
@@ -362,12 +328,15 @@ public final class ReworkedLocatorBarHudRenderer {
 
         String daysText = null;
         if (LocatorBarConfig.isShowDays()) {
+            //? if >=1.21.11
             long days = player.level().getOverworldClockTime() / 24000L;
+            //? if <1.21.11
+            /*long days = player.level().getDayTime() / 24000L;*/
             daysText = "Day " + days;
         }
 
-        guiGraphics.pose().pushMatrix();
-        guiGraphics.pose().scale(scale, scale);
+        RenderCompat.push(guiGraphics);
+        RenderCompat.scale(guiGraphics, scale, scale);
         float scaledCenterX = centerX / scale;
         int scaledStartY = Math.round(startY / scale);
         int lineStep = Minecraft.getInstance().font.lineHeight + 1;
@@ -386,18 +355,19 @@ public final class ReworkedLocatorBarHudRenderer {
             drawCenteredText(guiGraphics, daysText, scaledCenterX, scaledStartY);
         }
 
-        guiGraphics.pose().popMatrix();
+        RenderCompat.pop(guiGraphics);
     }
 
     private static void drawCenteredText(GuiGraphicsExtractor guiGraphics, String text, float centerX, int y) {
         int textX = Math.round(centerX - (Minecraft.getInstance().font.width(text) / 2.0F));
-        guiGraphics.text(Minecraft.getInstance().font, text, textX, y, 0xFFFFFFFF, false);
+        RenderCompat.text(guiGraphics, text, textX, y, 0xFFFFFFFF, false);
     }
 
     private static List<WaypointMarker> collectWaypointMarkers(Player localPlayer) {
         List<WaypointMarker> markers = new ArrayList<>();
         UUID localPlayerId = localPlayer.getUUID();
 
+        //? if >=1.21.11 {
         for (ItemStack stack : localPlayer.getInventory().getNonEquipmentItems()) {
             addWaypointMarker(markers, stack, localPlayer, localPlayerId);
         }
@@ -405,6 +375,14 @@ public final class ReworkedLocatorBarHudRenderer {
         if (!offhand.isEmpty()) {
             addWaypointMarker(markers, offhand, localPlayer, localPlayerId);
         }
+        //?} else {
+        /*for (ItemStack stack : localPlayer.getInventory().items) {
+            addWaypointMarker(markers, stack, localPlayer, localPlayerId);
+        }
+        for (ItemStack stack : localPlayer.getInventory().offhand) {
+            addWaypointMarker(markers, stack, localPlayer, localPlayerId);
+        }
+        *///?}
 
         markers.sort(
                 Comparator.comparingInt((WaypointMarker marker) -> marker.index() > 0 ? marker.index() : Integer.MAX_VALUE)
@@ -484,8 +462,20 @@ public final class ReworkedLocatorBarHudRenderer {
 
             float directionYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
             float distance = (float) Math.sqrt(dx * dx + dz * dz);
-            PlayerSkin playerSkin = Minecraft.getInstance().getSkinManager().createLookup(otherPlayer.getGameProfile(), false).get();
-            markers.add(new PlayerHeadMarker(playerSkin.body().texturePath(), wrapTo180(directionYaw), alpha, distance));
+            PlayerSkin playerSkin = Minecraft.getInstance().getSkinManager()
+                    //? if >=1.21.11
+                    .createLookup(otherPlayer.getGameProfile(), false).get();
+                    //? if <1.21.11
+                    /*.getInsecureSkin(otherPlayer.getGameProfile());*/
+            markers.add(new PlayerHeadMarker(
+                    //? if >=1.21.11
+                    playerSkin.body().texturePath(),
+                    //? if <1.21.11
+                    /*playerSkin.texture(),*/
+                    wrapTo180(directionYaw),
+                    alpha,
+                    distance
+            ));
         }
         markers.sort(Comparator.comparingDouble(PlayerHeadMarker::distance));
         return markers;

@@ -135,7 +135,7 @@ public final class LocatorBarConfigScreen extends Screen {
         viewAngleSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.view_angle"),
                 VIEW_ANGLE_MIN, VIEW_ANGLE_MAX, VIEW_ANGLE_STEP, selectedViewAngle,
                 value -> { selectedViewAngle = value; applyAndSave(); },
-                value -> Math.round(value) + "\u00b0");
+                value -> Integer.toString(Math.round(value)) + "\u00b0");
 
         showCoordinatesButton = Button.builder(showCoordinatesButtonText(), button -> toggleShowCoordinates()).bounds(0, 0, 120, 20).build();
         coordinatesFormatButton = Button.builder(coordinatesFormatButtonText(), button -> cycleCoordinatesFormat()).bounds(0, 0, 120, 20).build();
@@ -190,12 +190,36 @@ public final class LocatorBarConfigScreen extends Screen {
         updateControlStates();
     }
 
+    //? if >=26.1 {
     @Override
     public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.extractTransparentBackground(guiGraphics);
 
         super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 
+        renderHeader(guiGraphics);
+    }
+    //?} elif >=1.21.11 {
+    /*@Override
+    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.renderTransparentBackground(guiGraphics);
+
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+
+        renderHeader(guiGraphics);
+    }
+    *///?} else {
+    /*@Override
+    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+
+        renderHeader(guiGraphics);
+    }
+    *///?}
+
+    private void renderHeader(GuiGraphicsExtractor guiGraphics) {
         int centerX = this.width / 2;
         Component pageTitle = switch (page) {
             case 0 -> Component.translatable("locatorbar.config.page.general");
@@ -430,9 +454,16 @@ public final class LocatorBarConfigScreen extends Screen {
             return 340;
         }
 
+        //? if >=1.21.11 {
         private int getScrollbarPosition() {
             return this.width / 2 + 160;
         }
+        //?} else {
+        /*@Override
+        protected int getScrollbarPosition() {
+            return this.width / 2 + 160;
+        }
+        *///?}
 
         class Entry extends ContainerObjectSelectionList.Entry<Entry> {
             private final Component label;
@@ -445,17 +476,38 @@ public final class LocatorBarConfigScreen extends Screen {
                 this.children = ImmutableList.of(widget);
             }
 
+            //? if >=26.1 {
             @Override
             public void extractContent(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, boolean isMouseOver, float partialTick) {
                 int top = this.getContentY();
                 int height = this.getContentHeight();
+                renderEntry(guiGraphics, top, height, mouseX, mouseY, partialTick);
+            }
+            //?} elif >=1.21.11 {
+            /*@Override
+            public void renderContent(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, boolean isMouseOver, float partialTick) {
+                int top = this.getContentY();
+                int height = this.getContentHeight();
+                renderEntry(guiGraphics, top, height, mouseX, mouseY, partialTick);
+            }
+            *///?} else {
+            /*@Override
+            public void render(GuiGraphicsExtractor guiGraphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean isMouseOver, float partialTick) {
+                renderEntry(guiGraphics, top, height, mouseX, mouseY, partialTick);
+            }
+            *///?}
+
+            private void renderEntry(GuiGraphicsExtractor guiGraphics, int top, int height, int mouseX, int mouseY, float partialTick) {
                 int centerY = top + (height - LocatorBarConfigScreen.this.font.lineHeight) / 2;
 
                 guiGraphics.text(LocatorBarConfigScreen.this.font, label, LocatorBarConfigScreen.this.width / 2 - 138, centerY, 0xFFFFFFFF, false);
 
                 widget.setX(LocatorBarConfigScreen.this.width / 2 + 20);
                 widget.setY(top);
+                //? if >=26.1
                 widget.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
+                //? if <26.1
+                /*widget.render(guiGraphics, mouseX, mouseY, partialTick);*/
             }
 
             @Override

@@ -11,8 +11,15 @@ import pl.fuzjajadrowa.locatorbar.client.LocatorBarHudRenderer;
 
 @Mixin(Gui.class)
 public abstract class GuiMixin {
+    //? if >=26.1 {
     @Inject(method = "extractRenderState", at = @At("TAIL"))
     private void locatorbar$renderHud(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
         LocatorBarHudRenderer.render(guiGraphics);
     }
+    //?} else {
+    /*@Inject(method = "render", at = @At("TAIL"))
+    private void locatorbar$renderHud(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+        LocatorBarHudRenderer.render(guiGraphics);
+    }
+    *///?}
 }

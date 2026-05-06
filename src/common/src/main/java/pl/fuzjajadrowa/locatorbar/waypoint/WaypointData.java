@@ -2,6 +2,8 @@ package pl.fuzjajadrowa.locatorbar.waypoint;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+//? if <1.21.11
+/*import net.minecraft.nbt.Tag;*/
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -28,13 +30,25 @@ public final class WaypointData {
         }
 
         CompoundTag tag = getCustomDataTag(stack);
+        //? if >=1.21.11
         putUuid(tag, OWNER_TAG, player.getUUID());
+        //? if <1.21.11
+        /*tag.putUUID(OWNER_TAG, player.getUUID());*/
 
+        //? if >=1.21.11 {
         if (!hasUuid(tag, ID_TAG)) {
             putUuid(tag, ID_TAG, UUID.randomUUID());
         }
+        //?} else {
+        /*if (!tag.hasUUID(ID_TAG)) {
+            tag.putUUID(ID_TAG, UUID.randomUUID());
+        }
+        *///?}
 
+        //? if >=1.21.11
         if (!tag.contains(INDEX_TAG)) {
+        //? if <1.21.11
+        /*if (!tag.contains(INDEX_TAG, Tag.TAG_INT)) {*/
             tag.putInt(INDEX_TAG, findHighestWaypointIndex(player) + 1);
         }
 
@@ -43,31 +57,52 @@ public final class WaypointData {
 
     public static UUID getOwner(ItemStack stack) {
         CompoundTag tag = getCustomDataTagNullable(stack);
+        //? if >=1.21.11
         if (tag == null) {
+        //? if <1.21.11
+        /*if (tag == null || !tag.hasUUID(OWNER_TAG)) {*/
             return null;
         }
+        //? if >=1.21.11
         return getUuid(tag, OWNER_TAG);
+        //? if <1.21.11
+        /*return tag.getUUID(OWNER_TAG);*/
     }
 
     public static UUID getWaypointId(ItemStack stack) {
         CompoundTag tag = getCustomDataTagNullable(stack);
+        //? if >=1.21.11
         if (tag == null) {
+        //? if <1.21.11
+        /*if (tag == null || !tag.hasUUID(ID_TAG)) {*/
             return null;
         }
+        //? if >=1.21.11
         return getUuid(tag, ID_TAG);
+        //? if <1.21.11
+        /*return tag.getUUID(ID_TAG);*/
     }
 
     public static int getWaypointIndex(ItemStack stack) {
         CompoundTag tag = getCustomDataTagNullable(stack);
+        //? if >=1.21.11
         if (tag == null) {
+        //? if <1.21.11
+        /*if (tag == null || !tag.contains(INDEX_TAG, Tag.TAG_INT)) {*/
             return -1;
         }
+        //? if >=1.21.11
         return tag.getInt(INDEX_TAG).orElse(-1);
+        //? if <1.21.11
+        /*return tag.getInt(INDEX_TAG);*/
     }
 
     public static boolean isHidden(ItemStack stack) {
         CompoundTag tag = getCustomDataTagNullable(stack);
+        //? if >=1.21.11
         return tag != null && tag.getBoolean(HIDDEN_TAG).orElse(false);
+        //? if <1.21.11
+        /*return tag != null && tag.contains(HIDDEN_TAG, Tag.TAG_BYTE) && tag.getBoolean(HIDDEN_TAG);*/
     }
 
     public static void setHidden(ItemStack stack, boolean hidden) {
@@ -82,10 +117,16 @@ public final class WaypointData {
 
     public static Integer getCustomColor(ItemStack stack) {
         CompoundTag tag = getCustomDataTagNullable(stack);
+        //? if >=1.21.11
         if (tag == null) {
+        //? if <1.21.11
+        /*if (tag == null || !tag.contains(COLOR_TAG, Tag.TAG_INT)) {*/
             return null;
         }
+        //? if >=1.21.11
         return tag.getInt(COLOR_TAG).orElse(null);
+        //? if <1.21.11
+        /*return tag.getInt(COLOR_TAG);*/
     }
 
     public static void setCustomColor(ItemStack stack, Integer color) {
@@ -100,10 +141,16 @@ public final class WaypointData {
 
     public static String getWaypointSymbol(ItemStack stack) {
         CompoundTag tag = getCustomDataTagNullable(stack);
+        //? if >=1.21.11
         if (tag == null) {
+        //? if <1.21.11
+        /*if (tag == null || !tag.contains(SYMBOL_TAG, Tag.TAG_STRING)) {*/
             return null;
         }
+        //? if >=1.21.11
         String symbol = tag.getString(SYMBOL_TAG).orElse("");
+        //? if <1.21.11
+        /*String symbol = tag.getString(SYMBOL_TAG);*/
         if (symbol.isEmpty()) {
             return null;
         }
@@ -124,6 +171,7 @@ public final class WaypointData {
         int highest = 0;
         UUID owner = player.getUUID();
 
+        //? if >=1.21.11 {
         for (ItemStack stack : player.getInventory().getNonEquipmentItems()) {
             highest = Math.max(highest, readWaypointIndexForOwner(stack, owner));
         }
@@ -131,6 +179,14 @@ public final class WaypointData {
         if (!offhand.isEmpty()) {
             highest = Math.max(highest, readWaypointIndexForOwner(offhand, owner));
         }
+        //?} else {
+        /*for (ItemStack stack : player.getInventory().items) {
+            highest = Math.max(highest, readWaypointIndexForOwner(stack, owner));
+        }
+        for (ItemStack stack : player.getInventory().offhand) {
+            highest = Math.max(highest, readWaypointIndexForOwner(stack, owner));
+        }
+        *///?}
 
         return highest;
     }
@@ -158,6 +214,7 @@ public final class WaypointData {
         return customData.copyTag();
     }
 
+    //? if >=1.21.11 {
     private static void putUuid(CompoundTag tag, String key, UUID uuid) {
         tag.putIntArray(key, uuidToIntArray(uuid));
     }
@@ -186,4 +243,5 @@ public final class WaypointData {
         long least = ((long) values[2] << 32) | (values[3] & 0xFFFFFFFFL);
         return new UUID(most, least);
     }
+    //?}
 }
