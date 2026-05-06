@@ -2,12 +2,11 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 
 plugins {
-    id("dev.architectury.loom-no-remap") version "1.14-SNAPSHOT"
+    id("net.neoforged.moddev") version "2.0.141"
 }
 
 val minecraft = stonecutter.current.version
 val loader = stonecutter.current.project.substringAfterLast('-')
-val minecraftDependency = mod.dep("minecraft.$loader")
 val javaVersion = mod.prop("java_version")
 
 version = "${mod.version}+$minecraft"
@@ -30,19 +29,14 @@ repositories {
     maven("https://maven.terraformersmc.com/")
 }
 
-dependencies {
-    minecraft("com.mojang:minecraft:$minecraftDependency")
-    fun implement(dependency: String) {
-        implementation(dependency)
-    }
+neoForge {
+    version = mod.dep("neoforge_loader")
 
-    if (loader == "fabric") {
-        implement("net.fabricmc:fabric-loader:${mod.dep("fabric_loader")}")
-        implement("net.fabricmc.fabric-api:fabric-api:${mod.dep("fabric_api_version")}")
-        compileOnly("com.terraformersmc:modmenu:${mod.dep("modmenu_version")}")
-    }
-    if (loader == "neoforge") {
-        "neoForge"("net.neoforged:neoforge:${mod.dep("neoforge_loader")}")
+    runs {
+        register("client") {
+            gameDirectory = rootProject.file("run")
+            client()
+        }
     }
 }
 
@@ -73,32 +67,25 @@ if (stonecutter.current.isActive) {
 
     rootProject.tasks.register("runActive") {
         group = "project"
-        dependsOn(tasks.named("runClient"))
+        dependsOn(tasks.named("clientRun"))
     }
 }
 
 tasks.processResources {
     properties(
-        listOf("fabric.mod.json"),
+        listOf("META-INF/neoforge.mods.toml"),
         "id" to mod.id,
         "name" to mod.name,
         "version" to mod.version,
         "minecraft" to mod.prop("mc_targets"),
-        "java" to javaVersion,
-        "fabric_loader" to mod.dep("fabric_loader")
+        "loader" to mod.dep("neoforge_loader_range"),
+        "neoforge" to mod.dep("neoforge_version_range")
     )
     properties(
         listOf("*.mixins.json"),
         "java" to javaVersion
     )
-}
 
-tasks.build {
-    group = "versioned"
-    description = "Must run through 'chiseledBuild'"
-}
-
-tasks.processResources {
     doLast {
         fileTree(outputs.files.singleFile).matching {
             include("**/*.json")
@@ -108,8 +95,14 @@ tasks.processResources {
     }
 }
 
+tasks.build {
+    group = "versioned"
+    description = "Must run through 'chiseledBuild'"
+}
+
 stonecutter {
     constants {
-        arrayOf("fabric", "neoforge").forEach { it -> put(it, loader == it) }
+        put("fabric", false)
+        put("neoforge", true)
     }
 }
