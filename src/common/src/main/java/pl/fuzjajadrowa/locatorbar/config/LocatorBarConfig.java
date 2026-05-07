@@ -236,6 +236,10 @@ public final class LocatorBarConfig {
         data.waypoints.put(id, config);
     }
 
+    public static void removeWaypointConfig(UUID id) {
+        data.waypoints.remove(id);
+    }
+
     public static boolean hasServerSettings() {
         return serverSettings != null;
     }
