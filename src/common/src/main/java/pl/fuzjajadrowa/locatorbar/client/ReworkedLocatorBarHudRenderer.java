@@ -20,7 +20,6 @@ import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.CoordinatesFormat;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.DaysDisplayOrder;
 import pl.fuzjajadrowa.locatorbar.waypoint.WaypointData;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -140,6 +139,7 @@ public final class ReworkedLocatorBarHudRenderer {
             int maxWaypoints = LocatorBarConfig.getMaxVisibleWaypoints();
             for (WaypointMarker marker : collectWaypointMarkers(player)) {
                 String displayText = marker.symbol();
+                boolean defaultIndexText = displayText == null || displayText.isEmpty();
                 if (displayText == null || displayText.isEmpty()) {
                     int displayNumber = marker.index() > 0 ? marker.index() : fallbackIndex++;
                     displayText = Integer.toString(displayNumber);
@@ -152,7 +152,8 @@ public final class ReworkedLocatorBarHudRenderer {
                         halfViewAngle,
                         centerX,
                         waypointMarkerY,
-                        waypointMarkerSize
+                        waypointMarkerSize,
+                        defaultIndexText
                 )) {
                     renderedWaypoints++;
                     if (renderedWaypoints >= maxWaypoints) {
@@ -237,7 +238,8 @@ public final class ReworkedLocatorBarHudRenderer {
             float halfViewAngle,
             float centerX,
             int markerY,
-            int waypointMarkerSize
+            int waypointMarkerSize,
+            boolean defaultIndexText
     ) {
         float relative = wrapTo180(marker.directionYaw() - playerYaw);
         if (Math.abs(relative) > halfViewAngle) {
@@ -265,6 +267,9 @@ public final class ReworkedLocatorBarHudRenderer {
         );
 
         float dynamicTextScale = WAYPOINT_TEXT_SCALE * (waypointMarkerSize / (float) BASE_WAYPOINT_MARKER_SIZE);
+        if (defaultIndexText && displayText.length() > 1) {
+            dynamicTextScale *= 0.54F;
+        }
         float textWidth = Minecraft.getInstance().font.width(displayText) * dynamicTextScale;
         float textHeight = Minecraft.getInstance().font.lineHeight * dynamicTextScale;
         float textX = ((waypointMarkerSize - textWidth) / 2.0F) + 0.45F;
@@ -415,8 +420,7 @@ public final class ReworkedLocatorBarHudRenderer {
 
         UUID waypointId = WaypointData.getWaypointId(stack);
         if (waypointId == null) {
-            String fallbackSeed = target.dimension().identifier() + "|" + target.pos().toShortString();
-            waypointId = UUID.nameUUIDFromBytes(fallbackSeed.getBytes(StandardCharsets.UTF_8));
+            return;
         }
 
         LocatorBarConfig.WaypointConfig config = LocatorBarConfig.getWaypointConfig(waypointId);

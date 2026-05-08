@@ -4,6 +4,10 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 //? if <1.21.11
 /*import net.minecraft.nbt.Tag;*/
+import net.minecraft.core.GlobalPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -53,6 +57,50 @@ public final class WaypointData {
         }
 
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+    }
+
+    public static boolean ensureWaypointData(ItemStack stack, Player player, ResourceKey<Level> dimension, BlockPos pos) {
+        LodestoneTracker tracker = stack.get(DataComponents.LODESTONE_TRACKER);
+        if (tracker == null || tracker.target().isEmpty()) {
+            return false;
+        }
+
+        GlobalPos target = tracker.target().get();
+        if (!target.dimension().equals(dimension) || !target.pos().equals(pos)) {
+            return false;
+        }
+
+        ensureWaypointData(stack, player);
+        return getWaypointId(stack) != null;
+    }
+
+    public static boolean ensureClickedLodestoneWaypoint(Player player, ResourceKey<Level> dimension, BlockPos pos) {
+        ItemStack mainHand = player.getMainHandItem();
+        if (ensureWaypointData(mainHand, player, dimension, pos)) {
+            return true;
+        }
+
+        ItemStack offhand = player.getOffhandItem();
+        if (ensureWaypointData(offhand, player, dimension, pos)) {
+            return true;
+        }
+
+        Inventory inventory = player.getInventory();
+        //? if >=1.21.11 {
+        for (ItemStack stack : inventory.getNonEquipmentItems()) {
+            if (ensureWaypointData(stack, player, dimension, pos)) {
+                return true;
+            }
+        }
+        //?} else {
+        /*for (ItemStack stack : inventory.items) {
+            if (ensureWaypointData(stack, player, dimension, pos)) {
+                return true;
+            }
+        }
+        *///?}
+
+        return false;
     }
 
     public static UUID getOwner(ItemStack stack) {
@@ -171,28 +219,47 @@ public final class WaypointData {
         Inventory inventory = player.getInventory();
         //? if >=1.21.11 {
         for (ItemStack stack : inventory.getNonEquipmentItems()) {
-            unlinkIfMatches(stack, waypointId);
+            clearWaypointDataIfMatches(stack, waypointId);
         }
-        unlinkIfMatches(inventory.getItem(Inventory.SLOT_OFFHAND), waypointId);
+        clearWaypointDataIfMatches(inventory.getItem(Inventory.SLOT_OFFHAND), waypointId);
         //?} else {
         /*for (ItemStack stack : inventory.items) {
-            unlinkIfMatches(stack, waypointId);
+            clearWaypointDataIfMatches(stack, waypointId);
         }
         for (ItemStack stack : inventory.offhand) {
-            unlinkIfMatches(stack, waypointId);
+            clearWaypointDataIfMatches(stack, waypointId);
         }
         *///?}
     }
 
-    private static void unlinkIfMatches(ItemStack stack, UUID waypointId) {
+    private static void clearWaypointDataIfMatches(ItemStack stack, UUID waypointId) {
         if (stack.isEmpty()) {
             return;
         }
 
         UUID id = getWaypointId(stack);
         if (id != null && id.equals(waypointId)) {
-            stack.remove(DataComponents.LODESTONE_TRACKER);
+            clearLocatorBarData(stack);
+        }
+    }
+
+    private static void clearLocatorBarData(ItemStack stack) {
+        CompoundTag tag = getCustomDataTagNullable(stack);
+        if (tag == null) {
+            return;
+        }
+
+        tag.remove(OWNER_TAG);
+        tag.remove(ID_TAG);
+        tag.remove(INDEX_TAG);
+        tag.remove(HIDDEN_TAG);
+        tag.remove(COLOR_TAG);
+        tag.remove(SYMBOL_TAG);
+
+        if (tag.isEmpty()) {
             stack.remove(DataComponents.CUSTOM_DATA);
+        } else {
+            stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
         }
     }
 

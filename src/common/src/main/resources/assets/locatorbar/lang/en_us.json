@@ -46,6 +46,6 @@
   "locatorbar.config.field.waypoints_size": "Waypoints size",
   "locatorbar.config.field.max_waypoints": "Max waypoints",
   "locatorbar.config.field.max_visible_waypoints": "Max visible waypoints",
-  "locatorbar.config.header.waypoint_manager": "Waypoint Manager [BETA]",
+  "locatorbar.config.header.waypoint_manager": "Waypoint Manager",
   "locatorbar.config.button.delete": "Delete"
 }

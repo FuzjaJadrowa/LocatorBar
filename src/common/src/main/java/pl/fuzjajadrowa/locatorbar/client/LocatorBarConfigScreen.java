@@ -29,7 +29,6 @@ import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig.WaypointConfig;
 import pl.fuzjajadrowa.locatorbar.waypoint.WaypointData;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -505,8 +504,7 @@ public final class LocatorBarConfigScreen extends Screen {
 
         UUID waypointId = WaypointData.getWaypointId(stack);
         if (waypointId == null) {
-            String fallbackSeed = tracker.target().get().dimension().identifier() + "|" + tracker.target().get().pos().toShortString();
-            waypointId = UUID.nameUUIDFromBytes(fallbackSeed.getBytes(StandardCharsets.UTF_8));
+            return;
         }
 
         if (seenIds.contains(waypointId)) {
@@ -724,6 +722,7 @@ public final class LocatorBarConfigScreen extends Screen {
                 this.symbolBox.setValue(initialSymbol != null ? initialSymbol : "");
                 this.symbolBox.setMaxLength(1);
                 this.symbolBox.setResponder(value -> updateWaypoint());
+                saveDefaultWaypointConfigIfNeeded(initialSymbol);
 
                 this.colorBox = new EditBox(LocatorBarConfigScreen.this.font, 0, 0, 50, 20, Component.empty());
                 this.colorBox.setValue(String.format("%06X", waypoint.color & 0xFFFFFF));
@@ -776,6 +775,15 @@ public final class LocatorBarConfigScreen extends Screen {
                 boolean visible = visibilityButton.getMessage().getString().equals(Component.translatable("locatorbar.option.on").getString());
 
                 LocatorBarConfig.setWaypointConfig(waypoint.id, new WaypointConfig(waypoint.world, color, symbol, visible));
+                LocatorBarConfig.save();
+            }
+
+            private void saveDefaultWaypointConfigIfNeeded(String initialSymbol) {
+                if (LocatorBarConfig.getWaypointConfig(waypoint.id) != null || initialSymbol == null || initialSymbol.isEmpty()) {
+                    return;
+                }
+
+                LocatorBarConfig.setWaypointConfig(waypoint.id, new WaypointConfig(waypoint.world, waypoint.color, initialSymbol, waypoint.visible));
                 LocatorBarConfig.save();
             }
 
