@@ -4,18 +4,19 @@ Describe what this pull request changes.
 
 ## Scope
 
+- [ ] Common
 - [ ] Fabric
 - [ ] NeoForge
 
 ## Changes
 
-- 
+-
 
 ## Testing
 
 Describe how you tested the changes.
 
-- [ ] Local build passes
+- [ ] Local build passes (`./gradlew build`)
 - [ ] Manual in-game/server test completed
 
 ## Checklist
