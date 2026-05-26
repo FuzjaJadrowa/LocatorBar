@@ -51,7 +51,11 @@ fun Project.versionedJavaSources(vararg roots: File) {
     }
 
     extensions.getByType<SourceSetContainer>().named("main") {
-        java.setSrcDirs(listOf(generatedSources))
+        if (System.getProperty("idea.sync.active") == "true") {
+            java.setSrcDirs(roots.toList())
+        } else {
+            java.setSrcDirs(listOf(generatedSources))
+        }
     }
     tasks.named("compileJava") {
         dependsOn(prepareSources)
