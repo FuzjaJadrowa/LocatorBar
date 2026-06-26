@@ -74,9 +74,15 @@ public final class ReworkedLocatorBarHudRenderer {
         }
 
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.options.hideGui) {
+        //? if >=26.2 {
+        if (minecraft.gui.hud.isHidden()) {
             return;
         }
+        //?} else {
+        /*if (minecraft.options.hideGui) {
+            return;
+        }
+        *///?}
 
         float scale = LocatorBarConfig.getScale();
         float halfViewAngle = LocatorBarConfig.getViewAngle() / 2.0F;

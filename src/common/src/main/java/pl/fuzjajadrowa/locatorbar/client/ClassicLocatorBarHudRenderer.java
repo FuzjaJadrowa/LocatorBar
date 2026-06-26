@@ -74,9 +74,15 @@ public final class ClassicLocatorBarHudRenderer {
         }
 
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.options.hideGui) {
+        //? if >=26.2 {
+        if (minecraft.gui.hud.isHidden()) {
             return;
         }
+        //?} else {
+        /*if (minecraft.options.hideGui) {
+            return;
+        }
+        *///?}
 
         float halfViewAngle = 45.0F;
         int directionMarkerSize = Math.max(

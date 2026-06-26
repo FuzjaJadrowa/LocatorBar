@@ -274,7 +274,11 @@ public final class LocatorBarConfigScreen extends Screen {
     @Override
     public void onClose() {
         if (this.minecraft != null) {
-            this.minecraft.setScreen(parent);
+            //? if >=26.2 {
+            this.minecraft.setScreenAndShow(parent);
+            //?} else {
+            /*this.minecraft.setScreen(parent);
+            *///?}
         }
     }
 

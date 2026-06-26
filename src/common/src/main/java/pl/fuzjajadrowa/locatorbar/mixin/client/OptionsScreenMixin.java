@@ -28,7 +28,11 @@ public abstract class OptionsScreenMixin extends Screen {
         this.locatorbar$button = addRenderableWidget(
                 Button.builder(Component.translatable("locatorbar.options.button"), button -> {
                     if (this.minecraft != null) {
-                        this.minecraft.setScreen(new LocatorBarConfigScreen(this));
+                        //? if >=26.2 {
+                        this.minecraft.setScreenAndShow(new LocatorBarConfigScreen(this));
+                        //?} else {
+                        /*this.minecraft.setScreen(new LocatorBarConfigScreen(this));
+                        *///?}
                     }
                 }).bounds(0, 0, 150, 20).build()
         );
