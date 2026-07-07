@@ -51,5 +51,9 @@
 
 ## Credits
 - This project is an implementation of TIDZIMI idea for locator bar.
+### Translations
+- en_us.json - Fuzja Jądrowa
+- pl_pl.json - Fuzja Jądrowa
+- pt_br.json - guigiffoni
 ## License
 This project is distributed under the **GPL-3.0** license.

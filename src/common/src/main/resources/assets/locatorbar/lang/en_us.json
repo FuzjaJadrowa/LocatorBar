@@ -26,6 +26,10 @@
   "locatorbar.config.field.custom_offset_y": "Y offset",
   "locatorbar.config.field.view_angle": "View angle",
   "locatorbar.config.field.elements_on_xp_bar": "Elements on XP bar",
+  "locatorbar.player_marker.heads": "Heads",
+  "locatorbar.player_marker.dots": "Dots",
+  "locatorbar.player_marker.off": "Off",
+
   "locatorbar.config.field.show_coordinates": "Show coordinates",
   "locatorbar.config.field.coordinates_format": "Coordinates format",
   "locatorbar.config.field.show_days": "Show days",
@@ -33,9 +37,9 @@
 
   "locatorbar.config.field.show_world_directions": "Show world directions",
   "locatorbar.config.field.directions_size": "Directions size",
-  "locatorbar.config.field.show_player_heads": "Show player heads",
-  "locatorbar.config.field.heads_size": "Heads size",
-  "locatorbar.config.field.head_outline": "Head outline",
+  "locatorbar.config.field.show_player_heads": "Player markers",
+  "locatorbar.config.field.heads_size": "Markers size",
+  "locatorbar.config.field.head_outline": "Marker outline",
   "locatorbar.config.field.max_players": "Max players",
   "locatorbar.config.field.max_visible_players": "Max visible players",
 

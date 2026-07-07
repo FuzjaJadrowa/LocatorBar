@@ -17,6 +17,7 @@ import pl.fuzjajadrowa.locatorbar.network.PlayerLocatorPayload;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 public final class PlayerLocatorClient {
     private static final long MAX_PAYLOAD_AGE_MILLIS = 2000L;
@@ -75,7 +76,23 @@ public final class PlayerLocatorClient {
             /*Identifier skinTexture = playerInfo.getSkinLocation();
             *///?}
             float directionYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
-            markers.add(new Marker(skinTexture, directionYaw, alpha, distance));
+            //? if >=26.2 {
+            String playerName = playerInfo.getProfile().name();
+            //?} elif >=1.21.11 {
+            String playerName = playerInfo.getProfile().name();
+            //?} else {
+            /*String playerName = playerInfo.getProfile().getName();
+            */
+            //?}
+            //? if >=26.2 {
+            net.minecraft.world.scores.PlayerTeam team = localPlayer.level().getScoreboard().getPlayersTeam(playerName);
+            Integer teamColor = (team != null && team.getColor().isPresent()) ? team.getColor().get().rgb() : null;
+            //?} else {
+            /*net.minecraft.world.scores.PlayerTeam team = localPlayer.level().getScoreboard().getPlayersTeam(playerName);
+            Integer teamColor = (team != null && team.getColor() != null && team.getColor().getColor() != null) ? team.getColor().getColor() : null;
+            */
+            //?}
+            markers.add(new Marker(entry.playerId(), skinTexture, directionYaw, alpha, distance, teamColor));
         }
 
         markers.sort(Comparator.comparingDouble(Marker::distance));
@@ -111,7 +128,15 @@ public final class PlayerLocatorClient {
             /*Identifier skinTexture = otherPlayer instanceof AbstractClientPlayer ? ((AbstractClientPlayer) otherPlayer).getSkinTextureLocation() : net.minecraft.client.resources.DefaultPlayerSkin.getDefaultSkin(otherPlayer.getUUID());
             *///?}
             float directionYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
-            markers.add(new Marker(skinTexture, directionYaw, alpha, distance));
+            //? if >=26.2 {
+            net.minecraft.world.scores.Team team = otherPlayer.getTeam();
+            Integer teamColor = (team != null && team.getColor().isPresent()) ? team.getColor().get().rgb() : null;
+            //?} else {
+            /*net.minecraft.world.scores.Team team = otherPlayer.getTeam();
+            Integer teamColor = (team != null && team.getColor() != null && team.getColor().getColor() != null) ? team.getColor().getColor() : null;
+            */
+            //?}
+            markers.add(new Marker(otherPlayer.getUUID(), skinTexture, directionYaw, alpha, distance, teamColor));
         }
 
         markers.sort(Comparator.comparingDouble(Marker::distance));
@@ -155,6 +180,6 @@ public final class PlayerLocatorClient {
         float compute(float distance);
     }
 
-    public record Marker(Identifier skinTexture, float directionYaw, float alpha, float distance) {
+    public record Marker(UUID playerId, Identifier skinTexture, float directionYaw, float alpha, float distance, Integer teamColor) {
     }
 }

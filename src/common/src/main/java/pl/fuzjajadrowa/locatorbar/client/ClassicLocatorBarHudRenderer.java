@@ -18,6 +18,7 @@ import net.minecraft.world.item.component.LodestoneTracker;
 //?}
 import pl.fuzjajadrowa.locatorbar.LocatorBar;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig;
+import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType;
 import pl.fuzjajadrowa.locatorbar.waypoint.WaypointData;
 
 import java.util.ArrayList;
@@ -97,7 +98,7 @@ public final class ClassicLocatorBarHudRenderer {
         );
         int playerHeadMarkerSize = Math.max(
                 6,
-                Math.round(BASE_PLAYER_HEAD_MARKER_SIZE * LocatorBarConfig.getPlayerHeadsScale() * CLASSIC_PLAYER_HEADS_DEFAULT_SCALE)
+                Math.round(BASE_PLAYER_HEAD_MARKER_SIZE * LocatorBarConfig.getPlayerMarkersScale() * CLASSIC_PLAYER_HEADS_DEFAULT_SCALE)
         );
         int waypointMarkerSize = Math.max(
                 6,
@@ -191,11 +192,11 @@ public final class ClassicLocatorBarHudRenderer {
             }
         }
 
-        if (LocatorBarConfig.isShowPlayerHeads()) {
-            List<PlayerHeadMarker> markers = collectPlayerHeadMarkers(player);
+        if (LocatorBarConfig.getPlayerMarkerType() != PlayerMarkerType.OFF) {
+            List<PlayerMarker> markers = collectPlayerMarkers(player);
             int maxVisible = Math.min(markers.size(), LocatorBarConfig.getMaxVisiblePlayers());
             for (int i = 0; i < maxVisible; i++) {
-                renderPlayerHeadMarker(
+                renderPlayerMarker(
                         guiGraphics,
                         markers.get(i),
                         yaw,
@@ -203,7 +204,7 @@ public final class ClassicLocatorBarHudRenderer {
                         centerX,
                         headMarkerY,
                         playerHeadMarkerSize,
-                        LocatorBarConfig.isPlayerHeadOutline()
+                        LocatorBarConfig.isPlayerMarkerOutline()
                 );
             }
         }
@@ -310,9 +311,21 @@ public final class ClassicLocatorBarHudRenderer {
     }
 
 
-    private static void renderPlayerHeadMarker(
+    private static final Identifier DOT_LARGE_TEXTURE = Identifier.fromNamespaceAndPath(LocatorBar.MOD_ID, "textures/gui/player_dot_large.png");
+    private static final Identifier DOT_MEDIUM_TEXTURE = Identifier.fromNamespaceAndPath(LocatorBar.MOD_ID, "textures/gui/player_dot_medium.png");
+    private static final Identifier DOT_SMALL_TEXTURE = Identifier.fromNamespaceAndPath(LocatorBar.MOD_ID, "textures/gui/player_dot_small.png");
+
+    private static int colorFromPlayerId(UUID playerId) {
+        long hash = playerId.getMostSignificantBits() ^ playerId.getLeastSignificantBits();
+        float hue = (hash & 0xFFFFL) / 65535.0F;
+        float saturation = 0.70F + (((hash >>> 16) & 0xFFL) / 255.0F) * 0.20F;
+        float value = 0.85F + (((hash >>> 24) & 0xFFL) / 255.0F) * 0.15F;
+        return Mth.hsvToRgb(hue, saturation, value);
+    }
+
+    private static void renderPlayerMarker(
             GuiGraphicsExtractor guiGraphics,
-            PlayerHeadMarker marker,
+            PlayerMarker marker,
             float playerYaw,
             float halfViewAngle,
             float centerX,
@@ -331,19 +344,37 @@ public final class ClassicLocatorBarHudRenderer {
         RenderCompat.push(guiGraphics);
         RenderCompat.translate(guiGraphics, markerX, markerY);
 
-        int drawOffset = 0;
-        int drawSize = markerSize;
-        if (outline) {
-            int alpha = Math.max(0, Math.min(255, Math.round(marker.alpha() * 255.0F)));
-            guiGraphics.fill(0, 0, markerSize, markerSize, alpha << 24);
-            int border = Math.max(1, Math.round(markerSize * 0.14F));
-            drawOffset = border;
-            drawSize = Math.max(1, markerSize - (border * 2));
-        }
-
         int alpha = Math.max(0, Math.min(255, Math.round(marker.alpha() * 255.0F)));
-        int tint = (alpha << 24) | 0x00FFFFFF;
-        RenderCompat.blitPlayerHead(guiGraphics, marker.skinTexture(), drawOffset, drawOffset, drawSize, tint);
+
+        if (LocatorBarConfig.getPlayerMarkerType() == PlayerMarkerType.DOTS) {
+            Identifier dotTexture;
+            if (marker.distance() <= LocatorBarConfig.getPlayerMarkerFadeStartDistance()) {
+                dotTexture = DOT_LARGE_TEXTURE;
+            } else if (marker.distance() <= LocatorBarConfig.getPlayerMarkerFadeToMinDistance()) {
+                dotTexture = DOT_MEDIUM_TEXTURE;
+            } else {
+                dotTexture = DOT_SMALL_TEXTURE;
+            }
+            int playerColor = marker.teamColor() != null ? marker.teamColor() : colorFromPlayerId(marker.playerId());
+            int tint = (alpha << 24) | (playerColor & 0x00FFFFFF);
+            int dotSize = Math.round(markerSize * 1.5F);
+            float offset = (markerSize - dotSize) / 2.0F;
+            RenderCompat.push(guiGraphics);
+            RenderCompat.translate(guiGraphics, offset, offset);
+            RenderCompat.blitTinted(guiGraphics, dotTexture, 0, 0, 0, 0, dotSize, dotSize, 8, 8, 8, 8, tint);
+            RenderCompat.pop(guiGraphics);
+        } else {
+            int drawOffset = 0;
+            int drawSize = markerSize;
+            if (outline) {
+                guiGraphics.fill(0, 0, markerSize, markerSize, alpha << 24);
+                int border = Math.max(1, Math.round(markerSize * 0.14F));
+                drawOffset = border;
+                drawSize = Math.max(1, markerSize - (border * 2));
+            }
+            int tint = (alpha << 24) | 0x00FFFFFF;
+            RenderCompat.blitPlayerHead(guiGraphics, marker.skinTexture(), drawOffset, drawOffset, drawSize, tint);
+        }
         RenderCompat.pop(guiGraphics);
     }
 
@@ -506,25 +537,27 @@ public final class ClassicLocatorBarHudRenderer {
         return Mth.hsvToRgb(hue, saturation, value);
     }
 
-    private static List<PlayerHeadMarker> collectPlayerHeadMarkers(Player localPlayer) {
-        List<PlayerHeadMarker> markers = new ArrayList<>();
+    private static List<PlayerMarker> collectPlayerMarkers(Player localPlayer) {
+        List<PlayerMarker> markers = new ArrayList<>();
         for (PlayerLocatorClient.Marker marker : PlayerLocatorClient.collectMarkers(localPlayer, ClassicLocatorBarHudRenderer::computePlayerAlpha)) {
-            markers.add(new PlayerHeadMarker(
+            markers.add(new PlayerMarker(
+                    marker.playerId(),
                     marker.skinTexture(),
                     wrapTo180(marker.directionYaw()),
                     marker.alpha(),
-                    marker.distance()
+                    marker.distance(),
+                    marker.teamColor()
             ));
         }
-        markers.sort(Comparator.comparingDouble(PlayerHeadMarker::distance));
+        markers.sort(Comparator.comparingDouble(PlayerMarker::distance));
         return markers;
     }
 
     private static float computePlayerAlpha(float distance) {
-        float fadeStartDistance = LocatorBarConfig.getPlayerHeadFadeStartDistance();
-        float fadeToMinDistance = LocatorBarConfig.getPlayerHeadFadeToMinDistance();
-        float hideDistance = LocatorBarConfig.getPlayerHeadHideDistance();
-        float minAlpha = LocatorBarConfig.getPlayerHeadMinAlpha();
+        float fadeStartDistance = LocatorBarConfig.getPlayerMarkerFadeStartDistance();
+        float fadeToMinDistance = LocatorBarConfig.getPlayerMarkerFadeToMinDistance();
+        float hideDistance = LocatorBarConfig.getPlayerMarkerHideDistance();
+        float minAlpha = LocatorBarConfig.getPlayerMarkerMinAlpha();
 
         if (distance <= fadeStartDistance) {
             return 1.0F;
@@ -564,6 +597,6 @@ public final class ClassicLocatorBarHudRenderer {
     private record WaypointMarker(UUID waypointId, float directionYaw, int rgbColor, int index, String symbol, boolean isDeath) {
     }
 
-    private record PlayerHeadMarker(Identifier skinTexture, float directionYaw, float alpha, float distance) {
+    private record PlayerMarker(UUID playerId, Identifier skinTexture, float directionYaw, float alpha, float distance, Integer teamColor) {
     }
 }

@@ -66,4 +66,28 @@ public final class LocatorBarEnums {
             return this == DAYS_UNDER_COORDS ? COORDS_UNDER_DAYS : DAYS_UNDER_COORDS;
         }
     }
+
+    public enum PlayerMarkerType {
+        HEADS("locatorbar.player_marker.heads"),
+        DOTS("locatorbar.player_marker.dots"),
+        OFF("locatorbar.player_marker.off");
+
+        private final String translationKey;
+
+        PlayerMarkerType(String translationKey) {
+            this.translationKey = translationKey;
+        }
+
+        public String translationKey() {
+            return translationKey;
+        }
+
+        public PlayerMarkerType next() {
+            return switch (this) {
+                case HEADS -> DOTS;
+                case DOTS -> OFF;
+                case OFF -> HEADS;
+            };
+        }
+    }
 }

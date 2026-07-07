@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.CoordinatesFormat;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.DaysDisplayOrder;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.LocatorBarStyle;
+import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarServerConfig.ServerSettings;
 
 import java.io.IOException;
@@ -21,10 +22,7 @@ import java.util.UUID;
 public final class LocatorBarConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path CONFIG_PATH = Path.of("config", "locatorbar.json");
-    private static final float CLIENT_ONLY_PLAYER_HEAD_FADE_START_DISTANCE = 50.0F;
-    private static final float CLIENT_ONLY_PLAYER_HEAD_FADE_TO_MIN_DISTANCE = 125.0F;
-    private static final float CLIENT_ONLY_PLAYER_HEAD_HIDE_DISTANCE = 150.0F;
-    private static final float CLIENT_ONLY_PLAYER_HEAD_MIN_ALPHA_PERCENT = 40.0F;
+    public static final float INFINITE_PLAYER_HEAD_DISTANCE = 60_000_000.0F;
     private static LocatorBarConfigData data = new LocatorBarConfigData();
     private static ServerSettings serverSettings;
 
@@ -52,15 +50,35 @@ public final class LocatorBarConfig {
             if (data.waypoints == null) {
                 data.waypoints = new HashMap<>();
             }
+            
+            // Migration from version 1 to 2
+            if (data.version < 2) {
+                // Migrate showPlayerHeads boolean to playerMarkerType enum
+                if (!data.showPlayerHeads) {
+                    data.playerMarkerType = PlayerMarkerType.OFF;
+                } else {
+                    data.playerMarkerType = PlayerMarkerType.HEADS;
+                }
+                data.playerMarkersScale = data.playerHeadsScale;
+                data.playerMarkerOutline = data.playerHeadOutline;
+                data.version = 2;
+            }
+
             data.scale = clamp(data.scale, 0.5F, 2.0F);
             data.customOffsetX = clampInt(data.customOffsetX, -500, 500);
             data.customOffsetY = clampInt(data.customOffsetY, -500, 500);
             data.viewAngle = clamp(data.viewAngle, 30.0F, 180.0F);
             data.worldDirectionsScale = clamp(data.worldDirectionsScale, 0.5F, 2.0F);
-            data.playerHeadsScale = clamp(data.playerHeadsScale, 0.5F, 2.0F);
+            data.playerMarkersScale = clamp(data.playerMarkersScale, 0.5F, 2.0F);
+            data.playerMarkerFadeStartDistance = clamp(data.playerMarkerFadeStartDistance, 0.0F, INFINITE_PLAYER_HEAD_DISTANCE);
+            data.playerMarkerFadeToMinDistance = clamp(data.playerMarkerFadeToMinDistance, data.playerMarkerFadeStartDistance, INFINITE_PLAYER_HEAD_DISTANCE);
+            data.playerMarkerHideDistance = clamp(data.playerMarkerHideDistance, data.playerMarkerFadeToMinDistance, INFINITE_PLAYER_HEAD_DISTANCE);
+            data.playerMarkerMinAlphaPercent = clamp(data.playerMarkerMinAlphaPercent, 0.0F, 100.0F);
             data.maxVisiblePlayers = clampInt(data.maxVisiblePlayers, 1, 64);
             data.waypointsScale = clamp(data.waypointsScale, 0.5F, 2.0F);
             data.maxVisibleWaypoints = clampInt(data.maxVisibleWaypoints, 1, 64);
+            
+            save(); // save migrated fields
         } catch (IOException | JsonParseException exception) {
             data = new LocatorBarConfigData();
             save();
@@ -97,8 +115,6 @@ public final class LocatorBarConfig {
     public static void setScale(float scale) {
         data.scale = clamp(scale, 0.5F, 2.0F);
     }
-
-
 
     public static int getCustomOffsetX() {
         return data.customOffsetX;
@@ -180,28 +196,28 @@ public final class LocatorBarConfig {
         data.worldDirectionsScale = clamp(worldDirectionsScale, 0.5F, 2.0F);
     }
 
-    public static boolean isShowPlayerHeads() {
-        return serverSettings == null ? data.showPlayerHeads : serverSettings.showPlayerHeads();
+    public static PlayerMarkerType getPlayerMarkerType() {
+        return serverSettings == null ? data.playerMarkerType : serverSettings.playerMarkerType();
     }
 
-    public static void setShowPlayerHeads(boolean showPlayerHeads) {
-        data.showPlayerHeads = showPlayerHeads;
+    public static void setPlayerMarkerType(PlayerMarkerType type) {
+        data.playerMarkerType = type;
     }
 
-    public static float getPlayerHeadsScale() {
-        return data.playerHeadsScale;
+    public static float getPlayerMarkersScale() {
+        return data.playerMarkersScale;
     }
 
-    public static void setPlayerHeadsScale(float playerHeadsScale) {
-        data.playerHeadsScale = clamp(playerHeadsScale, 0.5F, 2.0F);
+    public static void setPlayerMarkersScale(float scale) {
+        data.playerMarkersScale = clamp(scale, 0.5F, 2.0F);
     }
 
-    public static boolean isPlayerHeadOutline() {
-        return data.playerHeadOutline;
+    public static boolean isPlayerMarkerOutline() {
+        return data.playerMarkerOutline;
     }
 
-    public static void setPlayerHeadOutline(boolean playerHeadOutline) {
-        data.playerHeadOutline = playerHeadOutline;
+    public static void setPlayerMarkerOutline(boolean outline) {
+        data.playerMarkerOutline = outline;
     }
 
     public static int getMaxVisiblePlayers() {
@@ -212,20 +228,24 @@ public final class LocatorBarConfig {
         data.maxVisiblePlayers = clampInt(maxVisiblePlayers, 1, 64);
     }
 
-    public static float getPlayerHeadFadeStartDistance() {
-        return serverSettings == null ? CLIENT_ONLY_PLAYER_HEAD_FADE_START_DISTANCE : serverSettings.playerHeadFadeStartDistance();
+    public static float getPlayerMarkerFadeStartDistance() {
+        return serverSettings == null ? data.playerMarkerFadeStartDistance : serverSettings.playerMarkerFadeStartDistance();
     }
 
-    public static float getPlayerHeadFadeToMinDistance() {
-        return serverSettings == null ? CLIENT_ONLY_PLAYER_HEAD_FADE_TO_MIN_DISTANCE : serverSettings.playerHeadFadeToMinDistance();
+    public static void setPlayerMarkerFadeStartDistance(float val) {
+        data.playerMarkerFadeStartDistance = clamp(val, 0.0F, INFINITE_PLAYER_HEAD_DISTANCE);
     }
 
-    public static float getPlayerHeadHideDistance() {
-        return serverSettings == null ? CLIENT_ONLY_PLAYER_HEAD_HIDE_DISTANCE : serverSettings.playerHeadHideDistance();
+    public static float getPlayerMarkerFadeToMinDistance() {
+        return serverSettings == null ? data.playerMarkerFadeToMinDistance : serverSettings.playerMarkerFadeToMinDistance();
     }
 
-    public static float getPlayerHeadMinAlpha() {
-        float percent = serverSettings == null ? CLIENT_ONLY_PLAYER_HEAD_MIN_ALPHA_PERCENT : serverSettings.playerHeadMinAlphaPercent();
+    public static float getPlayerMarkerHideDistance() {
+        return serverSettings == null ? data.playerMarkerHideDistance : serverSettings.playerMarkerHideDistance();
+    }
+
+    public static float getPlayerMarkerMinAlpha() {
+        float percent = serverSettings == null ? data.playerMarkerMinAlphaPercent : serverSettings.playerMarkerMinAlphaPercent();
         return clamp(percent, 0.0F, 100.0F) / 100.0F;
     }
 
@@ -316,13 +336,14 @@ public final class LocatorBarConfig {
     }
 
     private static final class LocatorBarConfigData {
+        @SerializedName("version")
+        private int version = 2;
+
         @SerializedName("style")
         private LocatorBarStyle style = LocatorBarStyle.REWORKED;
 
         @SerializedName("scale")
         private float scale = 1.0F;
-
-
 
         @SerializedName("customOffsetX")
         private int customOffsetX = 0;
@@ -354,14 +375,35 @@ public final class LocatorBarConfig {
         @SerializedName("worldDirectionsScale")
         private float worldDirectionsScale = 1.0F;
 
+        // --- Deprecated fields for migration ---
         @SerializedName("showPlayerHeads")
         private boolean showPlayerHeads = true;
-
         @SerializedName("playerHeadsScale")
         private float playerHeadsScale = 1.0F;
-
         @SerializedName("playerHeadOutline")
         private boolean playerHeadOutline = false;
+        // ---------------------------------------
+
+        @SerializedName("playerMarkerType")
+        private PlayerMarkerType playerMarkerType = PlayerMarkerType.HEADS;
+
+        @SerializedName("playerMarkersScale")
+        private float playerMarkersScale = 1.0F;
+
+        @SerializedName("playerMarkerOutline")
+        private boolean playerMarkerOutline = false;
+
+        @SerializedName("playerMarkerFadeStartDistance")
+        private float playerMarkerFadeStartDistance = 50.0F;
+
+        @SerializedName("playerMarkerFadeToMinDistance")
+        private float playerMarkerFadeToMinDistance = 125.0F;
+
+        @SerializedName("playerMarkerHideDistance")
+        private float playerMarkerHideDistance = 150.0F;
+
+        @SerializedName("playerMarkerMinAlphaPercent")
+        private float playerMarkerMinAlphaPercent = 40.0F;
 
         @SerializedName("maxVisiblePlayers")
         private int maxVisiblePlayers = 16;

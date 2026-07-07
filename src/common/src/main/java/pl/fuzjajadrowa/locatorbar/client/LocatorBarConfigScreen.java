@@ -15,6 +15,7 @@ import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.CoordinatesFormat;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.DaysDisplayOrder;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.LocatorBarStyle;
+import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType;
 
 import net.minecraft.client.gui.components.EditBox;
 //? if >=1.20.5 {
@@ -78,9 +79,9 @@ public final class LocatorBarConfigScreen extends Screen {
     private DaysDisplayOrder selectedDaysDisplayOrder;
     private boolean selectedShowWorldDirections;
     private float selectedWorldDirectionsScale;
-    private boolean selectedShowPlayerHeads;
-    private float selectedPlayerHeadsScale;
-    private boolean selectedPlayerHeadOutline;
+    private PlayerMarkerType selectedPlayerMarkerType;
+    private float selectedPlayerMarkersScale;
+    private boolean selectedPlayerMarkerOutline;
     private int selectedMaxVisiblePlayers;
     private boolean selectedShowWaypoints;
     private boolean selectedShowDeathWaypoint;
@@ -131,9 +132,9 @@ public final class LocatorBarConfigScreen extends Screen {
         this.selectedDaysDisplayOrder = LocatorBarConfig.getDaysDisplayOrder();
         this.selectedShowWorldDirections = LocatorBarConfig.isShowWorldDirections();
         this.selectedWorldDirectionsScale = LocatorBarConfig.getWorldDirectionsScale();
-        this.selectedShowPlayerHeads = LocatorBarConfig.isShowPlayerHeads();
-        this.selectedPlayerHeadsScale = LocatorBarConfig.getPlayerHeadsScale();
-        this.selectedPlayerHeadOutline = LocatorBarConfig.isPlayerHeadOutline();
+        this.selectedPlayerMarkerType = LocatorBarConfig.getPlayerMarkerType();
+        this.selectedPlayerMarkersScale = LocatorBarConfig.getPlayerMarkersScale();
+        this.selectedPlayerMarkerOutline = LocatorBarConfig.isPlayerMarkerOutline();
         this.selectedMaxVisiblePlayers = LocatorBarConfig.getMaxVisiblePlayers();
         this.selectedShowWaypoints = LocatorBarConfig.isShowWaypoints();
         this.selectedShowDeathWaypoint = LocatorBarConfig.isShowDeathWaypoint();
@@ -195,19 +196,21 @@ public final class LocatorBarConfigScreen extends Screen {
                 value -> { selectedWorldDirectionsScale = value; applyAndSave(); },
                 value -> String.format(Locale.ROOT, "%.2fx", value));
 
-        showPlayerHeadsButton = Button.builder(showPlayerHeadsButtonText(), button -> toggleShowPlayerHeads()).bounds(0, 0, 120, 20).build();
+        showPlayerHeadsButton = Button.builder(playerMarkerTypeButtonText(), button -> cyclePlayerMarkerType()).bounds(0, 0, 120, 20).build();
 
         playerHeadsScaleSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.heads_size"),
-                MARKER_SCALE_MIN, MARKER_SCALE_MAX, MARKER_SCALE_STEP, selectedPlayerHeadsScale,
-                value -> { selectedPlayerHeadsScale = value; applyAndSave(); },
+                MARKER_SCALE_MIN, MARKER_SCALE_MAX, MARKER_SCALE_STEP, selectedPlayerMarkersScale,
+                value -> { selectedPlayerMarkersScale = value; applyAndSave(); },
                 value -> String.format(Locale.ROOT, "%.2fx", value));
 
-        playerHeadOutlineButton = Button.builder(playerHeadOutlineButtonText(), button -> togglePlayerHeadOutline()).bounds(0, 0, 120, 20).build();
+        playerHeadOutlineButton = Button.builder(playerMarkerOutlineButtonText(), button -> togglePlayerMarkerOutline()).bounds(0, 0, 120, 20).build();
 
         maxVisiblePlayersSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.max_players"),
-                MAX_PLAYERS_MIN, MAX_PLAYERS_MAX, 1.0F, selectedMaxVisiblePlayers,
+                MAX_PLAYERS_MIN, MAX_PLAYERS_MAX, 1.0F, (float) selectedMaxVisiblePlayers,
                 value -> { selectedMaxVisiblePlayers = Math.round(value); applyAndSave(); },
                 value -> Integer.toString(Math.round(value)));
+
+
 
         showWaypointsButton = Button.builder(showWaypointsButtonText(), button -> toggleShowWaypoints()).bounds(0, 0, 120, 20).build();
         showDeathWaypointButton = Button.builder(showDeathWaypointButtonText(), button -> toggleShowDeathWaypoint()).bounds(0, 0, 120, 20).build();
@@ -367,25 +370,26 @@ public final class LocatorBarConfigScreen extends Screen {
         return Component.translatable(selectedShowWorldDirections ? "locatorbar.option.on" : "locatorbar.option.off");
     }
 
-    private void toggleShowPlayerHeads() {
-        selectedShowPlayerHeads = !selectedShowPlayerHeads;
-        showPlayerHeadsButton.setMessage(showPlayerHeadsButtonText());
+    private void cyclePlayerMarkerType() {
+        selectedPlayerMarkerType = selectedPlayerMarkerType.next();
+        showPlayerHeadsButton.setMessage(playerMarkerTypeButtonText());
         applyAndSave();
         updateControlStates();
+        updatePageState();
     }
 
-    private Component showPlayerHeadsButtonText() {
-        return Component.translatable(selectedShowPlayerHeads ? "locatorbar.option.on" : "locatorbar.option.off");
+    private Component playerMarkerTypeButtonText() {
+        return Component.translatable(selectedPlayerMarkerType.translationKey());
     }
 
-    private void togglePlayerHeadOutline() {
-        selectedPlayerHeadOutline = !selectedPlayerHeadOutline;
-        playerHeadOutlineButton.setMessage(playerHeadOutlineButtonText());
+    private void togglePlayerMarkerOutline() {
+        selectedPlayerMarkerOutline = !selectedPlayerMarkerOutline;
+        playerHeadOutlineButton.setMessage(playerMarkerOutlineButtonText());
         applyAndSave();
     }
 
-    private Component playerHeadOutlineButtonText() {
-        return Component.translatable(selectedPlayerHeadOutline ? "locatorbar.option.on" : "locatorbar.option.off");
+    private Component playerMarkerOutlineButtonText() {
+        return Component.translatable(selectedPlayerMarkerOutline ? "locatorbar.option.on" : "locatorbar.option.off");
     }
 
     private void toggleShowWaypoints() {
@@ -418,7 +422,8 @@ public final class LocatorBarConfigScreen extends Screen {
         boolean canChangeCoordinatesFormat = styleEnabled && !classicStyle && selectedShowCoordinates;
         boolean canChangeDaysOrder = styleEnabled && !classicStyle && selectedShowCoordinates && selectedShowDays;
         boolean canChangeDirectionScale = styleEnabled && selectedShowWorldDirections;
-        boolean canChangeHeadSettings = styleEnabled && selectedShowPlayerHeads;
+        boolean canChangeMarkerSettings = styleEnabled && selectedPlayerMarkerType != PlayerMarkerType.OFF;
+        boolean canChangeOutline = canChangeMarkerSettings && selectedPlayerMarkerType == PlayerMarkerType.HEADS;
         boolean canChangeWaypoints = styleEnabled && selectedShowWaypoints;
 
         styleButton.active = !serverControlled;
@@ -433,9 +438,9 @@ public final class LocatorBarConfigScreen extends Screen {
         showWorldDirectionsButton.active = styleEnabled && !serverControlled;
         worldDirectionsScaleSlider.active = canChangeDirectionScale;
         showPlayerHeadsButton.active = styleEnabled && !serverControlled;
-        playerHeadsScaleSlider.active = canChangeHeadSettings;
-        playerHeadOutlineButton.active = canChangeHeadSettings;
-        maxVisiblePlayersSlider.active = canChangeHeadSettings && !serverControlled;
+        playerHeadsScaleSlider.active = canChangeMarkerSettings;
+        playerHeadOutlineButton.active = canChangeOutline;
+        maxVisiblePlayersSlider.active = canChangeMarkerSettings && !serverControlled;
 
         showWaypointsButton.active = styleEnabled && !serverControlled;
         showDeathWaypointButton.active = styleEnabled && selectedShowWaypoints && !serverControlled;
@@ -600,10 +605,10 @@ public final class LocatorBarConfigScreen extends Screen {
         }
         LocatorBarConfig.setWorldDirectionsScale(selectedWorldDirectionsScale);
         if (!serverControlled) {
-            LocatorBarConfig.setShowPlayerHeads(selectedShowPlayerHeads);
+            LocatorBarConfig.setPlayerMarkerType(selectedPlayerMarkerType);
         }
-        LocatorBarConfig.setPlayerHeadsScale(selectedPlayerHeadsScale);
-        LocatorBarConfig.setPlayerHeadOutline(selectedPlayerHeadOutline);
+        LocatorBarConfig.setPlayerMarkersScale(selectedPlayerMarkersScale);
+        LocatorBarConfig.setPlayerMarkerOutline(selectedPlayerMarkerOutline);
         if (!serverControlled) {
             LocatorBarConfig.setMaxVisiblePlayers(selectedMaxVisiblePlayers);
             LocatorBarConfig.setShowWaypoints(selectedShowWaypoints);

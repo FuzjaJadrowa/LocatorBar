@@ -8,6 +8,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import pl.fuzjajadrowa.locatorbar.LocatorBar;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.LocatorBarStyle;
+import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarServerConfig.ServerSettings;
 
 //? if >=1.20.5
@@ -28,7 +29,7 @@ public record ServerConfigPayload(ServerSettings settings) implements CustomPack
                 buffer.readBoolean(),
                 buffer.readBoolean(),
                 buffer.readBoolean(),
-                buffer.readBoolean(),
+                PlayerMarkerType.values()[buffer.readVarInt()],
                 buffer.readVarInt(),
                 buffer.readFloat(),
                 buffer.readFloat(),
@@ -45,12 +46,12 @@ public record ServerConfigPayload(ServerSettings settings) implements CustomPack
         buffer.writeBoolean(settings.showCoordinates());
         buffer.writeBoolean(settings.showDays());
         buffer.writeBoolean(settings.showWorldDirections());
-        buffer.writeBoolean(settings.showPlayerHeads());
+        buffer.writeVarInt(settings.playerMarkerType().ordinal());
         buffer.writeVarInt(settings.maxVisiblePlayers());
-        buffer.writeFloat(settings.playerHeadFadeStartDistance());
-        buffer.writeFloat(settings.playerHeadFadeToMinDistance());
-        buffer.writeFloat(settings.playerHeadHideDistance());
-        buffer.writeFloat(settings.playerHeadMinAlphaPercent());
+        buffer.writeFloat(settings.playerMarkerFadeStartDistance());
+        buffer.writeFloat(settings.playerMarkerFadeToMinDistance());
+        buffer.writeFloat(settings.playerMarkerHideDistance());
+        buffer.writeFloat(settings.playerMarkerMinAlphaPercent());
         buffer.writeBoolean(settings.showWaypoints());
         buffer.writeVarInt(settings.maxVisibleWaypoints());
         buffer.writeBoolean(settings.showDeathWaypoint());

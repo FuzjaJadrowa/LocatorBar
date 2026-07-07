@@ -15,6 +15,7 @@ import pl.fuzjajadrowa.locatorbar.LocatorBar;
 import pl.fuzjajadrowa.locatorbar.client.PlayerLocatorClient;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.LocatorBarStyle;
+import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarServerConfig;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarServerConfig.ServerSettings;
 import pl.fuzjajadrowa.locatorbar.server.PlayerLocatorBroadcaster;
@@ -92,12 +93,12 @@ public final class LocatorBarForgeNetworking {
             buffer.writeBoolean(msg.settings.showCoordinates());
             buffer.writeBoolean(msg.settings.showDays());
             buffer.writeBoolean(msg.settings.showWorldDirections());
-            buffer.writeBoolean(msg.settings.showPlayerHeads());
+            buffer.writeVarInt(msg.settings.playerMarkerType().ordinal());
             buffer.writeVarInt(msg.settings.maxVisiblePlayers());
-            buffer.writeFloat(msg.settings.playerHeadFadeStartDistance());
-            buffer.writeFloat(msg.settings.playerHeadFadeToMinDistance());
-            buffer.writeFloat(msg.settings.playerHeadHideDistance());
-            buffer.writeFloat(msg.settings.playerHeadMinAlphaPercent());
+            buffer.writeFloat(msg.settings.playerMarkerFadeStartDistance());
+            buffer.writeFloat(msg.settings.playerMarkerFadeToMinDistance());
+            buffer.writeFloat(msg.settings.playerMarkerHideDistance());
+            buffer.writeFloat(msg.settings.playerMarkerMinAlphaPercent());
             buffer.writeBoolean(msg.settings.showWaypoints());
             buffer.writeVarInt(msg.settings.maxVisibleWaypoints());
             buffer.writeBoolean(msg.settings.showDeathWaypoint());
@@ -109,7 +110,7 @@ public final class LocatorBarForgeNetworking {
                     buffer.readBoolean(),
                     buffer.readBoolean(),
                     buffer.readBoolean(),
-                    buffer.readBoolean(),
+                    PlayerMarkerType.values()[buffer.readVarInt()],
                     buffer.readVarInt(),
                     buffer.readFloat(),
                     buffer.readFloat(),

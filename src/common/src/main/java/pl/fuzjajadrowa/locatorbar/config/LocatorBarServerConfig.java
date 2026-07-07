@@ -1,6 +1,7 @@
 package pl.fuzjajadrowa.locatorbar.config;
 
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.LocatorBarStyle;
+import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -28,20 +29,44 @@ public final class LocatorBarServerConfig {
         Properties properties = new Properties();
         try (Reader reader = Files.newBufferedReader(CONFIG_PATH)) {
             properties.load(new TomlPropertiesReader(reader));
-            float playerHeadFadeStartDistance = readDistance(properties, "playerHeadFadeStartDistance", ServerSettings.DEFAULT_PLAYER_HEAD_FADE_START_DISTANCE, 0.0F);
-            float playerHeadFadeToMinDistance = readDistance(properties, "playerHeadFadeToMinDistance", ServerSettings.DEFAULT_PLAYER_HEAD_FADE_TO_MIN_DISTANCE, playerHeadFadeStartDistance);
-            float playerHeadHideDistance = readDistance(properties, "playerHeadHideDistance", ServerSettings.DEFAULT_PLAYER_HEAD_HIDE_DISTANCE, playerHeadFadeToMinDistance);
+
+            // Read PlayerMarkerType
+            PlayerMarkerType playerMarkerType = PlayerMarkerType.HEADS;
+            String playerMarkerTypeStr = properties.getProperty("playerMarkerType");
+            if (playerMarkerTypeStr != null) {
+                try {
+                    playerMarkerType = PlayerMarkerType.valueOf(playerMarkerTypeStr.trim().replace("\"", "").toUpperCase(Locale.ROOT));
+                } catch (IllegalArgumentException exception) {
+                    playerMarkerType = PlayerMarkerType.HEADS;
+                }
+            } else {
+                // Fallback to old boolean key
+                String showPlayerHeadsStr = properties.getProperty("showPlayerHeads");
+                if (showPlayerHeadsStr != null) {
+                    boolean showPlayerHeads = Boolean.parseBoolean(showPlayerHeadsStr.trim());
+                    playerMarkerType = showPlayerHeads ? PlayerMarkerType.HEADS : PlayerMarkerType.OFF;
+                }
+            }
+
+            float playerMarkerFadeStartDistance = readDistance(properties, "playerMarkerFadeStartDistance",
+                    readDistance(properties, "playerHeadFadeStartDistance", ServerSettings.DEFAULT_PLAYER_MARKER_FADE_START_DISTANCE, 0.0F), 0.0F);
+            float playerMarkerFadeToMinDistance = readDistance(properties, "playerMarkerFadeToMinDistance",
+                    readDistance(properties, "playerHeadFadeToMinDistance", ServerSettings.DEFAULT_PLAYER_MARKER_FADE_TO_MIN_DISTANCE, playerMarkerFadeStartDistance), playerMarkerFadeStartDistance);
+            float playerMarkerHideDistance = readDistance(properties, "playerMarkerHideDistance",
+                    readDistance(properties, "playerHeadHideDistance", ServerSettings.DEFAULT_PLAYER_MARKER_HIDE_DISTANCE, playerMarkerFadeToMinDistance), playerMarkerFadeToMinDistance);
+
             data = new ServerSettings(
                     readStyle(properties, "style", LocatorBarStyle.REWORKED),
                     readBoolean(properties, "showCoordinates", true),
                     readBoolean(properties, "showDays", false),
                     readBoolean(properties, "showWorldDirections", true),
-                    readBoolean(properties, "showPlayerHeads", true),
+                    playerMarkerType,
                     readInt(properties, "maxVisiblePlayers", 16, 1, 64),
-                    playerHeadFadeStartDistance,
-                    playerHeadFadeToMinDistance,
-                    playerHeadHideDistance,
-                    readFloat(properties, "playerHeadMinAlphaPercent", ServerSettings.DEFAULT_PLAYER_HEAD_MIN_ALPHA_PERCENT, 0.0F, 100.0F),
+                    playerMarkerFadeStartDistance,
+                    playerMarkerFadeToMinDistance,
+                    playerMarkerHideDistance,
+                    readFloat(properties, "playerMarkerMinAlphaPercent",
+                            readFloat(properties, "playerHeadMinAlphaPercent", ServerSettings.DEFAULT_PLAYER_MARKER_MIN_ALPHA_PERCENT, 0.0F, 100.0F), 0.0F, 100.0F),
                     readBoolean(properties, "showWaypoints", true),
                     readInt(properties, "maxVisibleWaypoints", 16, 1, 64),
                     readBoolean(properties, "showDeathWaypoint", true)
@@ -62,6 +87,7 @@ public final class LocatorBarServerConfig {
             Files.createDirectories(CONFIG_PATH.getParent());
             try (Writer writer = Files.newBufferedWriter(CONFIG_PATH)) {
                 writer.write("# Locator Bar server-enforced settings\n");
+                writer.write("version = 2\n");
                 writer.write("# You can choose between \"reworked\" and \"classic\" style or just disable it with \"off\".\n");
                 writer.write("style = \"" + data.style().name().toLowerCase(Locale.ROOT) + "\"\n");
                 writer.write("# Show coordinates/days under locator bar. Works only on Reworked style.\n");
@@ -69,18 +95,18 @@ public final class LocatorBarServerConfig {
                 writer.write("showDays = " + data.showDays() + "\n");
                 writer.write("# Show world directions on locator bar.\n");
                 writer.write("showWorldDirections = " + data.showWorldDirections() + "\n");
-                writer.write("# Show player heads on locator bar and choose max visible players on it.\n");
-                writer.write("showPlayerHeads = " + data.showPlayerHeads() + "\n");
+                writer.write("# Player marker style (\"heads\", \"dots\", or \"off\") and choose max visible players on it.\n");
+                writer.write("playerMarkerType = \"" + data.playerMarkerType().name().toLowerCase(Locale.ROOT) + "\"\n");
                 writer.write("maxVisiblePlayers = " + data.maxVisiblePlayers() + "\n");
-                writer.write("# Player heads distance behaviour configuration. Fade start and fade to min is chose range\n");
-                writer.write("# when player head opacity rises down to min alpha value in percent. To disable this behaviour\n");
+                writer.write("# Player markers distance behaviour configuration. Fade start and fade to min is close range\n");
+                writer.write("# when player marker opacity / size decreases down to min alpha value in percent / small dot. To disable this behaviour\n");
                 writer.write("# set min alpha value to 100.0.\n");
-                writer.write("# Head hide distance is the distance when player head completely disappears from locator bar.\n");
+                writer.write("# Marker hide distance is the distance when player marker completely disappears from locator bar.\n");
                 writer.write("# You can set it to your own value or set \"inf\" to disable this behaviour.\n");
-                writer.write("playerHeadFadeStartDistance = " + formatDistance(data.playerHeadFadeStartDistance()) + "\n");
-                writer.write("playerHeadFadeToMinDistance = " + formatDistance(data.playerHeadFadeToMinDistance()) + "\n");
-                writer.write("playerHeadHideDistance = " + formatDistance(data.playerHeadHideDistance()) + "\n");
-                writer.write("playerHeadMinAlphaPercent = " + data.playerHeadMinAlphaPercent() + "\n");
+                writer.write("playerMarkerFadeStartDistance = " + formatDistance(data.playerMarkerFadeStartDistance()) + "\n");
+                writer.write("playerMarkerFadeToMinDistance = " + formatDistance(data.playerMarkerFadeToMinDistance()) + "\n");
+                writer.write("playerMarkerHideDistance = " + formatDistance(data.playerMarkerHideDistance()) + "\n");
+                writer.write("playerMarkerMinAlphaPercent = " + data.playerMarkerMinAlphaPercent() + "\n");
                 writer.write("# Show waypoints on locator bar and choose max visible waypoints on it.\n");
                 writer.write("showWaypoints = " + data.showWaypoints() + "\n");
                 writer.write("maxVisibleWaypoints = " + data.maxVisibleWaypoints() + "\n");
@@ -159,20 +185,20 @@ public final class LocatorBarServerConfig {
             boolean showCoordinates,
             boolean showDays,
             boolean showWorldDirections,
-            boolean showPlayerHeads,
+            PlayerMarkerType playerMarkerType,
             int maxVisiblePlayers,
-            float playerHeadFadeStartDistance,
-            float playerHeadFadeToMinDistance,
-            float playerHeadHideDistance,
-            float playerHeadMinAlphaPercent,
+            float playerMarkerFadeStartDistance,
+            float playerMarkerFadeToMinDistance,
+            float playerMarkerHideDistance,
+            float playerMarkerMinAlphaPercent,
             boolean showWaypoints,
             int maxVisibleWaypoints,
             boolean showDeathWaypoint
     ) {
-        public static final float DEFAULT_PLAYER_HEAD_FADE_START_DISTANCE = 150.0F;
-        public static final float DEFAULT_PLAYER_HEAD_FADE_TO_MIN_DISTANCE = 350.0F;
-        public static final float DEFAULT_PLAYER_HEAD_HIDE_DISTANCE = 400.0F;
-        public static final float DEFAULT_PLAYER_HEAD_MIN_ALPHA_PERCENT = 40.0F;
+        public static final float DEFAULT_PLAYER_MARKER_FADE_START_DISTANCE = 150.0F;
+        public static final float DEFAULT_PLAYER_MARKER_FADE_TO_MIN_DISTANCE = 350.0F;
+        public static final float DEFAULT_PLAYER_MARKER_HIDE_DISTANCE = 400.0F;
+        public static final float DEFAULT_PLAYER_MARKER_MIN_ALPHA_PERCENT = 40.0F;
 
         public static ServerSettings defaults() {
             return new ServerSettings(
@@ -180,12 +206,12 @@ public final class LocatorBarServerConfig {
                     true,
                     false,
                     true,
-                    true,
+                    PlayerMarkerType.HEADS,
                     16,
-                    DEFAULT_PLAYER_HEAD_FADE_START_DISTANCE,
-                    DEFAULT_PLAYER_HEAD_FADE_TO_MIN_DISTANCE,
-                    DEFAULT_PLAYER_HEAD_HIDE_DISTANCE,
-                    DEFAULT_PLAYER_HEAD_MIN_ALPHA_PERCENT,
+                    DEFAULT_PLAYER_MARKER_FADE_START_DISTANCE,
+                    DEFAULT_PLAYER_MARKER_FADE_TO_MIN_DISTANCE,
+                    DEFAULT_PLAYER_MARKER_HIDE_DISTANCE,
+                    DEFAULT_PLAYER_MARKER_MIN_ALPHA_PERCENT,
                     true,
                     16,
                     true

@@ -1,0 +1,53 @@
+{
+  "locatorbar.options.button": "Pasek lokalizatora...",
+  "locatorbar.option.on": "Wł.",
+  "locatorbar.option.off": "Wył.",
+
+  "locatorbar.style.reworked": "Odświeżony",
+  "locatorbar.style.classic": "Klasyczny",
+  "locatorbar.style.off": "Wyłączony",
+
+  "locatorbar.coordinates_format.xyz": "XYZ",
+  "locatorbar.coordinates_format.xz": "XZ",
+
+  "locatorbar.days_order.days_under_coords": "Dni pod koordynatami",
+  "locatorbar.days_order.coords_under_days": "Koordynaty pod dniami",
+
+  "locatorbar.config.title": "Pasek lokalizatora",
+  "locatorbar.config.header": "Konfiguracja paska lokalizatora",
+  "locatorbar.config.page.general": "1. Ogólne",
+  "locatorbar.config.page.markers": "2. Znaczniki",
+  "locatorbar.config.page.waypoints": "3. Waypointy",
+  "locatorbar.config.slider_value": "%1$s: %2$s",
+
+  "locatorbar.config.field.style": "Styl paska",
+  "locatorbar.config.field.scale": "Skala paska",
+  "locatorbar.config.field.custom_offset_x": "Przesunięcie X",
+  "locatorbar.config.field.custom_offset_y": "Przesunięcie Y",
+  "locatorbar.config.field.view_angle": "Kąt widzenia",
+  "locatorbar.config.field.elements_on_xp_bar": "Elementy na pasku XP",
+  "locatorbar.player_marker.heads": "Głowy",
+  "locatorbar.player_marker.dots": "Kropki",
+  "locatorbar.player_marker.off": "Wył.",
+
+  "locatorbar.config.field.show_coordinates": "Pokaż koordynaty",
+  "locatorbar.config.field.coordinates_format": "Format koordynatów",
+  "locatorbar.config.field.show_days": "Pokaż dni",
+  "locatorbar.config.field.days_display_order": "Kolejność wyświetlania dni",
+
+  "locatorbar.config.field.show_world_directions": "Pokaż kierunki świata",
+  "locatorbar.config.field.directions_size": "Rozmiar kierunków",
+  "locatorbar.config.field.show_player_heads": "Znaczniki graczy",
+  "locatorbar.config.field.heads_size": "Rozmiar znaczników",
+  "locatorbar.config.field.head_outline": "Obramowanie znacznika",
+  "locatorbar.config.field.max_players": "Maks. graczy",
+  "locatorbar.config.field.max_visible_players": "Maks. widocznych graczy",
+
+  "locatorbar.config.field.show_waypoints": "Pokaż waypointy",
+  "locatorbar.config.field.show_death_waypoint": "Pokaż punkt śmierci",
+  "locatorbar.config.field.waypoints_size": "Rozmiar waypointów",
+  "locatorbar.config.field.max_waypoints": "Maks. waypointów",
+  "locatorbar.config.field.max_visible_waypoints": "Maks. widocznych waypointów",
+  "locatorbar.config.header.waypoint_manager": "Menedżer waypointów",
+  "locatorbar.config.button.delete": "Usuń"
+}

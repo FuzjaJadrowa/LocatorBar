@@ -5,6 +5,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarServerConfig;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarServerConfig.ServerSettings;
 import pl.fuzjajadrowa.locatorbar.network.PlayerLocatorPayload;
@@ -25,12 +26,12 @@ public final class PlayerLocatorBroadcaster {
         if (settings == null) {
             settings = ServerSettings.defaults();
         }
-        if (!settings.showPlayerHeads()) {
+        if (settings.playerMarkerType() == PlayerMarkerType.OFF) {
             return new PlayerLocatorPayload(List.of());
         }
 
         int maxVisiblePlayers = settings.maxVisiblePlayers();
-        double maxDistance = settings.playerHeadHideDistance();
+        double maxDistance = settings.playerMarkerHideDistance();
         double maxDistanceSquared = maxDistance * maxDistance;
         PriorityQueue<PlayerEntry> closestEntries = new PriorityQueue<>(
                 maxVisiblePlayers,
