@@ -1,0 +1,49 @@
+{
+  "locatorbar.options.button": "Barra Localizadora...",
+  "locatorbar.option.on": "Sim",
+  "locatorbar.option.off": "Não",
+
+  "locatorbar.style.reworked": "Retrabalhado",
+  "locatorbar.style.classic": "Clássico",
+  "locatorbar.style.off": "Desligado",
+
+  "locatorbar.coordinates_format.xyz": "XYZ",
+  "locatorbar.coordinates_format.xz": "XZ",
+
+  "locatorbar.days_order.days_under_coords": "Dias abaixo das coordenadas",
+  "locatorbar.days_order.coords_under_days": "Coordenadas abaixo dos dias",
+
+  "locatorbar.config.title": "Barra Localizadora",
+  "locatorbar.config.header": "Configuração da Barra localizadora",
+  "locatorbar.config.page.general": "1. Geral",
+  "locatorbar.config.page.markers": "2. Marcadores",
+  "locatorbar.config.page.waypoints": "3. Waypoints",
+  "locatorbar.config.slider_value": "%1$s: %2$s",
+
+  "locatorbar.config.field.style": "Estilo da Barra localizadora",
+  "locatorbar.config.field.scale": "Escala da Barra localizadora",
+  "locatorbar.config.field.custom_offset_x": "offset X",
+  "locatorbar.config.field.custom_offset_y": "offset Y",
+  "locatorbar.config.field.view_angle": "Ângulo de visão",
+  "locatorbar.config.field.elements_on_xp_bar": "Elementos na barra de experiência",
+  "locatorbar.config.field.show_coordinates": "Mostrar coordenadas",
+  "locatorbar.config.field.coordinates_format": "Formato das coordenadas",
+  "locatorbar.config.field.show_days": "Mostrar dias",
+  "locatorbar.config.field.days_display_order": "Days display order",
+
+  "locatorbar.config.field.show_world_directions": "Mostrar direções do mundo",
+  "locatorbar.config.field.directions_size": "Tamanho das direções",
+  "locatorbar.config.field.show_player_heads": "Mostrar cabeça dos jogadores",
+  "locatorbar.config.field.heads_size": "Tamanho da cabeça",
+  "locatorbar.config.field.head_outline": "Contorno da cabeça",
+  "locatorbar.config.field.max_players": "Máximo de jogadores",
+  "locatorbar.config.field.max_visible_players": "Máximo de jogadores visíveis",
+
+  "locatorbar.config.field.show_waypoints": "Mostrar waypoints",
+  "locatorbar.config.field.show_death_waypoint": "Mostrar waypoint de morte",
+  "locatorbar.config.field.waypoints_size": "Tamanho do waypoint",
+  "locatorbar.config.field.max_waypoints": "Máximo de waypoints",
+  "locatorbar.config.field.max_visible_waypoints": "Número máximo de waypoints",
+  "locatorbar.config.header.waypoint_manager": "Gerenciador de waypoints",
+  "locatorbar.config.button.delete": "Deletar"
+}
