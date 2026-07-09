@@ -375,14 +375,14 @@ public final class LocatorBarConfig {
         @SerializedName("worldDirectionsScale")
         private float worldDirectionsScale = 1.0F;
 
-        // --- Deprecated fields for migration ---
+        // Deprecated fields for migration
         @SerializedName("showPlayerHeads")
         private boolean showPlayerHeads = true;
         @SerializedName("playerHeadsScale")
         private float playerHeadsScale = 1.0F;
         @SerializedName("playerHeadOutline")
         private boolean playerHeadOutline = false;
-        // ---------------------------------------
+        // ---
 
         @SerializedName("playerMarkerType")
         private PlayerMarkerType playerMarkerType = PlayerMarkerType.HEADS;
@@ -400,7 +400,7 @@ public final class LocatorBarConfig {
         private float playerMarkerFadeToMinDistance = 125.0F;
 
         @SerializedName("playerMarkerHideDistance")
-        private float playerMarkerHideDistance = 150.0F;
+        private float playerMarkerHideDistance = LocatorBarConfig.INFINITE_PLAYER_HEAD_DISTANCE;
 
         @SerializedName("playerMarkerMinAlphaPercent")
         private float playerMarkerMinAlphaPercent = 40.0F;

@@ -197,7 +197,7 @@ public final class LocatorBarServerConfig {
     ) {
         public static final float DEFAULT_PLAYER_MARKER_FADE_START_DISTANCE = 150.0F;
         public static final float DEFAULT_PLAYER_MARKER_FADE_TO_MIN_DISTANCE = 350.0F;
-        public static final float DEFAULT_PLAYER_MARKER_HIDE_DISTANCE = 400.0F;
+        public static final float DEFAULT_PLAYER_MARKER_HIDE_DISTANCE = INFINITE_PLAYER_HEAD_DISTANCE;
         public static final float DEFAULT_PLAYER_MARKER_MIN_ALPHA_PERCENT = 40.0F;
 
         public static ServerSettings defaults() {
