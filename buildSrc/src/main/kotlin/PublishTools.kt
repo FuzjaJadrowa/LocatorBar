@@ -165,7 +165,7 @@ private fun Project.configureRootGithubPublishing() {
 }
 
 private fun Project.publishJarTaskName(loader: String): String {
-    return if (loader == "fabric" && tasks.names.contains("remapJar")) {
+    return if (tasks.names.contains("remapJar")) {
         "remapJar"
     } else {
         "jar"

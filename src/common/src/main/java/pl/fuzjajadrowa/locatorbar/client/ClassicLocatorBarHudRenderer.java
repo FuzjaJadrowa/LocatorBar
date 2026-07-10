@@ -138,7 +138,7 @@ public final class ClassicLocatorBarHudRenderer {
         int scissorBottom = y + BAR_TEXTURE_HEIGHT + scissorOverflow;
         guiGraphics.enableScissor(x, scissorTop, x + BAR_TEXTURE_WIDTH, scissorBottom);
         RenderCompat.push(guiGraphics);
-        RenderCompat.translate(guiGraphics, x, y, 0.0F);
+        RenderCompat.translate(guiGraphics, x, y, 200.0F);
 
         if (!vanillaExperienceBarVisible || !elementsOnXpBar) {
             RenderCompat.blit(
