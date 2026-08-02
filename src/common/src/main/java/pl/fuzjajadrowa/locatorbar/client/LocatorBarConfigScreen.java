@@ -12,6 +12,7 @@ import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig;
+import pl.fuzjajadrowa.locatorbar.config.LocatorBarServerConfig;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.CoordinatesFormat;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.DaysDisplayOrder;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.LocatorBarStyle;
@@ -371,7 +372,16 @@ public final class LocatorBarConfigScreen extends Screen {
     }
 
     private void cyclePlayerMarkerType() {
-        selectedPlayerMarkerType = selectedPlayerMarkerType.next();
+        if (LocatorBarConfig.hasServerSettings()) {
+            var server = LocatorBarServerConfig.get();
+            if (server != null && server.playerMarkerType() == PlayerMarkerType.DOTS) {
+                selectedPlayerMarkerType = selectedPlayerMarkerType == PlayerMarkerType.DOTS ? PlayerMarkerType.OFF : PlayerMarkerType.DOTS;
+            } else {
+                selectedPlayerMarkerType = selectedPlayerMarkerType.next();
+            }
+        } else {
+            selectedPlayerMarkerType = selectedPlayerMarkerType.next();
+        }
         showPlayerHeadsButton.setMessage(playerMarkerTypeButtonText());
         applyAndSave();
         updateControlStates();
@@ -415,7 +425,6 @@ public final class LocatorBarConfigScreen extends Screen {
     }
 
     private void updateControlStates() {
-        boolean serverControlled = LocatorBarConfig.hasServerSettings();
         boolean styleEnabled = selectedStyle != LocatorBarStyle.OFF;
         boolean classicStyle = selectedStyle == LocatorBarStyle.CLASSIC;
         boolean reworkedStyle = selectedStyle == LocatorBarStyle.REWORKED;
@@ -426,26 +435,29 @@ public final class LocatorBarConfigScreen extends Screen {
         boolean canChangeOutline = canChangeMarkerSettings && selectedPlayerMarkerType == PlayerMarkerType.HEADS;
         boolean canChangeWaypoints = styleEnabled && selectedShowWaypoints;
 
-        styleButton.active = !serverControlled;
+        var server = LocatorBarServerConfig.get();
+        boolean hasServer = LocatorBarConfig.hasServerSettings() && server != null;
+
+        styleButton.active = true;
         scaleSlider.active = reworkedStyle;
         viewAngleSlider.active = reworkedStyle;
-        showCoordinatesButton.active = reworkedStyle && !serverControlled;
+        showCoordinatesButton.active = reworkedStyle && (!hasServer || server.showCoordinates());
         elementsOnXpBarButton.active = classicStyle;
         coordinatesFormatButton.active = canChangeCoordinatesFormat;
-        showDaysButton.active = reworkedStyle && !serverControlled;
+        showDaysButton.active = reworkedStyle && (!hasServer || server.showDays());
         daysDisplayOrderButton.active = canChangeDaysOrder;
 
-        showWorldDirectionsButton.active = styleEnabled && !serverControlled;
+        showWorldDirectionsButton.active = styleEnabled;
         worldDirectionsScaleSlider.active = canChangeDirectionScale;
-        showPlayerHeadsButton.active = styleEnabled && !serverControlled;
+        showPlayerHeadsButton.active = styleEnabled && (!hasServer || server.playerMarkerType() != PlayerMarkerType.OFF);
         playerHeadsScaleSlider.active = canChangeMarkerSettings;
         playerHeadOutlineButton.active = canChangeOutline;
-        maxVisiblePlayersSlider.active = canChangeMarkerSettings && !serverControlled;
+        maxVisiblePlayersSlider.active = canChangeMarkerSettings;
 
-        showWaypointsButton.active = styleEnabled && !serverControlled;
-        showDeathWaypointButton.active = styleEnabled && selectedShowWaypoints && !serverControlled;
+        showWaypointsButton.active = styleEnabled && (!hasServer || server.showWaypoints());
+        showDeathWaypointButton.active = styleEnabled && selectedShowWaypoints && (!hasServer || server.showDeathWaypoint());
         waypointsScaleSlider.active = canChangeWaypoints;
-        maxVisibleWaypointsSlider.active = canChangeWaypoints && !serverControlled;
+        maxVisibleWaypointsSlider.active = canChangeWaypoints;
     }
 
     private void updatePageState() {
@@ -568,20 +580,12 @@ public final class LocatorBarConfigScreen extends Screen {
 
         WaypointConfig config = LocatorBarConfig.getWaypointConfig(waypointId);
         String symbol = config != null ? config.character : WaypointData.getWaypointSymbol(stack);
-        int color = config != null ? config.color : (WaypointData.getCustomColor(stack) != null ? WaypointData.getCustomColor(stack) : colorFromWaypointId(waypointId));
+        int color = config != null ? config.color : (WaypointData.getCustomColor(stack) != null ? WaypointData.getCustomColor(stack) : LocatorBarHudHelper.colorFromWaypointId(waypointId));
         boolean visible = config == null ? !WaypointData.isHidden(stack) : config.visible;
         int index = WaypointData.getWaypointIndex(stack);
 
         waypoints.add(new ManagedWaypoint(waypointId, symbol, color, visible, currentWorld, index));
         seenIds.add(waypointId);
-    }
-
-    private static int colorFromWaypointId(UUID waypointId) {
-        long hash = waypointId.getMostSignificantBits() ^ waypointId.getLeastSignificantBits();
-        float hue = (hash & 0xFFFFL) / 65535.0F;
-        float saturation = 0.65F + (((hash >>> 16) & 0xFFL) / 255.0F) * 0.25F;
-        float value = 0.8F + (((hash >>> 24) & 0xFFL) / 255.0F) * 0.2F;
-        return Mth.hsvToRgb(hue, saturation, value);
     }
 
     private void applyAndSave() {
@@ -831,7 +835,7 @@ public final class LocatorBarConfigScreen extends Screen {
                 try {
                     color = Integer.parseInt(colorBox.getValue(), 16);
                 } catch (NumberFormatException e) {
-                    color = colorFromWaypointId(waypoint.id);
+                    color = LocatorBarHudHelper.colorFromWaypointId(waypoint.id);
                 }
                 boolean visible = visibilityButton.getMessage().getString().equals(Component.translatable("locatorbar.option.on").getString());
 
@@ -864,7 +868,7 @@ public final class LocatorBarConfigScreen extends Screen {
                 try {
                     color = Integer.parseInt(colorBox.getValue(), 16);
                 } catch (NumberFormatException e) {
-                    color = colorFromWaypointId(waypoint.id);
+                    color = LocatorBarHudHelper.colorFromWaypointId(waypoint.id);
                 }
                 String symbol = symbolBox.getValue();
                 if (symbol.isEmpty()) {

@@ -1,6 +1,7 @@
 package pl.fuzjajadrowa.locatorbar.config;
 
-import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.LocatorBarStyle;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType;
 
 import java.io.IOException;
@@ -8,11 +9,14 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 
 public final class LocatorBarServerConfig {
-    private static final Path CONFIG_PATH = Path.of("config", "locatorbar-server.toml");
+    private static final Path TOML_CONFIG_PATH = Path.of("config", "locatorbar-server.toml");
+    private static final Path JSON_CONFIG_PATH = Path.of("config", "locatorbar-server.json");
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     public static final float INFINITE_PLAYER_HEAD_DISTANCE = 60_000_000.0F;
     private static ServerSettings data = null;
 
@@ -20,17 +24,82 @@ public final class LocatorBarServerConfig {
     }
 
     public static void load() {
-        if (!Files.exists(CONFIG_PATH)) {
-            data = ServerSettings.defaults();
+        if (!Files.exists(JSON_CONFIG_PATH)) {
+            ServerSettings migrated = loadFromLegacyToml();
+            if (migrated != null) {
+                data = migrated;
+                try {
+                    Files.deleteIfExists(TOML_CONFIG_PATH);
+                } catch (IOException ignored) {
+                }
+            } else {
+                data = ServerSettings.defaults();
+            }
             save();
             return;
         }
 
-        Properties properties = new Properties();
-        try (Reader reader = Files.newBufferedReader(CONFIG_PATH)) {
-            properties.load(new TomlPropertiesReader(reader));
+        try (Reader reader = Files.newBufferedReader(JSON_CONFIG_PATH)) {
+            ServerSettings loaded = GSON.fromJson(reader, ServerSettings.class);
+            data = loaded == null ? ServerSettings.defaults() : loaded;
 
-            // Read PlayerMarkerType
+            // Validate and clamp parsed parameters
+            data = new ServerSettings(
+                    data.showCoordinates(),
+                    data.showDays(),
+                    data.playerMarkerType() == null ? PlayerMarkerType.HEADS : data.playerMarkerType(),
+                    clampInt(data.maxVisiblePlayers(), 1, 64),
+                    clamp(data.playerMarkerFadeStartDistance(), 0.0F, INFINITE_PLAYER_HEAD_DISTANCE),
+                    clamp(data.playerMarkerFadeToMinDistance(), data.playerMarkerFadeStartDistance(), INFINITE_PLAYER_HEAD_DISTANCE),
+                    clamp(data.playerMarkerHideDistance(), data.playerMarkerFadeToMinDistance(), INFINITE_PLAYER_HEAD_DISTANCE),
+                    clamp(data.playerMarkerMinAlphaPercent(), 0.0F, 100.0F),
+                    data.showWaypoints(),
+                    clampInt(data.maxVisibleWaypoints(), 1, 64),
+                    data.showDeathWaypoint()
+            );
+            save();
+        } catch (IOException | com.google.gson.JsonParseException exception) {
+            data = ServerSettings.defaults();
+            save();
+        }
+    }
+
+    public static void save() {
+        if (data == null) {
+            return;
+        }
+
+        try {
+            Files.createDirectories(JSON_CONFIG_PATH.getParent());
+            try (Writer writer = Files.newBufferedWriter(JSON_CONFIG_PATH)) {
+                GSON.toJson(data, writer);
+            }
+        } catch (IOException ignored) {
+        }
+    }
+
+    public static ServerSettings get() {
+        return data;
+    }
+
+    private static ServerSettings loadFromLegacyToml() {
+        if (!Files.exists(TOML_CONFIG_PATH)) {
+            return null;
+        }
+        try {
+            Properties properties = new Properties();
+            List<String> lines = Files.readAllLines(TOML_CONFIG_PATH);
+            for (String line : lines) {
+                String trimmed = line.trim();
+                if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+                    continue;
+                }
+                String[] parts = trimmed.split("=", 2);
+                if (parts.length == 2) {
+                    properties.setProperty(parts[0].trim(), parts[1].trim());
+                }
+            }
+
             PlayerMarkerType playerMarkerType = PlayerMarkerType.HEADS;
             String playerMarkerTypeStr = properties.getProperty("playerMarkerType");
             if (playerMarkerTypeStr != null) {
@@ -40,7 +109,6 @@ public final class LocatorBarServerConfig {
                     playerMarkerType = PlayerMarkerType.HEADS;
                 }
             } else {
-                // Fallback to old boolean key
                 String showPlayerHeadsStr = properties.getProperty("showPlayerHeads");
                 if (showPlayerHeadsStr != null) {
                     boolean showPlayerHeads = Boolean.parseBoolean(showPlayerHeadsStr.trim());
@@ -55,11 +123,9 @@ public final class LocatorBarServerConfig {
             float playerMarkerHideDistance = readDistance(properties, "playerMarkerHideDistance",
                     readDistance(properties, "playerHeadHideDistance", ServerSettings.DEFAULT_PLAYER_MARKER_HIDE_DISTANCE, playerMarkerFadeToMinDistance), playerMarkerFadeToMinDistance);
 
-            data = new ServerSettings(
-                    readStyle(properties, "style", LocatorBarStyle.REWORKED),
+            return new ServerSettings(
                     readBoolean(properties, "showCoordinates", true),
                     readBoolean(properties, "showDays", false),
-                    readBoolean(properties, "showWorldDirections", true),
                     playerMarkerType,
                     readInt(properties, "maxVisiblePlayers", 16, 1, 64),
                     playerMarkerFadeStartDistance,
@@ -71,67 +137,8 @@ public final class LocatorBarServerConfig {
                     readInt(properties, "maxVisibleWaypoints", 16, 1, 64),
                     readBoolean(properties, "showDeathWaypoint", true)
             );
-            save();
-        } catch (IOException | IllegalArgumentException exception) {
-            data = ServerSettings.defaults();
-            save();
-        }
-    }
-
-    public static void save() {
-        if (data == null) {
-            return;
-        }
-
-        try {
-            Files.createDirectories(CONFIG_PATH.getParent());
-            try (Writer writer = Files.newBufferedWriter(CONFIG_PATH)) {
-                writer.write("# Locator Bar server-enforced settings\n");
-                writer.write("version = 2\n");
-                writer.write("# You can choose between \"reworked\" and \"classic\" style or just disable it with \"off\".\n");
-                writer.write("style = \"" + data.style().name().toLowerCase(Locale.ROOT) + "\"\n");
-                writer.write("# Show coordinates/days under locator bar. Works only on Reworked style.\n");
-                writer.write("showCoordinates = " + data.showCoordinates() + "\n");
-                writer.write("showDays = " + data.showDays() + "\n");
-                writer.write("# Show world directions on locator bar.\n");
-                writer.write("showWorldDirections = " + data.showWorldDirections() + "\n");
-                writer.write("# Player marker style (\"heads\", \"dots\", or \"off\") and choose max visible players on it.\n");
-                writer.write("playerMarkerType = \"" + data.playerMarkerType().name().toLowerCase(Locale.ROOT) + "\"\n");
-                writer.write("maxVisiblePlayers = " + data.maxVisiblePlayers() + "\n");
-                writer.write("# Player markers distance behaviour configuration. Fade start and fade to min is close range\n");
-                writer.write("# when player marker opacity / size decreases down to min alpha value in percent / small dot. To disable this behaviour\n");
-                writer.write("# set min alpha value to 100.0.\n");
-                writer.write("# Marker hide distance is the distance when player marker completely disappears from locator bar.\n");
-                writer.write("# You can set it to your own value or set \"inf\" to disable this behaviour.\n");
-                writer.write("playerMarkerFadeStartDistance = " + formatDistance(data.playerMarkerFadeStartDistance()) + "\n");
-                writer.write("playerMarkerFadeToMinDistance = " + formatDistance(data.playerMarkerFadeToMinDistance()) + "\n");
-                writer.write("playerMarkerHideDistance = " + formatDistance(data.playerMarkerHideDistance()) + "\n");
-                writer.write("playerMarkerMinAlphaPercent = " + data.playerMarkerMinAlphaPercent() + "\n");
-                writer.write("# Show waypoints on locator bar and choose max visible waypoints on it.\n");
-                writer.write("showWaypoints = " + data.showWaypoints() + "\n");
-                writer.write("maxVisibleWaypoints = " + data.maxVisibleWaypoints() + "\n");
-                writer.write("# Show death waypoint on locator bar.\n");
-                writer.write("showDeathWaypoint = " + data.showDeathWaypoint() + "\n");
-            }
-        } catch (IOException ignored) {
-            // Keep startup stable even if saving fails.
-        }
-    }
-
-    public static ServerSettings get() {
-        return data;
-    }
-
-    private static LocatorBarStyle readStyle(Properties properties, String key, LocatorBarStyle fallback) {
-        String value = properties.getProperty(key);
-        if (value == null) {
-            return fallback;
-        }
-
-        try {
-            return LocatorBarStyle.valueOf(value.trim().replace("\"", "").toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException exception) {
-            return fallback;
+        } catch (Exception e) {
+            return null;
         }
     }
 
@@ -145,7 +152,6 @@ public final class LocatorBarServerConfig {
         if (value == null) {
             return fallback;
         }
-
         try {
             int parsed = Integer.parseInt(value.trim());
             return Math.max(min, Math.min(max, parsed));
@@ -167,7 +173,6 @@ public final class LocatorBarServerConfig {
         if (value == null) {
             return fallback;
         }
-
         try {
             float parsed = Float.parseFloat(value.trim().replace("\"", ""));
             return Math.max(min, Math.min(max, parsed));
@@ -176,15 +181,17 @@ public final class LocatorBarServerConfig {
         }
     }
 
-    private static String formatDistance(float distance) {
-        return distance >= INFINITE_PLAYER_HEAD_DISTANCE ? "inf" : Float.toString(distance);
+    private static float clamp(float value, float min, float max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    private static int clampInt(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     public record ServerSettings(
-            LocatorBarStyle style,
             boolean showCoordinates,
             boolean showDays,
-            boolean showWorldDirections,
             PlayerMarkerType playerMarkerType,
             int maxVisiblePlayers,
             float playerMarkerFadeStartDistance,
@@ -202,10 +209,8 @@ public final class LocatorBarServerConfig {
 
         public static ServerSettings defaults() {
             return new ServerSettings(
-                    LocatorBarStyle.REWORKED,
                     true,
                     false,
-                    true,
                     PlayerMarkerType.HEADS,
                     16,
                     DEFAULT_PLAYER_MARKER_FADE_START_DISTANCE,
@@ -216,61 +221,6 @@ public final class LocatorBarServerConfig {
                     16,
                     true
             );
-        }
-    }
-
-    private static final class TomlPropertiesReader extends Reader {
-        private final Reader delegate;
-        private String content;
-        private int index;
-
-        private TomlPropertiesReader(Reader delegate) {
-            this.delegate = delegate;
-        }
-
-        @Override
-        public int read(char[] cbuf, int off, int len) throws IOException {
-            if (content == null) {
-                content = normalize(delegate);
-            }
-            if (index >= content.length()) {
-                return -1;
-            }
-
-            int count = Math.min(len, content.length() - index);
-            content.getChars(index, index + count, cbuf, off);
-            index += count;
-            return count;
-        }
-
-        @Override
-        public void close() throws IOException {
-            delegate.close();
-        }
-
-        private static String normalize(Reader reader) throws IOException {
-            StringBuilder output = new StringBuilder();
-            StringBuilder line = new StringBuilder();
-            int read;
-            while ((read = reader.read()) >= 0) {
-                char character = (char) read;
-                if (character == '\n') {
-                    appendLine(output, line.toString());
-                    line.setLength(0);
-                } else if (character != '\r') {
-                    line.append(character);
-                }
-            }
-            appendLine(output, line.toString());
-            return output.toString();
-        }
-
-        private static void appendLine(StringBuilder output, String line) {
-            String trimmed = line.trim();
-            if (trimmed.isEmpty() || trimmed.startsWith("#")) {
-                return;
-            }
-            output.append(trimmed.replaceFirst("\\s*=\\s*", "=")).append('\n');
         }
     }
 }

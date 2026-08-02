@@ -3,16 +3,13 @@ package pl.fuzjajadrowa.locatorbar.client;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 //? if >=1.20.2
 import net.minecraft.world.entity.player.PlayerSkin;
 //? if <1.20.2
-/*import net.minecraft.client.player.AbstractClientPlayer;*/
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import net.minecraft.client.player.AbstractClientPlayer;
 import pl.fuzjajadrowa.locatorbar.network.PlayerLocatorPayload;
+import pl.fuzjajadrowa.locatorbar.util.LocatorBarUtils;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -101,8 +98,10 @@ public final class PlayerLocatorClient {
 
     private static List<Marker> collectEntityMarkers(Player localPlayer, AlphaFunction alphaFunction) {
         List<Marker> markers = new ArrayList<>();
+        java.util.Set<java.util.UUID> addedPlayers = new java.util.HashSet<>();
+
         for (Player otherPlayer : localPlayer.level().players()) {
-            if (otherPlayer == localPlayer || shouldHidePlayerHead(localPlayer, otherPlayer)) {
+            if (otherPlayer == localPlayer || LocatorBarUtils.shouldHidePlayerHead(localPlayer, otherPlayer)) {
                 continue;
             }
 
@@ -119,8 +118,7 @@ public final class PlayerLocatorClient {
             }
 
             //? if >=1.21.11 {
-            PlayerSkin playerSkin = Minecraft.getInstance().getSkinManager().createLookup(otherPlayer.getGameProfile(), false).get();
-            Identifier skinTexture = skinTexture(playerSkin);
+            Identifier skinTexture = otherPlayer instanceof net.minecraft.client.player.AbstractClientPlayer clientPlayer ? skinTexture(clientPlayer.getSkin()) : skinTexture(net.minecraft.client.resources.DefaultPlayerSkin.get(otherPlayer.getUUID()));
             //?} elif >=1.20.2 {
             /*PlayerSkin playerSkin = Minecraft.getInstance().getSkinManager().getInsecureSkin(otherPlayer.getGameProfile());
             Identifier skinTexture = skinTexture(playerSkin);
@@ -137,33 +135,59 @@ public final class PlayerLocatorClient {
             */
             //?}
             markers.add(new Marker(otherPlayer.getUUID(), skinTexture, directionYaw, alpha, distance, teamColor));
+            addedPlayers.add(otherPlayer.getUUID());
         }
+
+        //? if >=26.2 {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.getConnection() != null) {
+            var waypointManager = minecraft.getConnection().getWaypointManager();
+            if (waypointManager != null) {
+                float partialTicks = minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+                net.minecraft.world.waypoints.TrackedWaypoint.Camera camera = new net.minecraft.world.waypoints.TrackedWaypoint.Camera() {
+                    @Override
+                    public float yaw() { return localPlayer.getYRot(); }
+                    @Override
+                    public net.minecraft.world.phys.Vec3 position() { return localPlayer.getEyePosition(partialTicks); }
+                };
+
+                waypointManager.forEachWaypoint(localPlayer, trackedWaypoint -> {
+                    trackedWaypoint.id().left().ifPresent(uuid -> {
+                        if (uuid.equals(localPlayer.getUUID()) || addedPlayers.contains(uuid)) {
+                            return;
+                        }
+
+                        double distanceSq = trackedWaypoint.distanceSquared(localPlayer);
+                        float distance = (float) Math.sqrt(distanceSq);
+
+                        float alpha = alphaFunction.compute(distance);
+                        if (alpha <= 0.0F) {
+                            return;
+                        }
+
+                        double yawRad = trackedWaypoint.yawAngleToCamera(localPlayer.level(), camera, entity -> partialTicks);
+                        float directionYaw = (float) Math.toDegrees(yawRad);
+
+                        var playerInfo = minecraft.getConnection().getPlayerInfo(uuid);
+                        Identifier skinTexture = (playerInfo != null) ? skinTexture(playerInfo.getSkin()) : skinTexture(net.minecraft.client.resources.DefaultPlayerSkin.get(uuid));
+
+                        Integer teamColor = null;
+                        if (playerInfo != null) {
+                            String playerName = playerInfo.getProfile().name();
+                            net.minecraft.world.scores.PlayerTeam team = localPlayer.level().getScoreboard().getPlayersTeam(playerName);
+                            teamColor = (team != null && team.getColor().isPresent()) ? team.getColor().get().rgb() : null;
+                        }
+
+                        markers.add(new Marker(uuid, skinTexture, directionYaw, alpha, distance, teamColor));
+                        addedPlayers.add(uuid);
+                    });
+                });
+            }
+        }
+        //?}
 
         markers.sort(Comparator.comparingDouble(Marker::distance));
         return markers;
-    }
-
-    private static boolean shouldHidePlayerHead(Player localPlayer, Player otherPlayer) {
-        if (!otherPlayer.level().dimension().equals(localPlayer.level().dimension())) {
-            return true;
-        }
-        if (otherPlayer.isCrouching()) {
-            return true;
-        }
-
-        ItemStack helmet = otherPlayer.getItemBySlot(EquipmentSlot.HEAD);
-        if (helmet.isEmpty()) {
-            return false;
-        }
-
-        Item helmetItem = helmet.getItem();
-        return helmetItem == Items.CARVED_PUMPKIN
-                || helmetItem == Items.SKELETON_SKULL
-                || helmetItem == Items.WITHER_SKELETON_SKULL
-                || helmetItem == Items.ZOMBIE_HEAD
-                || helmetItem == Items.CREEPER_HEAD
-                || helmetItem == Items.DRAGON_HEAD
-                || helmetItem == Items.PIGLIN_HEAD;
     }
 
     //? if >=1.20.2 {
