@@ -380,6 +380,6 @@ public final class ReworkedLocatorBarHudRenderer {
 
     private static void drawCenteredText(GuiGraphicsExtractor guiGraphics, String text, float centerX, int y) {
         int textX = Math.round(centerX - (Minecraft.getInstance().font.width(text) / 2.0F));
-        RenderCompat.text(guiGraphics, text, textX, y, 0xFFFFFFFF, false);
+        RenderCompat.text(guiGraphics, text, textX, y, 0xFFFFFFFF, true);
     }
 }
