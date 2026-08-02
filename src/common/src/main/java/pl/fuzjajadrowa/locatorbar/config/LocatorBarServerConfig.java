@@ -2,6 +2,7 @@ package pl.fuzjajadrowa.locatorbar.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.LocatorBarStyle;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType;
 
 import java.io.IOException;
@@ -45,6 +46,7 @@ public final class LocatorBarServerConfig {
 
             // Validate and clamp parsed parameters
             data = new ServerSettings(
+                    data.style() == null ? LocatorBarStyle.REWORKED : data.style(),
                     data.showCoordinates(),
                     data.showDays(),
                     data.playerMarkerType() == null ? PlayerMarkerType.HEADS : data.playerMarkerType(),
@@ -124,6 +126,7 @@ public final class LocatorBarServerConfig {
                     readDistance(properties, "playerHeadHideDistance", ServerSettings.DEFAULT_PLAYER_MARKER_HIDE_DISTANCE, playerMarkerFadeToMinDistance), playerMarkerFadeToMinDistance);
 
             return new ServerSettings(
+                    readStyle(properties, "style", LocatorBarStyle.REWORKED),
                     readBoolean(properties, "showCoordinates", true),
                     readBoolean(properties, "showDays", false),
                     playerMarkerType,
@@ -139,6 +142,18 @@ public final class LocatorBarServerConfig {
             );
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    private static LocatorBarStyle readStyle(Properties properties, String key, LocatorBarStyle fallback) {
+        String value = properties.getProperty(key);
+        if (value == null) {
+            return fallback;
+        }
+        try {
+            return LocatorBarStyle.valueOf(value.trim().replace("\"", "").toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            return fallback;
         }
     }
 
@@ -190,6 +205,7 @@ public final class LocatorBarServerConfig {
     }
 
     public record ServerSettings(
+            LocatorBarStyle style,
             boolean showCoordinates,
             boolean showDays,
             PlayerMarkerType playerMarkerType,
@@ -209,6 +225,7 @@ public final class LocatorBarServerConfig {
 
         public static ServerSettings defaults() {
             return new ServerSettings(
+                    LocatorBarStyle.REWORKED,
                     true,
                     false,
                     PlayerMarkerType.HEADS,

@@ -438,7 +438,7 @@ public final class LocatorBarConfigScreen extends Screen {
         var server = LocatorBarServerConfig.get();
         boolean hasServer = LocatorBarConfig.hasServerSettings() && server != null;
 
-        styleButton.active = true;
+        styleButton.active = !hasServer;
         scaleSlider.active = reworkedStyle;
         viewAngleSlider.active = reworkedStyle;
         showCoordinatesButton.active = reworkedStyle && (!hasServer || server.showCoordinates());

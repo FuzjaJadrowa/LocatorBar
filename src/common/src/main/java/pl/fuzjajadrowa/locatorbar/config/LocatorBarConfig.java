@@ -50,10 +50,8 @@ public final class LocatorBarConfig {
             if (data.waypoints == null) {
                 data.waypoints = new HashMap<>();
             }
-            
-            // Migration from version 1 to 2
+
             if (data.version < 2) {
-                // Migrate showPlayerHeads boolean to playerMarkerType enum
                 if (!data.showPlayerHeads) {
                     data.playerMarkerType = PlayerMarkerType.OFF;
                 } else {
@@ -97,7 +95,7 @@ public final class LocatorBarConfig {
     }
 
     public static LocatorBarStyle getStyle() {
-        return data.style;
+        return serverSettings == null ? data.style : serverSettings.style();
     }
 
     public static void setStyle(LocatorBarStyle style) {

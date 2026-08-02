@@ -7,6 +7,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 //?}
 import net.minecraft.resources.Identifier;
 import pl.fuzjajadrowa.locatorbar.LocatorBar;
+import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.LocatorBarStyle;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarServerConfig.ServerSettings;
 
@@ -24,6 +25,7 @@ public record ServerConfigPayload(ServerSettings settings) implements CustomPack
 
     private static ServerConfigPayload read(RegistryFriendlyByteBuf buffer) {
         return new ServerConfigPayload(new ServerSettings(
+                LocatorBarStyle.values()[buffer.readVarInt()],
                 buffer.readBoolean(),
                 buffer.readBoolean(),
                 PlayerMarkerType.values()[buffer.readVarInt()],
@@ -39,6 +41,7 @@ public record ServerConfigPayload(ServerSettings settings) implements CustomPack
     }
 
     private void write(RegistryFriendlyByteBuf buffer) {
+        buffer.writeVarInt(settings.style().ordinal());
         buffer.writeBoolean(settings.showCoordinates());
         buffer.writeBoolean(settings.showDays());
         buffer.writeVarInt(settings.playerMarkerType().ordinal());

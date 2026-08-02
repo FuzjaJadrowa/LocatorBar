@@ -14,6 +14,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import pl.fuzjajadrowa.locatorbar.LocatorBar;
 import pl.fuzjajadrowa.locatorbar.client.PlayerLocatorClient;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig;
+import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.LocatorBarStyle;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarServerConfig;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarServerConfig.ServerSettings;
@@ -64,6 +65,7 @@ public final class LocatorBarForgeNetworking {
         }
 
         public static void encode(ServerConfigPacket msg, FriendlyByteBuf buffer) {
+            buffer.writeVarInt(msg.settings.style().ordinal());
             buffer.writeBoolean(msg.settings.showCoordinates());
             buffer.writeBoolean(msg.settings.showDays());
             buffer.writeVarInt(msg.settings.playerMarkerType().ordinal());
@@ -79,6 +81,7 @@ public final class LocatorBarForgeNetworking {
 
         public static ServerConfigPacket decode(FriendlyByteBuf buffer) {
             return new ServerConfigPacket(new ServerSettings(
+                    LocatorBarStyle.values()[buffer.readVarInt()],
                     buffer.readBoolean(),
                     buffer.readBoolean(),
                     PlayerMarkerType.values()[buffer.readVarInt()],
