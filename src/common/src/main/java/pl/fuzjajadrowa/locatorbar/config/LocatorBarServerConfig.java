@@ -44,11 +44,11 @@ public final class LocatorBarServerConfig {
             ServerSettings loaded = GSON.fromJson(reader, ServerSettings.class);
             data = loaded == null ? ServerSettings.defaults() : loaded;
 
-            // Validate and clamp parsed parameters
             data = new ServerSettings(
                     data.style() == null ? LocatorBarStyle.REWORKED : data.style(),
                     data.showCoordinates(),
                     data.showDays(),
+                    data.showWorldDirections(),
                     data.playerMarkerType() == null ? PlayerMarkerType.HEADS : data.playerMarkerType(),
                     clampInt(data.maxVisiblePlayers(), 1, 64),
                     clamp(data.playerMarkerFadeStartDistance(), 0.0F, INFINITE_PLAYER_HEAD_DISTANCE),
@@ -129,6 +129,7 @@ public final class LocatorBarServerConfig {
                     readStyle(properties, "style", LocatorBarStyle.REWORKED),
                     readBoolean(properties, "showCoordinates", true),
                     readBoolean(properties, "showDays", false),
+                    readBoolean(properties, "showWorldDirections", true),
                     playerMarkerType,
                     readInt(properties, "maxVisiblePlayers", 16, 1, 64),
                     playerMarkerFadeStartDistance,
@@ -208,6 +209,7 @@ public final class LocatorBarServerConfig {
             LocatorBarStyle style,
             boolean showCoordinates,
             boolean showDays,
+            boolean showWorldDirections,
             PlayerMarkerType playerMarkerType,
             int maxVisiblePlayers,
             float playerMarkerFadeStartDistance,
@@ -228,6 +230,7 @@ public final class LocatorBarServerConfig {
                     LocatorBarStyle.REWORKED,
                     true,
                     false,
+                    true,
                     PlayerMarkerType.HEADS,
                     16,
                     DEFAULT_PLAYER_MARKER_FADE_START_DISTANCE,

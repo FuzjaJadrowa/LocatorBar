@@ -139,7 +139,7 @@ public final class LocatorBarConfig {
     }
 
     public static boolean isShowCoordinates() {
-        return serverSettings == null ? data.showCoordinates : (serverSettings.showCoordinates() && data.showCoordinates);
+        return serverSettings == null ? data.showCoordinates : serverSettings.showCoordinates();
     }
 
     public static void setShowCoordinates(boolean showCoordinates) {
@@ -163,7 +163,7 @@ public final class LocatorBarConfig {
     }
 
     public static boolean isShowDays() {
-        return serverSettings == null ? data.showDays : (serverSettings.showDays() && data.showDays);
+        return serverSettings == null ? data.showDays : serverSettings.showDays();
     }
 
     public static void setShowDays(boolean showDays) {
@@ -179,7 +179,7 @@ public final class LocatorBarConfig {
     }
 
     public static boolean isShowWorldDirections() {
-        return data.showWorldDirections;
+        return serverSettings == null ? data.showWorldDirections : serverSettings.showWorldDirections();
     }
 
     public static void setShowWorldDirections(boolean showWorldDirections) {
@@ -195,18 +195,7 @@ public final class LocatorBarConfig {
     }
 
     public static PlayerMarkerType getPlayerMarkerType() {
-        if (serverSettings == null) {
-            return data.playerMarkerType;
-        }
-        PlayerMarkerType client = data.playerMarkerType;
-        PlayerMarkerType server = serverSettings.playerMarkerType();
-        if (server == PlayerMarkerType.OFF || client == PlayerMarkerType.OFF) {
-            return PlayerMarkerType.OFF;
-        }
-        if (server == PlayerMarkerType.DOTS || client == PlayerMarkerType.DOTS) {
-            return PlayerMarkerType.DOTS;
-        }
-        return PlayerMarkerType.HEADS;
+        return serverSettings == null ? data.playerMarkerType : serverSettings.playerMarkerType();
     }
 
     public static void setPlayerMarkerType(PlayerMarkerType type) {
@@ -230,7 +219,7 @@ public final class LocatorBarConfig {
     }
 
     public static int getMaxVisiblePlayers() {
-        return serverSettings == null ? data.maxVisiblePlayers : Math.min(data.maxVisiblePlayers, serverSettings.maxVisiblePlayers());
+        return serverSettings == null ? data.maxVisiblePlayers : serverSettings.maxVisiblePlayers();
     }
 
     public static void setMaxVisiblePlayers(int maxVisiblePlayers) {
@@ -259,7 +248,7 @@ public final class LocatorBarConfig {
     }
 
     public static boolean isShowWaypoints() {
-        return serverSettings == null ? data.showWaypoints : (serverSettings.showWaypoints() && data.showWaypoints);
+        return serverSettings == null ? data.showWaypoints : serverSettings.showWaypoints();
     }
 
     public static void setShowWaypoints(boolean showWaypoints) {
@@ -267,7 +256,7 @@ public final class LocatorBarConfig {
     }
 
     public static boolean isShowDeathWaypoint() {
-        return serverSettings == null ? data.showDeathWaypoint : (serverSettings.showDeathWaypoint() && data.showDeathWaypoint);
+        return serverSettings == null ? data.showDeathWaypoint : serverSettings.showDeathWaypoint();
     }
 
     public static void setShowDeathWaypoint(boolean showDeathWaypoint) {
@@ -283,7 +272,7 @@ public final class LocatorBarConfig {
     }
 
     public static int getMaxVisibleWaypoints() {
-        return serverSettings == null ? data.maxVisibleWaypoints : Math.min(data.maxVisibleWaypoints, serverSettings.maxVisibleWaypoints());
+        return serverSettings == null ? data.maxVisibleWaypoints : serverSettings.maxVisibleWaypoints();
     }
 
     public static void setMaxVisibleWaypoints(int maxVisibleWaypoints) {
@@ -308,6 +297,10 @@ public final class LocatorBarConfig {
 
     public static boolean hasServerSettings() {
         return serverSettings != null;
+    }
+
+    public static ServerSettings getServerSettings() {
+        return serverSettings;
     }
 
     public static void applyServerSettings(ServerSettings settings) {

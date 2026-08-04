@@ -68,6 +68,7 @@ public final class LocatorBarForgeNetworking {
             buffer.writeVarInt(msg.settings.style().ordinal());
             buffer.writeBoolean(msg.settings.showCoordinates());
             buffer.writeBoolean(msg.settings.showDays());
+            buffer.writeBoolean(msg.settings.showWorldDirections());
             buffer.writeVarInt(msg.settings.playerMarkerType().ordinal());
             buffer.writeVarInt(msg.settings.maxVisiblePlayers());
             buffer.writeFloat(msg.settings.playerMarkerFadeStartDistance());
@@ -82,6 +83,7 @@ public final class LocatorBarForgeNetworking {
         public static ServerConfigPacket decode(FriendlyByteBuf buffer) {
             return new ServerConfigPacket(new ServerSettings(
                     LocatorBarStyle.values()[buffer.readVarInt()],
+                    buffer.readBoolean(),
                     buffer.readBoolean(),
                     buffer.readBoolean(),
                     PlayerMarkerType.values()[buffer.readVarInt()],

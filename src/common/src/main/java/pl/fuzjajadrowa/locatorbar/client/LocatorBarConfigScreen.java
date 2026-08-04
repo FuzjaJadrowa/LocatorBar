@@ -373,7 +373,7 @@ public final class LocatorBarConfigScreen extends Screen {
 
     private void cyclePlayerMarkerType() {
         if (LocatorBarConfig.hasServerSettings()) {
-            var server = LocatorBarServerConfig.get();
+            var server = LocatorBarConfig.getServerSettings();
             if (server != null && server.playerMarkerType() == PlayerMarkerType.DOTS) {
                 selectedPlayerMarkerType = selectedPlayerMarkerType == PlayerMarkerType.DOTS ? PlayerMarkerType.OFF : PlayerMarkerType.DOTS;
             } else {
@@ -435,29 +435,29 @@ public final class LocatorBarConfigScreen extends Screen {
         boolean canChangeOutline = canChangeMarkerSettings && selectedPlayerMarkerType == PlayerMarkerType.HEADS;
         boolean canChangeWaypoints = styleEnabled && selectedShowWaypoints;
 
-        var server = LocatorBarServerConfig.get();
+        var server = LocatorBarConfig.getServerSettings();
         boolean hasServer = LocatorBarConfig.hasServerSettings() && server != null;
 
         styleButton.active = !hasServer;
         scaleSlider.active = reworkedStyle;
         viewAngleSlider.active = reworkedStyle;
-        showCoordinatesButton.active = reworkedStyle && (!hasServer || server.showCoordinates());
+        showCoordinatesButton.active = reworkedStyle && !hasServer;
         elementsOnXpBarButton.active = classicStyle;
         coordinatesFormatButton.active = canChangeCoordinatesFormat;
-        showDaysButton.active = reworkedStyle && (!hasServer || server.showDays());
+        showDaysButton.active = reworkedStyle && !hasServer;
         daysDisplayOrderButton.active = canChangeDaysOrder;
 
-        showWorldDirectionsButton.active = styleEnabled;
+        showWorldDirectionsButton.active = styleEnabled && !hasServer;
         worldDirectionsScaleSlider.active = canChangeDirectionScale;
-        showPlayerHeadsButton.active = styleEnabled && (!hasServer || server.playerMarkerType() != PlayerMarkerType.OFF);
+        showPlayerHeadsButton.active = styleEnabled && !hasServer;
         playerHeadsScaleSlider.active = canChangeMarkerSettings;
         playerHeadOutlineButton.active = canChangeOutline;
-        maxVisiblePlayersSlider.active = canChangeMarkerSettings;
+        maxVisiblePlayersSlider.active = canChangeMarkerSettings && !hasServer;
 
-        showWaypointsButton.active = styleEnabled && (!hasServer || server.showWaypoints());
-        showDeathWaypointButton.active = styleEnabled && selectedShowWaypoints && (!hasServer || server.showDeathWaypoint());
+        showWaypointsButton.active = styleEnabled && !hasServer;
+        showDeathWaypointButton.active = styleEnabled && selectedShowWaypoints && !hasServer;
         waypointsScaleSlider.active = canChangeWaypoints;
-        maxVisibleWaypointsSlider.active = canChangeWaypoints;
+        maxVisibleWaypointsSlider.active = canChangeWaypoints && !hasServer;
     }
 
     private void updatePageState() {

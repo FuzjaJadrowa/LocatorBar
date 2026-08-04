@@ -28,6 +28,7 @@ public record ServerConfigPayload(ServerSettings settings) implements CustomPack
                 LocatorBarStyle.values()[buffer.readVarInt()],
                 buffer.readBoolean(),
                 buffer.readBoolean(),
+                buffer.readBoolean(),
                 PlayerMarkerType.values()[buffer.readVarInt()],
                 buffer.readVarInt(),
                 buffer.readFloat(),
@@ -44,6 +45,7 @@ public record ServerConfigPayload(ServerSettings settings) implements CustomPack
         buffer.writeVarInt(settings.style().ordinal());
         buffer.writeBoolean(settings.showCoordinates());
         buffer.writeBoolean(settings.showDays());
+        buffer.writeBoolean(settings.showWorldDirections());
         buffer.writeVarInt(settings.playerMarkerType().ordinal());
         buffer.writeVarInt(settings.maxVisiblePlayers());
         buffer.writeFloat(settings.playerMarkerFadeStartDistance());
