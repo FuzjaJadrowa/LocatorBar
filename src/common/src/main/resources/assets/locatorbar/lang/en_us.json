@@ -49,5 +49,26 @@
   "locatorbar.config.field.max_waypoints": "Max waypoints",
   "locatorbar.config.field.max_visible_waypoints": "Max visible waypoints",
   "locatorbar.config.header.waypoint_manager": "Waypoint Manager",
-  "locatorbar.config.button.delete": "Delete"
+  "locatorbar.config.button.delete": "Delete",
+
+  "locatorbar.commands.help.title": "=== Locator Bar Help ===",
+  "locatorbar.commands.help.usage": "Use: /locatorbar help <option> to get details about an option.",
+  "locatorbar.commands.help.options_list": "Available options:",
+  "locatorbar.commands.help.header": "=== Help: %s ===",
+  "locatorbar.commands.help.label.description": "Description: ",
+  "locatorbar.commands.help.label.type": "Type: ",
+  "locatorbar.commands.help.label.default": "Default: ",
+  "locatorbar.commands.help.style.desc": "Locator bar style.",
+  "locatorbar.commands.help.showCoordinates.desc": "Displays player coordinates on the bar.",
+  "locatorbar.commands.help.showDays.desc": "Displays the number of world days on the bar.",
+  "locatorbar.commands.help.showWorldDirections.desc": "Displays world directions (N, S, E, W, etc.).",
+  "locatorbar.commands.help.playerMarkerType.desc": "Method of showing other players on the bar.",
+  "locatorbar.commands.help.maxVisiblePlayers.desc": "Maximum number of concurrently visible players on the bar.",
+  "locatorbar.commands.help.playerMarkerFadeStartDistance.desc": "Distance (in blocks) at which other players' markers start to fade.",
+  "locatorbar.commands.help.playerMarkerFadeToMinDistance.desc": "Distance (in blocks) at which other players' markers reach minimum transparency.",
+  "locatorbar.commands.help.playerMarkerHideDistance.desc": "Distance (in blocks) at which other players' markers disappear. Can be set to 'inf' for infinity.",
+  "locatorbar.commands.help.playerMarkerMinAlphaPercent.desc": "Minimum visibility (in percent) of player markers at maximum fade distance.",
+  "locatorbar.commands.help.showWaypoints.desc": "Whether waypoints from compasses should be visible on the bar.",
+  "locatorbar.commands.help.maxVisibleWaypoints.desc": "Maximum number of concurrently visible waypoints on the bar.",
+  "locatorbar.commands.help.showDeathWaypoint.desc": "Whether a waypoint should appear at the player's death location upon death."
 }

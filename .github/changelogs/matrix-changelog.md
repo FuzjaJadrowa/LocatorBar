@@ -1,6 +1,7 @@
 # 1.2.2
 ## Added
 - Added drop shadow to coordinate and day counters under reworked locator bar.
+- Added `/locatorbar` command for changing server-side options of the config or seeing help.
 ## Changed
 - Changed the experience bar visible duration when collecting XP to 5 seconds.
 - [1.21.4] Ended support for 1.21.4. Shows specified modal for users of these versions.

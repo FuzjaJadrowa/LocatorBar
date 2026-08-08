@@ -6,6 +6,11 @@ import pl.fuzjajadrowa.locatorbar.config.LocatorBarServerConfig;
 public final class LocatorBar {
     public static final String MOD_ID = "locatorbar";
 
+    public interface NetworkBroadcaster {
+        void broadcastConfig(pl.fuzjajadrowa.locatorbar.config.LocatorBarServerConfig.ServerSettings settings);
+    }
+
+    public static NetworkBroadcaster broadcaster = null;
     private LocatorBar() {
     }
 

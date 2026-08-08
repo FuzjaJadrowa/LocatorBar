@@ -17,9 +17,21 @@ public final class LocatorBarForge {
 
         MinecraftForge.EVENT_BUS.addListener(LocatorBarForgeNetworking::onPlayerLoggedIn);
         MinecraftForge.EVENT_BUS.addListener(LocatorBarForgeNetworking::onServerTick);
+        MinecraftForge.EVENT_BUS.addListener(LocatorBarForge::onRegisterCommands);
+
+        LocatorBar.broadcaster = settings -> {
+            LocatorBarForgeNetworking.INSTANCE.send(
+                net.minecraftforge.network.PacketDistributor.ALL.noArg(),
+                new LocatorBarForgeNetworking.ServerConfigPacket(settings)
+            );
+        };
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
             LocatorBarForgeClient.init();
         }
+    }
+
+    public static void onRegisterCommands(net.minecraftforge.event.RegisterCommandsEvent event) {
+        pl.fuzjajadrowa.locatorbar.server.LocatorBarCommands.register(event.getDispatcher());
     }
 }

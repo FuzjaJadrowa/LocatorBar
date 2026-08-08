@@ -49,5 +49,27 @@
   "locatorbar.config.field.max_waypoints": "Maks. waypointów",
   "locatorbar.config.field.max_visible_waypoints": "Maks. widocznych waypointów",
   "locatorbar.config.header.waypoint_manager": "Menedżer waypointów",
-  "locatorbar.config.button.delete": "Usuń"
+  "locatorbar.config.button.delete": "Usuń",
+
+  "locatorbar.commands.help.title": "=== Pomoc Locator Bar ===",
+  "locatorbar.commands.help.usage": "Użyj: /locatorbar help <opcja>, aby uzyskać szczegóły o danej opcji.",
+  "locatorbar.commands.help.options_list": "Dostępne opcje:",
+  "locatorbar.commands.help.header": "=== Pomoc: %s ===",
+  "locatorbar.commands.help.label.description": "Opis: ",
+  "locatorbar.commands.help.label.type": "Typ: ",
+  "locatorbar.commands.help.label.default": "Domyślnie: ",
+  "locatorbar.commands.help.style.desc": "Styl locator bara.",
+  "locatorbar.commands.help.showCoordinates.desc": "Wyświetlanie współrzędnych gracza na pasku.",
+  "locatorbar.commands.help.showDays.desc": "Wyświetlanie liczby dni świata gry na pasku.",
+  "locatorbar.commands.help.showWorldDirections.desc": "Wyświetlanie kierunków świata (N, S, E, W itp.).",
+  "locatorbar.commands.help.playerMarkerType.desc": "Sposób pokazywania znaczników innych graczy na pasku.",
+  "locatorbar.commands.help.maxVisiblePlayers.desc": "Maksymalna liczba jednocześnie widocznych graczy na pasku.",
+  "locatorbar.commands.help.playerMarkerFadeStartDistance.desc": "Odległość (w blokach), od której znaczniki innych graczy zaczynają zanikać.",
+  "locatorbar.commands.help.playerMarkerFadeToMinDistance.desc": "Odległość (w blokach), przy której znaczniki graczy osiągają minimalną widoczność.",
+  "locatorbar.commands.help.playerMarkerHideDistance.desc": "Odległość (w blokach), przy której znaczniki graczy całkowicie znikają. Można wpisać 'inf' dla nieskończoności.",
+  "locatorbar.commands.help.playerMarkerMinAlphaPercent.desc": "Minimalna przezroczystość (w procentach) znacznika gracza po pełnym oddaleniu.",
+  "locatorbar.commands.help.showWaypoints.desc": "Czy waypointy z kompasów mają być widoczne.",
+  "locatorbar.commands.help.maxVisibleWaypoints.desc": "Maksymalna liczba jednocześnie widocznych waypointów na pasku.",
+  "locatorbar.commands.help.showDeathWaypoint.desc": "Czy po zgonie gracza ma pokazywać się znacznik z miejscem śmierci (gdy gracz ma kompas odzyskania)."
+}
 }

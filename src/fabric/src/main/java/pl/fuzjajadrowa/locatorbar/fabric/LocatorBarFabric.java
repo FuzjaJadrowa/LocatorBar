@@ -10,5 +10,8 @@ public final class LocatorBarFabric implements ModInitializer {
     public void onInitialize() {
         LocatorBar.init(FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT);
         LocatorBarFabricNetworking.initCommon();
+        net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+            pl.fuzjajadrowa.locatorbar.server.LocatorBarCommands.register(dispatcher);
+        });
     }
 }

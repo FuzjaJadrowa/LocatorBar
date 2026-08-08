@@ -21,6 +21,13 @@ public final class LocatorBarNeoForge {
         modEventBus.addListener(LocatorBarNeoForgeNetworking::registerPayloads);
         NeoForge.EVENT_BUS.addListener(LocatorBarNeoForgeNetworking::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(LocatorBarNeoForgeNetworking::onServerTick);
+        NeoForge.EVENT_BUS.addListener(LocatorBarNeoForge::onRegisterCommands);
+
+        LocatorBar.broadcaster = settings -> {
+            net.neoforged.neoforge.network.PacketDistributor.sendToAllPlayers(
+                new pl.fuzjajadrowa.locatorbar.network.ServerConfigPayload(settings)
+            );
+        };
         //? if >=1.21.11 {
         if (FMLEnvironment.getDist() == Dist.CLIENT) {
             initClient(modContainer);
@@ -30,6 +37,10 @@ public final class LocatorBarNeoForge {
             initClient(modContainer);
         }
         *///?}
+    }
+
+    public static void onRegisterCommands(net.neoforged.neoforge.event.RegisterCommandsEvent event) {
+        pl.fuzjajadrowa.locatorbar.server.LocatorBarCommands.register(event.getDispatcher());
     }
 
     private static void initClient(ModContainer modContainer) {

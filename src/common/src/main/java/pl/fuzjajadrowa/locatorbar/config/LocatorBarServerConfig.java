@@ -84,6 +84,10 @@ public final class LocatorBarServerConfig {
         return data;
     }
 
+    public static void set(ServerSettings settings) {
+        data = settings;
+    }
+
     private static ServerSettings loadFromLegacyToml() {
         if (!Files.exists(TOML_CONFIG_PATH)) {
             return null;

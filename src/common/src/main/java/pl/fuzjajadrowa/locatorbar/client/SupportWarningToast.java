@@ -34,7 +34,7 @@ public class SupportWarningToast implements Toast {
     public void render(GuiGraphicsExtractor guiGraphics, Font font, long startTime) {
         guiGraphics.blitSprite(net.minecraft.client.renderer.RenderType::guiTextured, BACKGROUND_SPRITE, 0, 0, 160, 32);
         RenderCompat.text(guiGraphics, "Locator Bar for 1.21.4", 30, 7, 0xFFFFFFFF, false);
-        RenderCompat.text(guiGraphics, "will no longer be supported.", 30, 18, 0xFFFFFFFF, false);
+        RenderCompat.text(guiGraphics, "won't be supported.", 30, 18, 0xFFFFFFFF, false);
         RenderCompat.blitRegion(guiGraphics, DEATH_WAYPOINT, 8, 8, 0, 0, 16, 16, 36, 36, 36, 36);
     }
 }
