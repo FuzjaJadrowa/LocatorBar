@@ -57,9 +57,7 @@ public final class ClassicLocatorBarHudRenderer {
     private static final float WAYPOINT_TEXT_SCALE = 0.65F;
     private static final int WAYPOINT_Y_OFFSET = 2;
 
-    private static final Identifier DOT_LARGE_TEXTURE = Identifier.fromNamespaceAndPath(LocatorBar.MOD_ID, "textures/gui/player_dot_large.png");
-    private static final Identifier DOT_MEDIUM_TEXTURE = Identifier.fromNamespaceAndPath(LocatorBar.MOD_ID, "textures/gui/player_dot_medium.png");
-    private static final Identifier DOT_SMALL_TEXTURE = Identifier.fromNamespaceAndPath(LocatorBar.MOD_ID, "textures/gui/player_dot_small.png");
+    private static final Identifier DOT_TEXTURE = Identifier.fromNamespaceAndPath(LocatorBar.MOD_ID, "textures/gui/locator_bar_dot.png");
 
     private ClassicLocatorBarHudRenderer() {
     }
@@ -332,14 +330,7 @@ public final class ClassicLocatorBarHudRenderer {
         int alpha = Math.max(0, Math.min(255, Math.round(marker.alpha() * 255.0F)));
 
         if (LocatorBarConfig.getPlayerMarkerType() == PlayerMarkerType.DOTS) {
-            Identifier dotTexture;
-            if (marker.distance() <= LocatorBarConfig.getPlayerMarkerFadeStartDistance()) {
-                dotTexture = DOT_LARGE_TEXTURE;
-            } else if (marker.distance() <= LocatorBarConfig.getPlayerMarkerFadeToMinDistance()) {
-                dotTexture = DOT_MEDIUM_TEXTURE;
-            } else {
-                dotTexture = DOT_SMALL_TEXTURE;
-            }
+            Identifier dotTexture = DOT_TEXTURE;
             int playerColor = marker.teamColor() != null ? marker.teamColor() : LocatorBarUtils.colorFromPlayerId(marker.playerId());
             int tint = (alpha << 24) | (playerColor & 0x00FFFFFF);
             int dotSize = Math.round(markerSize * 1.5F);
