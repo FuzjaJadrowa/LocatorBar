@@ -80,6 +80,11 @@ public final class ClassicLocatorBarHudRenderer {
         }
         *///?}
 
+        //? if <1.21.11 {
+        /*guiGraphics.flush();
+        com.mojang.blaze3d.systems.RenderSystem.disableDepthTest();
+        *///?}
+
         float halfViewAngle = 45.0F;
         int directionMarkerSize = Math.max(
                 4,
@@ -127,7 +132,7 @@ public final class ClassicLocatorBarHudRenderer {
         int scissorBottom = y + BAR_TEXTURE_HEIGHT + scissorOverflow;
         guiGraphics.enableScissor(x, scissorTop, x + BAR_TEXTURE_WIDTH, scissorBottom);
         RenderCompat.push(guiGraphics);
-        RenderCompat.translate(guiGraphics, x, y, 200.0F);
+        RenderCompat.translate(guiGraphics, x, y);
 
         if (!vanillaExperienceBarVisible || !elementsOnXpBar) {
             RenderCompat.blit(
@@ -200,6 +205,10 @@ public final class ClassicLocatorBarHudRenderer {
 
         RenderCompat.pop(guiGraphics);
         guiGraphics.disableScissor();
+        //? if <1.21.11 {
+        /*com.mojang.blaze3d.systems.RenderSystem.enableDepthTest();
+        guiGraphics.flush();
+        *///?}
     }
 
     private static void renderDirectionMarker(

@@ -6,7 +6,7 @@ import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.LocatorBarStyle;
 
 public final class ClassicExperienceBarState {
-    private static final long EXPERIENCE_BAR_VISIBLE_MILLIS = 3000L;
+    private static final long EXPERIENCE_BAR_VISIBLE_MILLIS = 5000L;
     private static int lastTotalExperience = -1;
     private static long experienceBarVisibleUntil;
 

@@ -5,6 +5,7 @@
   "minVersion": "0.8",
   "client": [
     "client.ExperienceBarMixin",
+    "client.ExperienceLevelMixin",
     "client.LocatorBarRendererMixin",
     "client.OptionsScreenMixin"
   ],
