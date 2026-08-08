@@ -311,6 +311,14 @@ public final class LocatorBarConfig {
         serverSettings = null;
     }
 
+    public static boolean isUnsupportedVersionWarningShown() {
+        return data.unsupportedVersionWarningShown;
+    }
+
+    public static void setUnsupportedVersionWarningShown(boolean val) {
+        data.unsupportedVersionWarningShown = val;
+    }
+
     private static float clamp(float value, float min, float max) {
         return Math.max(min, Math.min(max, value));
     }
@@ -424,5 +432,8 @@ public final class LocatorBarConfig {
 
         @SerializedName("waypoints")
         private Map<UUID, WaypointConfig> waypoints = new HashMap<>();
+
+        @SerializedName("unsupportedVersionWarningShown")
+        private boolean unsupportedVersionWarningShown = false;
     }
 }

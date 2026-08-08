@@ -9,6 +9,17 @@ public final class LocatorBarHudRenderer {
     }
 
     public static void render(GuiGraphicsExtractor guiGraphics) {
+        //? if >=1.21.4 {
+        //? if <1.21.11 {
+        net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
+        if (minecraft.player != null && !LocatorBarConfig.isUnsupportedVersionWarningShown()) {
+            minecraft.getToastManager().addToast(new SupportWarningToast());
+            LocatorBarConfig.setUnsupportedVersionWarningShown(true);
+            LocatorBarConfig.save();
+        }
+        //?}
+        //?}
+
         if (!LocatorBarConfig.isEnabled()) {
             return;
         }
