@@ -33,7 +33,7 @@ jobs:
 
       - name: Sync target properties
         run: |
-          for target in 1.21.1 1.21.4 1.21.11 26.2; do
+          for target in 1.21.1 1.21.11 26.2; do
             cp "gradle/targets/${target}.properties" "versions/${target}-fabric/gradle.properties"
             cp "gradle/targets/${target}.properties" "versions/${target}-neoforge/gradle.properties"
           done

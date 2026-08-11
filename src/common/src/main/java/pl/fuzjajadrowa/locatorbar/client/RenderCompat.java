@@ -6,10 +6,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 //? if >=1.21.11
 import net.minecraft.client.renderer.RenderPipelines;
-//? if <1.21.11 {
-//? if >=1.21.4
-/*import net.minecraft.client.renderer.RenderType;*/
-//?}
 import net.minecraft.resources.Identifier;
 
 final class RenderCompat {
@@ -65,8 +61,6 @@ final class RenderCompat {
     ) {
         //? if >=1.21.11 {
         guiGraphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, u, v, width, height, textureWidth, textureHeight);
-        //?} elif >=1.21.4 {
-        /*guiGraphics.blit(RenderType::guiTextured, texture, x, y, u, v, width, height, textureWidth, textureHeight);*/
         //?} else {
         /*guiGraphics.blit(texture, x, y, u, v, width, height, textureWidth, textureHeight);*/
         //?}
@@ -88,8 +82,6 @@ final class RenderCompat {
     ) {
         //? if >=1.21.11 {
         guiGraphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, u, v, width, height, regionWidth, regionHeight, textureWidth, textureHeight);
-        //?} elif >=1.21.4 {
-        /*guiGraphics.blit(RenderType::guiTextured, texture, x, y, u, v, width, height, regionWidth, regionHeight, textureWidth, textureHeight);*/
         //?} else {
         /*guiGraphics.blit(texture, x, y, width, height, u, v, regionWidth, regionHeight, textureWidth, textureHeight);*/
         //?}
@@ -112,8 +104,6 @@ final class RenderCompat {
     ) {
         //? if >=1.21.11 {
         guiGraphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, u, v, width, height, regionWidth, regionHeight, textureWidth, textureHeight, tint);
-        //?} elif >=1.21.4 {
-        /*guiGraphics.blit(RenderType::guiTextured, texture, x, y, u, v, width, height, regionWidth, regionHeight, textureWidth, textureHeight, tint);*/
         //?} else {
         /*float red = ((tint >> 16) & 0xFF) / 255.0F;
         float green = ((tint >> 8) & 0xFF) / 255.0F;

@@ -9,6 +9,8 @@ public final class LocatorBarHudRenderer {
     }
 
     public static void render(GuiGraphicsExtractor guiGraphics) {
+        // May be used in future
+        /*
         //? if >=1.21.4 {
         //? if <1.21.11 {
         net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
@@ -19,6 +21,7 @@ public final class LocatorBarHudRenderer {
         }
         //?}
         //?}
+        */
 
         if (!LocatorBarConfig.isEnabled()) {
             return;

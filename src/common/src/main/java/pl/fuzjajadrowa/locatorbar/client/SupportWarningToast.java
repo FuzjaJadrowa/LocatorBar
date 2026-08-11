@@ -1,5 +1,7 @@
 package pl.fuzjajadrowa.locatorbar.client;
 
+// May be used in future
+/*
 //? if >=1.21.4 {
 //? if <1.21.11 {
 import net.minecraft.client.Minecraft;
@@ -40,3 +42,4 @@ public class SupportWarningToast implements Toast {
 }
 //?}
 //?}
+*/
