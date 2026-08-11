@@ -44,7 +44,7 @@ fun Project.versionedJavaSources(vararg roots: File) {
                         val relative = root.toPath().relativize(file.toPath())
                         val output = outputRoot.toPath().resolve(relative).toFile()
                         output.parentFile.mkdirs()
-                        output.writeText(Preprocessor.transform(file.readLines(), project.name.substringBeforeLast('-')))
+                        output.writeText(Preprocessor.transform(file.readLines(), project.name.substringBeforeLast('-'), project.name.substringAfterLast('-')))
                     }
             }
         }

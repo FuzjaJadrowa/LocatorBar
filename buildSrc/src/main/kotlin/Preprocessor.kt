@@ -7,7 +7,7 @@ object Preprocessor {
         var active: Boolean
     )
 
-    fun transform(lines: List<String>, version: String): String {
+    fun transform(lines: List<String>, version: String, loader: String): String {
         val output = mutableListOf<String>()
         val blocks = ArrayDeque<StonecutterBlock>()
         var nextLineActive: Boolean? = null
@@ -25,7 +25,7 @@ object Preprocessor {
                     directive.startsWith("} elif ") && directive.endsWith(" {") -> {
                         val block = blocks.last()
                         val condition = directive.removePrefix("} elif ").removeSuffix(" {").trim()
-                        val active = block.parentActive && !block.matched && evalVersion(version, condition)
+                        val active = block.parentActive && !block.matched && evalVersion(version, loader, condition)
                         block.active = active
                         block.matched = block.matched || active
                     }
@@ -37,13 +37,13 @@ object Preprocessor {
                     }
                     directive.startsWith("if ") && directive.endsWith(" {") -> {
                         val condition = directive.removePrefix("if ").removeSuffix(" {").trim()
-                        val active = currentActive() && evalVersion(version, condition)
+                        val active = currentActive() && evalVersion(version, loader, condition)
                         blocks.addLast(StonecutterBlock(currentActive(), active, active))
                     }
                     directive.startsWith("elif ") && directive.endsWith(" {") -> {
                         val block = blocks.last()
                         val condition = directive.removePrefix("elif ").removeSuffix(" {").trim()
-                        val active = block.parentActive && !block.matched && evalVersion(version, condition)
+                        val active = block.parentActive && !block.matched && evalVersion(version, loader, condition)
                         block.active = active
                         block.matched = block.matched || active
                     }
@@ -55,7 +55,7 @@ object Preprocessor {
                     }
                     directive.startsWith("if ") -> {
                         val condition = directive.removePrefix("if ").trim()
-                        nextLineActive = currentActive() && evalVersion(version, condition)
+                        nextLineActive = currentActive() && evalVersion(version, loader, condition)
                     }
                 }
                 continue
@@ -67,7 +67,7 @@ object Preprocessor {
                 continue
             }
 
-            output += applyReplacements(uncommentLine(line), version)
+            output += applyReplacements(uncommentLine(line), version, loader)
         }
 
         return output.joinToString(System.lineSeparator(), postfix = System.lineSeparator())
@@ -95,19 +95,19 @@ object Preprocessor {
         return result
     }
 
-    private fun applyReplacements(line: String, version: String): String {
+    private fun applyReplacements(line: String, version: String, loader: String): String {
         var result = line
-        if (evalVersion(version, "<1.21")) {
+        if (evalVersion(version, loader, "<1.21")) {
             result = result
                 .replace("Identifier.fromNamespaceAndPath(", "new Identifier(")
         }
-        if (evalVersion(version, "<1.21.11")) {
+        if (evalVersion(version, loader, "<1.21.11")) {
             result = result
                 .replace("Identifier", "ResourceLocation")
                 .replace("import net.minecraft.world.entity.player.PlayerSkin;", "import net.minecraft.client.resources.PlayerSkin;")
                 .replace(".identifier()", ".location()")
         }
-        if (evalVersion(version, "<26.1")) {
+        if (evalVersion(version, loader, "<26.1")) {
             result = result
                 .replace("GuiGraphicsExtractor", "GuiGraphics")
                 .replace(".text(", ".drawString(")
@@ -117,7 +117,14 @@ object Preprocessor {
         return result
     }
 
-    private fun evalVersion(version: String, condition: String): Boolean {
+    private fun evalVersion(version: String, loader: String, condition: String): Boolean {
+        if (condition == "fabric") return loader == "fabric"
+        if (condition == "!fabric") return loader != "fabric"
+        if (condition == "neoforge") return loader == "neoforge"
+        if (condition == "!neoforge") return loader != "neoforge"
+        if (condition == "forge") return loader == "forge"
+        if (condition == "!forge") return loader != "forge"
+
         val parts = condition.trim().split(Regex("\\s+"), limit = 2)
         val operator: String
         val compared: String

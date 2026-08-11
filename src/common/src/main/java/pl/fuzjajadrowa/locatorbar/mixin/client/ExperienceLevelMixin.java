@@ -10,7 +10,13 @@ import pl.fuzjajadrowa.locatorbar.client.ClassicExperienceBarState;
 //? if >=26.2 {
 import net.minecraft.client.gui.Hud;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+//? if fabric {
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.contextualbar.ContextualBar;
+import org.spongepowered.asm.mixin.injection.Redirect;
+//?} else {
 import net.minecraft.client.DeltaTracker;
+//?}
 
 @Mixin(Hud.class)
 //?} else {
@@ -25,14 +31,30 @@ import net.minecraft.client.gui.GuiGraphics;
 @Mixin(Gui.class)
 *///?}
 public abstract class ExperienceLevelMixin {
-    //? if >=26.1 {
+    //? if >=26.2 {
+    //? if fabric {
+    @Redirect(method = "extractHotbarAndDecorations", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/contextualbar/ContextualBar;extractExperienceLevel(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/gui/Font;I)V"))
+    private void locatorbar$redirectExtractExperienceLevel(GuiGraphicsExtractor guiGraphics, Font font, int level) {
+        if (!ClassicExperienceBarState.shouldHideVanillaExperienceBar(Minecraft.getInstance())) {
+            ContextualBar.extractExperienceLevel(guiGraphics, font, level);
+        }
+    }
+    //?} else {
     @Inject(method = "extractExperienceLevel", at = @At("HEAD"), cancellable = true)
     private void locatorbar$hideExperienceLevel(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
         if (ClassicExperienceBarState.shouldHideVanillaExperienceBar(Minecraft.getInstance())) {
             ci.cancel();
         }
     }
-    //?} else {
+    //?}
+    //?} elif >=26.1 {
+    /*@Inject(method = "extractExperienceLevel", at = @At("HEAD"), cancellable = true)
+    private void locatorbar$hideExperienceLevel(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+        if (ClassicExperienceBarState.shouldHideVanillaExperienceBar(Minecraft.getInstance())) {
+            ci.cancel();
+        }
+    }
+    *///?} else {
     //? if >=1.20.5 {
     /*@Inject(method = "renderExperienceLevel", at = @At("HEAD"), cancellable = true)
     private void locatorbar$hideExperienceLevel(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
