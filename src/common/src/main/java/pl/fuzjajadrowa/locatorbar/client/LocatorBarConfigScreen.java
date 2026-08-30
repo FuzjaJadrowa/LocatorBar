@@ -794,7 +794,7 @@ public final class LocatorBarConfigScreen extends Screen {
 
                 this.symbolBox = new EditBox(LocatorBarConfigScreen.this.font, 0, 0, 20, 20, Component.empty());
                 this.symbolBox.setValue(initialSymbol != null ? initialSymbol : "");
-                this.symbolBox.setMaxLength(1);
+                this.symbolBox.setMaxLength(4);
                 this.symbolBox.setResponder(value -> updateWaypoint());
                 saveDefaultWaypointConfigIfNeeded(initialSymbol);
 

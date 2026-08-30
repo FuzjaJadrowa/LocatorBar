@@ -83,8 +83,7 @@ public final class LocatorBarUtils {
         //? if >=1.20.5 {
         net.minecraft.world.item.component.BundleContents bundleContents = stack.get(net.minecraft.core.component.DataComponents.BUNDLE_CONTENTS);
         if (bundleContents != null) {
-            //? if >=1.21.11 {
-            for (ItemStack innerStack : bundleContents.items()) {
+            for (ItemStack innerStack : bundleContents.itemCopyStream().toList()) {
                 if (!innerStack.isEmpty()) {
                     consumer.accept(innerStack);
                     if (innerStack.is(Items.BUNDLE)) {
@@ -92,17 +91,8 @@ public final class LocatorBarUtils {
                     }
                 }
             }
-            //?} else {
-            /*for (ItemStack innerStack : bundleContents.itemCopyStream().toList()) {
-                if (!innerStack.isEmpty()) {
-                    consumer.accept(innerStack);
-                    if (innerStack.is(Items.BUNDLE)) {
-                        forEachBundleItem(innerStack, consumer);
-                    }
-                }
-            }
-            *///?}
         }
+        //?} else {
         //?} else {
         /*net.minecraft.nbt.CompoundTag tag = stack.getTag();
         if (tag != null && tag.contains("Items", 9)) {

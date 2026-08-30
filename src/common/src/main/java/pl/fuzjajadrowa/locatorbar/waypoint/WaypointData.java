@@ -190,8 +190,13 @@ public final class WaypointData {
         } else {
             tag.remove(HIDDEN_TAG);
         }
-        //? if >=1.20.5
-        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+        //? if >=1.20.5 {
+        if (tag.isEmpty()) {
+            stack.remove(DataComponents.CUSTOM_DATA);
+        } else {
+            stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+        }
+        //?}
     }
 
     public static Integer getCustomColor(ItemStack stack) {
@@ -215,8 +220,13 @@ public final class WaypointData {
         } else {
             tag.putInt(COLOR_TAG, color);
         }
-        //? if >=1.20.5
-        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+        //? if >=1.20.5 {
+        if (tag.isEmpty()) {
+            stack.remove(DataComponents.CUSTOM_DATA);
+        } else {
+            stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+        }
+        //?}
     }
 
     public static String getWaypointSymbol(ItemStack stack) {
@@ -234,7 +244,7 @@ public final class WaypointData {
         if (symbol.isEmpty()) {
             return null;
         }
-        return symbol.substring(0, 1);
+        return symbol.substring(0, Character.charCount(symbol.codePointAt(0)));
     }
 
     public static void setWaypointSymbol(ItemStack stack, String symbol) {
@@ -242,10 +252,15 @@ public final class WaypointData {
         if (symbol == null || symbol.isEmpty()) {
             tag.remove(SYMBOL_TAG);
         } else {
-            tag.putString(SYMBOL_TAG, symbol.substring(0, 1));
+            tag.putString(SYMBOL_TAG, symbol.substring(0, Character.charCount(symbol.codePointAt(0))));
         }
-        //? if >=1.20.5
-        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+        //? if >=1.20.5 {
+        if (tag.isEmpty()) {
+            stack.remove(DataComponents.CUSTOM_DATA);
+        } else {
+            stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+        }
+        //?}
     }
 
     public static void unlinkWaypoint(Player player, UUID waypointId) {
@@ -281,48 +296,42 @@ public final class WaypointData {
         }
     }
 
-    private static void clearWaypointInBundleIfMatches(ItemStack bundleStack, UUID waypointId) {
+    private static boolean clearWaypointInBundleIfMatches(ItemStack bundleStack, UUID waypointId) {
         //? if >=1.20.5 {
         net.minecraft.world.item.component.BundleContents bundleContents = bundleStack.get(DataComponents.BUNDLE_CONTENTS);
         if (bundleContents == null) {
-            return;
+            return false;
         }
 
         java.util.List<ItemStack> updatedItems = new java.util.ArrayList<>();
         boolean modified = false;
-        //? if >=1.21.11 {
-        for (ItemStack item : bundleContents.items()) {
+        for (ItemStack item : bundleContents.itemCopyStream().toList()) {
             ItemStack copy = item.copy();
             if (getWaypointId(copy) != null && getWaypointId(copy).equals(waypointId)) {
                 clearLocatorBarData(copy);
                 modified = true;
             } else if (copy.is(net.minecraft.world.item.Items.BUNDLE)) {
-                clearWaypointInBundleIfMatches(copy, waypointId);
-                modified = true;
+                if (clearWaypointInBundleIfMatches(copy, waypointId)) {
+                    modified = true;
+                }
             }
             updatedItems.add(copy);
         }
-        //?} else {
-        /*for (ItemStack item : bundleContents.itemCopyStream().toList()) {
-            ItemStack copy = item.copy();
-            if (getWaypointId(copy) != null && getWaypointId(copy).equals(waypointId)) {
-                clearLocatorBarData(copy);
-                modified = true;
-            } else if (copy.is(net.minecraft.world.item.Items.BUNDLE)) {
-                clearWaypointInBundleIfMatches(copy, waypointId);
-                modified = true;
-            }
-            updatedItems.add(copy);
-        }
-        *///?}
 
         if (modified) {
+            //? if >=26.1 {
+            /*bundleStack.set(DataComponents.BUNDLE_CONTENTS, new net.minecraft.world.item.component.BundleContents(
+                    updatedItems.stream().map(st -> new net.minecraft.world.item.ItemStackTemplate(st.getItem().builtInRegistryHolder(), st.getCount(), st.getComponentsPatch())).toList()
+            ));*/
+            //?} else {
             bundleStack.set(DataComponents.BUNDLE_CONTENTS, new net.minecraft.world.item.component.BundleContents(updatedItems));
+            //?}
         }
+        return modified;
         //?} else {
         /*CompoundTag tag = bundleStack.getTag();
         if (tag == null || !tag.contains("Items", 9)) {
-            return;
+            return false;
         }
 
         net.minecraft.nbt.ListTag itemsList = tag.getList("Items", 10);
@@ -336,9 +345,10 @@ public final class WaypointData {
                     itemsList.set(i, innerStack.save(new CompoundTag()));
                     modified = true;
                 } else if (innerStack.is(net.minecraft.world.item.Items.BUNDLE)) {
-                    clearWaypointInBundleIfMatches(innerStack, waypointId);
-                    itemsList.set(i, innerStack.save(new CompoundTag()));
-                    modified = true;
+                    if (clearWaypointInBundleIfMatches(innerStack, waypointId)) {
+                        itemsList.set(i, innerStack.save(new CompoundTag()));
+                        modified = true;
+                    }
                 }
             }
         }
@@ -347,6 +357,7 @@ public final class WaypointData {
             tag.put("Items", itemsList);
             bundleStack.setTag(tag);
         }
+        return modified;
         *///?}
     }
 

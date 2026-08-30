@@ -35,22 +35,23 @@ public final class LocatorBarHudHelper {
 
     public static List<WaypointMarker> collectWaypointMarkers(Player localPlayer) {
         List<WaypointMarker> markers = new ArrayList<>();
+        java.util.Set<UUID> seenWaypointIds = new java.util.HashSet<>();
         UUID localPlayerId = localPlayer.getUUID();
 
         //? if >=1.21.11 {
         for (ItemStack stack : localPlayer.getInventory().getNonEquipmentItems()) {
-            addWaypointMarker(markers, stack, localPlayer, localPlayerId);
+            addWaypointMarker(markers, seenWaypointIds, stack, localPlayer, localPlayerId);
         }
         ItemStack offhand = localPlayer.getInventory().getItem(Inventory.SLOT_OFFHAND);
         if (!offhand.isEmpty()) {
-            addWaypointMarker(markers, offhand, localPlayer, localPlayerId);
+            addWaypointMarker(markers, seenWaypointIds, offhand, localPlayer, localPlayerId);
         }
         //?} else {
         /*for (ItemStack stack : localPlayer.getInventory().items) {
-            addWaypointMarker(markers, stack, localPlayer, localPlayerId);
+            addWaypointMarker(markers, seenWaypointIds, stack, localPlayer, localPlayerId);
         }
         for (ItemStack stack : localPlayer.getInventory().offhand) {
-            addWaypointMarker(markers, stack, localPlayer, localPlayerId);
+            addWaypointMarker(markers, seenWaypointIds, stack, localPlayer, localPlayerId);
         }
         *///?}
 
@@ -108,14 +109,16 @@ public final class LocatorBarHudHelper {
                         }
 
                         UUID dummyId = UUID.nameUUIDFromBytes(name.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                        markers.add(new WaypointMarker(
-                                dummyId,
-                                LocatorBarUtils.wrapTo180(directionYaw),
-                                color,
-                                -1,
-                                "",
-                                false
-                        ));
+                        if (seenWaypointIds.add(dummyId)) {
+                            markers.add(new WaypointMarker(
+                                    dummyId,
+                                    LocatorBarUtils.wrapTo180(directionYaw),
+                                    color,
+                                    -1,
+                                    "",
+                                    false
+                            ));
+                        }
                     });
                 });
             }
@@ -135,13 +138,13 @@ public final class LocatorBarHudHelper {
         return markers;
     }
 
-    private static void addWaypointMarker(List<WaypointMarker> markers, ItemStack stack, Player localPlayer, UUID localPlayerId) {
+    private static void addWaypointMarker(List<WaypointMarker> markers, java.util.Set<UUID> seenWaypointIds, ItemStack stack, Player localPlayer, UUID localPlayerId) {
         if (stack == null || stack.isEmpty()) {
             return;
         }
 
         if (stack.is(net.minecraft.world.item.Items.BUNDLE)) {
-            LocatorBarUtils.forEachBundleItem(stack, innerStack -> addWaypointMarker(markers, innerStack, localPlayer, localPlayerId));
+            LocatorBarUtils.forEachBundleItem(stack, innerStack -> addWaypointMarker(markers, seenWaypointIds, innerStack, localPlayer, localPlayerId));
             return;
         }
 
@@ -156,11 +159,6 @@ public final class LocatorBarHudHelper {
             return;
         }
         *///?}
-
-        UUID owner = WaypointData.getOwner(stack);
-        if (owner != null && !owner.equals(localPlayerId)) {
-            return;
-        }
 
         //? if >=1.20.5 {
         GlobalPos target = tracker.target().get();
@@ -185,8 +183,12 @@ public final class LocatorBarHudHelper {
             return;
         }
 
+        if (WaypointData.getWaypointId(stack) == null) {
+            WaypointData.ensureWaypointData(stack, localPlayer);
+        }
+
         UUID waypointId = WaypointData.getWaypointId(stack);
-        if (waypointId == null) {
+        if (waypointId == null || !seenWaypointIds.add(waypointId)) {
             return;
         }
 

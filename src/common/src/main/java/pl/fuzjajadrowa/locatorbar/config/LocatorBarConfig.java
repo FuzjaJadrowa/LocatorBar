@@ -340,7 +340,7 @@ public final class LocatorBarConfig {
         public WaypointConfig(String world, int color, String character, boolean visible) {
             this.world = world;
             this.color = color;
-            this.character = character == null || character.isEmpty() ? null : character.substring(0, 1);
+            this.character = character == null || character.isEmpty() ? null : character.substring(0, Character.charCount(character.codePointAt(0)));
             this.visible = visible;
         }
     }
