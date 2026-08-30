@@ -113,8 +113,7 @@ private fun Project.configureRootGithubPublishing() {
     }
 
     rootProject.gradle.projectsEvaluated {
-        val targetSubprojects = rootProject.subprojects.filter { it.name == "26.2-fabric" }
-        val releaseFiles = targetSubprojects
+        val releaseFiles = rootProject.subprojects
             .sortedBy { it.name }
             .map { project ->
                 val loader = project.name.substringAfterLast('-')
@@ -126,12 +125,12 @@ private fun Project.configureRootGithubPublishing() {
             additionalFiles.from(releaseFiles.drop(1))
         }
 
-        val subprojectBuilds = targetSubprojects.map { it.tasks.named("build") }
-        val subprojectPublishTasks = targetSubprojects.map { it.tasks.named("publishMods") }
+        val subprojectBuilds = rootProject.subprojects.map { it.tasks.named("build") }
+        val subprojectPublishTasks = rootProject.subprojects.map { it.tasks.named("publishMods") }
 
         validatePublishTargets.configure {
             doLast {
-                targetSubprojects.sortedBy { it.name }.forEach { project ->
+                rootProject.subprojects.sortedBy { it.name }.forEach { project ->
                     val targets = project.mod.prop("mc_targets")
                     val loader = project.name.substringAfterLast('-')
                     val versions = publishedMinecraftVersions(targets, project.mod.dep("minecraft.$loader"))
