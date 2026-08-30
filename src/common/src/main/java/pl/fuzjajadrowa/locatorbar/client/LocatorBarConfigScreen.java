@@ -548,6 +548,10 @@ public final class LocatorBarConfigScreen extends Screen {
     }
 
     private void addManagedWaypoint(List<ManagedWaypoint> waypoints, Set<UUID> seenIds, ItemStack stack, String currentWorld) {
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
+
         //? if >=1.20.5 {
         LodestoneTracker tracker = stack.get(DataComponents.LODESTONE_TRACKER);
         if (tracker == null || tracker.target().isEmpty()) {

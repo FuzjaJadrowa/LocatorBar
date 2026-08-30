@@ -32,6 +32,9 @@ public final class WaypointData {
     }
 
     public static void ensureWaypointData(ItemStack stack, Player player) {
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
         //? if >=1.20.5 {
         LodestoneTracker tracker = stack.get(DataComponents.LODESTONE_TRACKER);
         if (tracker == null || tracker.target().isEmpty()) {
@@ -71,6 +74,9 @@ public final class WaypointData {
     }
 
     public static boolean ensureWaypointData(ItemStack stack, Player player, ResourceKey<Level> dimension, BlockPos pos) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
         //? if >=1.20.5 {
         LodestoneTracker tracker = stack.get(DataComponents.LODESTONE_TRACKER);
         if (tracker == null || tracker.target().isEmpty()) {
@@ -340,6 +346,9 @@ public final class WaypointData {
     }
 
     private static CompoundTag getCustomDataTagNullable(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return null;
+        }
         //? if >=1.20.5 {
         CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
         if (customData == null) {
