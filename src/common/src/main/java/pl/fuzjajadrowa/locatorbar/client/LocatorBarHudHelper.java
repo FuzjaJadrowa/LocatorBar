@@ -140,6 +140,11 @@ public final class LocatorBarHudHelper {
             return;
         }
 
+        if (stack.is(net.minecraft.world.item.Items.BUNDLE)) {
+            LocatorBarUtils.forEachBundleItem(stack, innerStack -> addWaypointMarker(markers, innerStack, localPlayer, localPlayerId));
+            return;
+        }
+
         //? if >=1.20.5 {
         LodestoneTracker tracker = stack.get(DataComponents.LODESTONE_TRACKER);
         if (tracker == null || tracker.target().isEmpty()) {
@@ -252,25 +257,44 @@ public final class LocatorBarHudHelper {
     public static boolean hasRecoveryCompass(Player player) {
         //? if >=1.21.11 {
         for (ItemStack stack : player.getInventory().getNonEquipmentItems()) {
-            if (stack.is(net.minecraft.world.item.Items.RECOVERY_COMPASS)) {
+            if (isOrContainsRecoveryCompass(stack)) {
                 return true;
             }
         }
-        if (player.getInventory().getItem(Inventory.SLOT_OFFHAND).is(net.minecraft.world.item.Items.RECOVERY_COMPASS)) {
+        if (isOrContainsRecoveryCompass(player.getInventory().getItem(Inventory.SLOT_OFFHAND))) {
             return true;
         }
         //?} else {
         /*for (ItemStack stack : player.getInventory().items) {
-            if (stack.is(net.minecraft.world.item.Items.RECOVERY_COMPASS)) {
+            if (isOrContainsRecoveryCompass(stack)) {
                 return true;
             }
         }
         for (ItemStack stack : player.getInventory().offhand) {
-            if (stack.is(net.minecraft.world.item.Items.RECOVERY_COMPASS)) {
+            if (isOrContainsRecoveryCompass(stack)) {
                 return true;
             }
         }
         *///?}
+        return false;
+    }
+
+    private static boolean isOrContainsRecoveryCompass(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        if (stack.is(net.minecraft.world.item.Items.RECOVERY_COMPASS)) {
+            return true;
+        }
+        if (stack.is(net.minecraft.world.item.Items.BUNDLE)) {
+            boolean[] found = new boolean[1];
+            LocatorBarUtils.forEachBundleItem(stack, inner -> {
+                if (inner.is(net.minecraft.world.item.Items.RECOVERY_COMPASS)) {
+                    found[0] = true;
+                }
+            });
+            return found[0];
+        }
         return false;
     }
 }

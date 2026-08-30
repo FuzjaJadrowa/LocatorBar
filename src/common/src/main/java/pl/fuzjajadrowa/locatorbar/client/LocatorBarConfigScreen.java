@@ -552,6 +552,11 @@ public final class LocatorBarConfigScreen extends Screen {
             return;
         }
 
+        if (stack.is(net.minecraft.world.item.Items.BUNDLE)) {
+            pl.fuzjajadrowa.locatorbar.util.LocatorBarUtils.forEachBundleItem(stack, innerStack -> addManagedWaypoint(waypoints, seenIds, innerStack, currentWorld));
+            return;
+        }
+
         //? if >=1.20.5 {
         LodestoneTracker tracker = stack.get(DataComponents.LODESTONE_TRACKER);
         if (tracker == null || tracker.target().isEmpty()) {

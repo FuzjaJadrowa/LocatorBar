@@ -266,7 +266,12 @@ public final class WaypointData {
     }
 
     private static void clearWaypointDataIfMatches(ItemStack stack, UUID waypointId) {
-        if (stack.isEmpty()) {
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
+
+        if (stack.is(net.minecraft.world.item.Items.BUNDLE)) {
+            clearWaypointInBundleIfMatches(stack, waypointId);
             return;
         }
 
@@ -274,6 +279,75 @@ public final class WaypointData {
         if (id != null && id.equals(waypointId)) {
             clearLocatorBarData(stack);
         }
+    }
+
+    private static void clearWaypointInBundleIfMatches(ItemStack bundleStack, UUID waypointId) {
+        //? if >=1.20.5 {
+        net.minecraft.world.item.component.BundleContents bundleContents = bundleStack.get(DataComponents.BUNDLE_CONTENTS);
+        if (bundleContents == null) {
+            return;
+        }
+
+        java.util.List<ItemStack> updatedItems = new java.util.ArrayList<>();
+        boolean modified = false;
+        //? if >=1.21.11 {
+        for (ItemStack item : bundleContents.items()) {
+            ItemStack copy = item.copy();
+            if (getWaypointId(copy) != null && getWaypointId(copy).equals(waypointId)) {
+                clearLocatorBarData(copy);
+                modified = true;
+            } else if (copy.is(net.minecraft.world.item.Items.BUNDLE)) {
+                clearWaypointInBundleIfMatches(copy, waypointId);
+                modified = true;
+            }
+            updatedItems.add(copy);
+        }
+        //?} else {
+        /*for (ItemStack item : bundleContents.itemCopyStream().toList()) {
+            ItemStack copy = item.copy();
+            if (getWaypointId(copy) != null && getWaypointId(copy).equals(waypointId)) {
+                clearLocatorBarData(copy);
+                modified = true;
+            } else if (copy.is(net.minecraft.world.item.Items.BUNDLE)) {
+                clearWaypointInBundleIfMatches(copy, waypointId);
+                modified = true;
+            }
+            updatedItems.add(copy);
+        }
+        *///?}
+
+        if (modified) {
+            bundleStack.set(DataComponents.BUNDLE_CONTENTS, new net.minecraft.world.item.component.BundleContents(updatedItems));
+        }
+        //?} else {
+        /*CompoundTag tag = bundleStack.getTag();
+        if (tag == null || !tag.contains("Items", 9)) {
+            return;
+        }
+
+        net.minecraft.nbt.ListTag itemsList = tag.getList("Items", 10);
+        boolean modified = false;
+        for (int i = 0; i < itemsList.size(); i++) {
+            CompoundTag itemTag = itemsList.getCompound(i);
+            ItemStack innerStack = ItemStack.of(itemTag);
+            if (!innerStack.isEmpty()) {
+                if (getWaypointId(innerStack) != null && getWaypointId(innerStack).equals(waypointId)) {
+                    clearLocatorBarData(innerStack);
+                    itemsList.set(i, innerStack.save(new CompoundTag()));
+                    modified = true;
+                } else if (innerStack.is(net.minecraft.world.item.Items.BUNDLE)) {
+                    clearWaypointInBundleIfMatches(innerStack, waypointId);
+                    itemsList.set(i, innerStack.save(new CompoundTag()));
+                    modified = true;
+                }
+            }
+        }
+
+        if (modified) {
+            tag.put("Items", itemsList);
+            bundleStack.setTag(tag);
+        }
+        *///?}
     }
 
     private static void clearLocatorBarData(ItemStack stack) {
@@ -327,6 +401,18 @@ public final class WaypointData {
     }
 
     private static int readWaypointIndexForOwner(ItemStack stack, UUID owner) {
+        if (stack == null || stack.isEmpty()) {
+            return 0;
+        }
+
+        if (stack.is(net.minecraft.world.item.Items.BUNDLE)) {
+            int[] highest = new int[]{0};
+            pl.fuzjajadrowa.locatorbar.util.LocatorBarUtils.forEachBundleItem(stack, inner -> {
+                highest[0] = Math.max(highest[0], readWaypointIndexForOwner(inner, owner));
+            });
+            return highest[0];
+        }
+
         UUID stackOwner = getOwner(stack);
         if (stackOwner == null || !stackOwner.equals(owner)) {
             return 0;

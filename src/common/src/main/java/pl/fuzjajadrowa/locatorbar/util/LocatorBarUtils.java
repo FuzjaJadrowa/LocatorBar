@@ -74,4 +74,50 @@ public final class LocatorBarUtils {
         /*return colorFromId(id, 0.70F, 0.20F, 0.85F, 0.15F);
         *///?}
     }
+
+    public static void forEachBundleItem(ItemStack stack, java.util.function.Consumer<ItemStack> consumer) {
+        if (stack == null || stack.isEmpty() || !stack.is(Items.BUNDLE)) {
+            return;
+        }
+
+        //? if >=1.20.5 {
+        net.minecraft.world.item.component.BundleContents bundleContents = stack.get(net.minecraft.core.component.DataComponents.BUNDLE_CONTENTS);
+        if (bundleContents != null) {
+            //? if >=1.21.11 {
+            for (ItemStack innerStack : bundleContents.items()) {
+                if (!innerStack.isEmpty()) {
+                    consumer.accept(innerStack);
+                    if (innerStack.is(Items.BUNDLE)) {
+                        forEachBundleItem(innerStack, consumer);
+                    }
+                }
+            }
+            //?} else {
+            /*for (ItemStack innerStack : bundleContents.itemCopyStream().toList()) {
+                if (!innerStack.isEmpty()) {
+                    consumer.accept(innerStack);
+                    if (innerStack.is(Items.BUNDLE)) {
+                        forEachBundleItem(innerStack, consumer);
+                    }
+                }
+            }
+            *///?}
+        }
+        //?} else {
+        /*net.minecraft.nbt.CompoundTag tag = stack.getTag();
+        if (tag != null && tag.contains("Items", 9)) {
+            net.minecraft.nbt.ListTag itemsList = tag.getList("Items", 10);
+            for (int i = 0; i < itemsList.size(); i++) {
+                net.minecraft.nbt.CompoundTag itemTag = itemsList.getCompound(i);
+                ItemStack innerStack = ItemStack.of(itemTag);
+                if (!innerStack.isEmpty()) {
+                    consumer.accept(innerStack);
+                    if (innerStack.is(Items.BUNDLE)) {
+                        forEachBundleItem(innerStack, consumer);
+                    }
+                }
+            }
+        }
+        *///?}
+    }
 }
