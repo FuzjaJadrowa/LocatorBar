@@ -69,7 +69,11 @@ public final class WaypointInventory {
 
         java.util.List<ItemStack> updatedItems = new java.util.ArrayList<>();
         boolean modified = false;
-        java.util.Iterator<ItemStack> items = bundleContents.itemCopyStream().iterator();
+        //? if >=26.3 {
+        java.util.Iterator<ItemStack> items = bundleContents.itemCopies().iterator();
+        //?} else {
+        /*java.util.Iterator<ItemStack> items = bundleContents.itemCopyStream().iterator();
+        *///?}
         while (items.hasNext()) {
             ItemStack copy = items.next();
             modified |= updateStack(copy, update);

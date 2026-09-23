@@ -22,7 +22,7 @@ class PreprocessorTest {
         """
         assertEquals("legacy\nnbt", transform(source).replace("\r", ""))
         assertEquals("components", transform(source, "1.21.1"))
-        assertEquals("modern", transform(source, "26.2"))
+        assertEquals("modern", transform(source, "26.3"))
         assertEquals("yes", transform("//? if forge\nyes\n//? if fabric\nno"))
         assertEquals("", transform("//? if fabric {\nno\n//?}"))
         assertEquals("yes", transform("//? if !fabric {\nyes\n//?} else {\nno\n//?}"))
@@ -41,7 +41,7 @@ class PreprocessorTest {
             //?}
         """
         assertEquals("yes", transform(source, "1.21.11", "neoforge"))
-        assertEquals("other", transform(source, "26.2", "fabric"))
+        assertEquals("other", transform(source, "26.3", "fabric"))
         assertEquals("old", transform(source))
         for (operator in listOf("==", ">=", "<=")) {
             assertEquals("yes", transform("//? if $operator 1.20.1.0\nyes"))
@@ -77,7 +77,7 @@ class PreprocessorTest {
     @Test fun allRepositoryTargetsGenerateSyntacticallyValidJava() {
         val root = File(System.getProperty("locatorbar.root"))
         val versions = listOf("1.20.1-forge", "1.21.1-fabric", "1.21.1-neoforge", "1.21.11-fabric",
-            "1.21.11-neoforge", "26.1.2-fabric", "26.1.2-neoforge", "26.2-fabric", "26.2-neoforge")
+            "1.21.11-neoforge", "26.1.2-fabric", "26.1.2-neoforge", "26.3-fabric", "26.3-neoforge")
         val compiler = ToolProvider.getSystemJavaCompiler()
         for (target in versions) {
             val version = target.substringBeforeLast('-')
@@ -93,6 +93,18 @@ class PreprocessorTest {
                     if (file.name == "LocatorBarUtils.java" && target == "1.20.1-forge") {
                         assertContains(result, "ItemStack.of(itemTag)")
                         assertFalse(result.contains("DataComponents"))
+                    }
+                    if (file.name in listOf("LocatorBarUtils.java", "WaypointInventory.java")) {
+                        when {
+                            version == "26.3" -> {
+                                assertContains(result, "bundleContents.itemCopies()")
+                                assertFalse(result.contains("itemCopyStream()"))
+                            }
+                            version != "1.20.1" -> {
+                                assertContains(result, "bundleContents.itemCopyStream()")
+                                assertFalse(result.contains("itemCopies()"))
+                            }
+                        }
                     }
                 }
             }

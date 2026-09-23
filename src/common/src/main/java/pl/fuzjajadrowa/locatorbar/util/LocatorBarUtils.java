@@ -77,7 +77,11 @@ public final class LocatorBarUtils {
         //? if >=1.20.5 {
         net.minecraft.world.item.component.BundleContents bundleContents = stack.get(net.minecraft.core.component.DataComponents.BUNDLE_CONTENTS);
         if (bundleContents != null) {
-            java.util.Iterator<ItemStack> items = bundleContents.itemCopyStream().iterator();
+            //? if >=26.3 {
+            java.util.Iterator<ItemStack> items = bundleContents.itemCopies().iterator();
+            //?} else {
+            /*java.util.Iterator<ItemStack> items = bundleContents.itemCopyStream().iterator();
+            *///?}
             while (items.hasNext()) {
                 ItemStack innerStack = items.next();
                 if (!innerStack.isEmpty()) {
