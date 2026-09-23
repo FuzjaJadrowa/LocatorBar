@@ -24,7 +24,9 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 25
+          java-version: |
+            17
+            25
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -40,8 +42,11 @@ jobs:
       - name: Inspect Gradle projects
         run: ./gradlew --no-daemon projects --stacktrace
 
+      - name: Test preprocessor, all generated targets, config and math
+        run: ./gradlew --no-daemon -p buildSrc test --stacktrace
+
       - name: Check active code
-        run: ./gradlew --no-daemon :26.2-fabric:check :26.2-neoforge:check --stacktrace
+        run: ./gradlew --no-daemon check --stacktrace
 
   build:
     name: Build ${{ matrix.target }}
@@ -70,7 +75,9 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 25
+          java-version: |
+            17
+            25
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4

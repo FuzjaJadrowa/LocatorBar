@@ -98,6 +98,7 @@ public final class PlayerLocatorClient {
 
     private static List<Marker> collectEntityMarkers(Player localPlayer, AlphaFunction alphaFunction) {
         List<Marker> markers = new ArrayList<>();
+        //? if >=26.2
         java.util.Set<java.util.UUID> addedPlayers = new java.util.HashSet<>();
 
         for (Player otherPlayer : localPlayer.level().players()) {
@@ -135,6 +136,7 @@ public final class PlayerLocatorClient {
             */
             //?}
             markers.add(new Marker(otherPlayer.getUUID(), skinTexture, directionYaw, alpha, distance, teamColor));
+            //? if >=26.2
             addedPlayers.add(otherPlayer.getUUID());
         }
 

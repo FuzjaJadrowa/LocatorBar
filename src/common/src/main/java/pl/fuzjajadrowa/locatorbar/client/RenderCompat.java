@@ -33,13 +33,6 @@ final class RenderCompat {
         /*guiGraphics.pose().translate(x, y, 0.0F);*/
     }
 
-    static void translate(GuiGraphicsExtractor guiGraphics, float x, float y, float z) {
-        //? if >=1.21.11
-        guiGraphics.pose().translate(x, y);
-        //? if <1.21.11
-        /*guiGraphics.pose().translate(x, y, z);*/
-    }
-
     static void scale(GuiGraphicsExtractor guiGraphics, float x, float y) {
         //? if >=1.21.11
         guiGraphics.pose().scale(x, y);

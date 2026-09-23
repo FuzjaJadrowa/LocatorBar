@@ -7,8 +7,6 @@ import net.minecraft.core.GlobalPos;
 import net.minecraft.core.component.DataComponents;
 //?}
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 //? if >=1.20.5 {
@@ -19,56 +17,35 @@ import pl.fuzjajadrowa.locatorbar.waypoint.WaypointData;
 import pl.fuzjajadrowa.locatorbar.util.LocatorBarUtils;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
 public final class LocatorBarHudHelper {
+    private static final UUID DEATH_WAYPOINT_ID = new UUID(0L, 0L);
     private LocatorBarHudHelper() {
     }
 
     public record WaypointMarker(UUID waypointId, float directionYaw, int rgbColor, int index, String symbol, boolean isDeath) {
     }
 
-    public record PlayerMarker(UUID playerId, Identifier skinTexture, float directionYaw, float alpha, float distance, Integer teamColor) {
-    }
-
     public static List<WaypointMarker> collectWaypointMarkers(Player localPlayer) {
         List<WaypointMarker> markers = new ArrayList<>();
         java.util.Set<UUID> seenWaypointIds = new java.util.HashSet<>();
-        UUID localPlayerId = localPlayer.getUUID();
 
-        //? if >=1.21.11 {
-        for (ItemStack stack : localPlayer.getInventory().getNonEquipmentItems()) {
-            addWaypointMarker(markers, seenWaypointIds, stack, localPlayer, localPlayerId);
+        for (ItemStack stack : ClientWaypointInventory.items(localPlayer)) {
+            addWaypointMarker(markers, seenWaypointIds, stack, localPlayer);
         }
-        ItemStack offhand = localPlayer.getInventory().getItem(Inventory.SLOT_OFFHAND);
-        if (!offhand.isEmpty()) {
-            addWaypointMarker(markers, seenWaypointIds, offhand, localPlayer, localPlayerId);
-        }
-        //?} else {
-        /*for (ItemStack stack : localPlayer.getInventory().items) {
-            addWaypointMarker(markers, seenWaypointIds, stack, localPlayer, localPlayerId);
-        }
-        for (ItemStack stack : localPlayer.getInventory().offhand) {
-            addWaypointMarker(markers, seenWaypointIds, stack, localPlayer, localPlayerId);
-        }
-        *///?}
 
         if (LocatorBarConfig.isShowDeathWaypoint()) {
             if (hasRecoveryCompass(localPlayer)) {
-                //? if >=26.1 {
-                net.minecraft.core.GlobalPos lastDeath = localPlayer.getLastDeathLocation().orElse(null);
-                //?} else {
-                /*net.minecraft.core.GlobalPos lastDeath = localPlayer.getLastDeathLocation().orElse(null);
-                *///?}
+                GlobalPos lastDeath = localPlayer.getLastDeathLocation().orElse(null);
                 if (lastDeath != null && lastDeath.dimension().equals(localPlayer.level().dimension())) {
                     double dx = lastDeath.pos().getX() + 0.5D - localPlayer.getX();
                     double dz = lastDeath.pos().getZ() + 0.5D - localPlayer.getZ();
                     if (dx * dx + dz * dz >= 1.0E-6D) {
                         float directionYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
                         markers.add(new WaypointMarker(
-                                new UUID(0L, 0L),
+                                DEATH_WAYPOINT_ID,
                                 LocatorBarUtils.wrapTo180(directionYaw),
                                 0xFFFFFF,
                                 -1,
@@ -95,7 +72,6 @@ public final class LocatorBarHudHelper {
 
                 waypointManager.forEachWaypoint(localPlayer, trackedWaypoint -> {
                     trackedWaypoint.id().right().ifPresent(name -> {
-                        double distanceSq = trackedWaypoint.distanceSquared(localPlayer);
                         double yawRad = trackedWaypoint.yawAngleToCamera(localPlayer.level(), camera, entity -> partialTicks);
                         float directionYaw = (float) Math.toDegrees(yawRad);
 
@@ -138,13 +114,8 @@ public final class LocatorBarHudHelper {
         return markers;
     }
 
-    private static void addWaypointMarker(List<WaypointMarker> markers, java.util.Set<UUID> seenWaypointIds, ItemStack stack, Player localPlayer, UUID localPlayerId) {
+    private static void addWaypointMarker(List<WaypointMarker> markers, java.util.Set<UUID> seenWaypointIds, ItemStack stack, Player localPlayer) {
         if (stack == null || stack.isEmpty()) {
-            return;
-        }
-
-        if (stack.is(net.minecraft.world.item.Items.BUNDLE)) {
-            LocatorBarUtils.forEachBundleItem(stack, innerStack -> addWaypointMarker(markers, seenWaypointIds, innerStack, localPlayer, localPlayerId));
             return;
         }
 
@@ -183,10 +154,6 @@ public final class LocatorBarHudHelper {
             return;
         }
 
-        if (WaypointData.getWaypointId(stack) == null) {
-            WaypointData.ensureWaypointData(stack, localPlayer);
-        }
-
         UUID waypointId = WaypointData.getWaypointId(stack);
         if (waypointId == null || !seenWaypointIds.add(waypointId)) {
             return;
@@ -217,86 +184,16 @@ public final class LocatorBarHudHelper {
         return LocatorBarUtils.colorFromId(waypointId, 0.65F, 0.25F, 0.80F, 0.20F);
     }
 
-    public static List<PlayerMarker> collectPlayerMarkers(Player localPlayer) {
-        List<PlayerMarker> markers = new ArrayList<>();
-        for (PlayerLocatorClient.Marker marker : PlayerLocatorClient.collectMarkers(localPlayer, LocatorBarHudHelper::computePlayerAlpha)) {
-            markers.add(new PlayerMarker(
-                    marker.playerId(),
-                    marker.skinTexture(),
-                    LocatorBarUtils.wrapTo180(marker.directionYaw()),
-                    marker.alpha(),
-                    marker.distance(),
-                    marker.teamColor()
-            ));
-        }
-        markers.sort(Comparator.comparingDouble(PlayerMarker::distance));
-        return markers;
-    }
-
-    public static float computePlayerAlpha(float distance) {
-        float fadeStartDistance = LocatorBarConfig.getPlayerMarkerFadeStartDistance();
-        float fadeToMinDistance = LocatorBarConfig.getPlayerMarkerFadeToMinDistance();
-        float hideDistance = LocatorBarConfig.getPlayerMarkerHideDistance();
+    public static List<PlayerLocatorClient.Marker> collectPlayerMarkers(Player localPlayer) {
+        float start = LocatorBarConfig.getPlayerMarkerFadeStartDistance();
+        float end = LocatorBarConfig.getPlayerMarkerFadeToMinDistance();
+        float hide = LocatorBarConfig.getPlayerMarkerHideDistance();
         float minAlpha = LocatorBarConfig.getPlayerMarkerMinAlpha();
-
-        if (distance <= fadeStartDistance) {
-            return 1.0F;
-        }
-        if (distance <= fadeToMinDistance) {
-            if (fadeToMinDistance <= fadeStartDistance) {
-                return minAlpha;
-            }
-            float progress = (distance - fadeStartDistance) / (fadeToMinDistance - fadeStartDistance);
-            float curvedProgress = (float) Math.pow(progress, 1.65D);
-            return 1.0F - (curvedProgress * (1.0F - minAlpha));
-        }
-        if (distance < hideDistance) {
-            return minAlpha;
-        }
-        return 0.0F;
+        return PlayerLocatorClient.collectMarkers(localPlayer,
+                distance -> pl.fuzjajadrowa.locatorbar.util.MarkerMath.playerAlpha(distance, start, end, hide, minAlpha));
     }
 
     public static boolean hasRecoveryCompass(Player player) {
-        //? if >=1.21.11 {
-        for (ItemStack stack : player.getInventory().getNonEquipmentItems()) {
-            if (isOrContainsRecoveryCompass(stack)) {
-                return true;
-            }
-        }
-        if (isOrContainsRecoveryCompass(player.getInventory().getItem(Inventory.SLOT_OFFHAND))) {
-            return true;
-        }
-        //?} else {
-        /*for (ItemStack stack : player.getInventory().items) {
-            if (isOrContainsRecoveryCompass(stack)) {
-                return true;
-            }
-        }
-        for (ItemStack stack : player.getInventory().offhand) {
-            if (isOrContainsRecoveryCompass(stack)) {
-                return true;
-            }
-        }
-        *///?}
-        return false;
-    }
-
-    private static boolean isOrContainsRecoveryCompass(ItemStack stack) {
-        if (stack == null || stack.isEmpty()) {
-            return false;
-        }
-        if (stack.is(net.minecraft.world.item.Items.RECOVERY_COMPASS)) {
-            return true;
-        }
-        if (stack.is(net.minecraft.world.item.Items.BUNDLE)) {
-            boolean[] found = new boolean[1];
-            LocatorBarUtils.forEachBundleItem(stack, inner -> {
-                if (inner.is(net.minecraft.world.item.Items.RECOVERY_COMPASS)) {
-                    found[0] = true;
-                }
-            });
-            return found[0];
-        }
-        return false;
+        return ClientWaypointInventory.hasRecoveryCompass(player);
     }
 }

@@ -23,11 +23,7 @@ public final class LocatorBarNeoForge {
         NeoForge.EVENT_BUS.addListener(LocatorBarNeoForgeNetworking::onServerTick);
         NeoForge.EVENT_BUS.addListener(LocatorBarNeoForge::onRegisterCommands);
 
-        LocatorBar.broadcaster = settings -> {
-            net.neoforged.neoforge.network.PacketDistributor.sendToAllPlayers(
-                new pl.fuzjajadrowa.locatorbar.network.ServerConfigPayload(settings)
-            );
-        };
+        LocatorBar.broadcaster = LocatorBarNeoForgeNetworking::broadcastConfig;
         //? if >=1.21.11 {
         if (FMLEnvironment.getDist() == Dist.CLIENT) {
             initClient(modContainer);

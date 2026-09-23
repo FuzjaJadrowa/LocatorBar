@@ -26,6 +26,7 @@ fun Project.versionedJavaSources(vararg roots: File) {
     val generatedSources = layout.buildDirectory.dir("generated/preprocessed/main")
     val prepareSources = tasks.register("prepareVersionedJavaSources") {
         inputs.files(roots)
+        inputs.property("target", project.name)
         outputs.dir(generatedSources)
         dependsOn(tasks.matching { it.name == "stonecutterGenerate" })
 
@@ -44,7 +45,7 @@ fun Project.versionedJavaSources(vararg roots: File) {
                         val relative = root.toPath().relativize(file.toPath())
                         val output = outputRoot.toPath().resolve(relative).toFile()
                         output.parentFile.mkdirs()
-                        output.writeText(Preprocessor.transform(file.readLines(), project.name.substringBeforeLast('-'), project.name.substringAfterLast('-')))
+                        output.writeText(Preprocessor.transform(file.readLines(), project.name.substringBeforeLast('-'), project.name.substringAfterLast('-'), file.path))
                     }
             }
         }

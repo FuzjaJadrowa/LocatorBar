@@ -33,7 +33,7 @@ public final class LocatorBarNeoForgeNetworking {
 
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         var settings = LocatorBarServerConfig.get();
-        if (settings != null && event.getEntity() instanceof ServerPlayer player) {
+        if (settings != null && event.getEntity() instanceof ServerPlayer player && player.connection.hasChannel(ServerConfigPayload.TYPE)) {
             PacketDistributor.sendToPlayer(player, new ServerConfigPayload(settings));
         }
     }
@@ -47,7 +47,20 @@ public final class LocatorBarNeoForgeNetworking {
 
         List<ServerPlayer> players = event.getServer().getPlayerList().getPlayers();
         for (ServerPlayer player : players) {
-            PacketDistributor.sendToPlayer(player, PlayerLocatorBroadcaster.createPayload(player, players));
+            if (player.connection.hasChannel(PlayerLocatorPayload.TYPE)) {
+                PacketDistributor.sendToPlayer(player, PlayerLocatorBroadcaster.createPayload(player, players));
+            }
+        }
+    }
+
+    public static void broadcastConfig(LocatorBarServerConfig.ServerSettings settings) {
+        var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server == null) return;
+        var payload = new ServerConfigPayload(settings);
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (player.connection.hasChannel(ServerConfigPayload.TYPE)) {
+                PacketDistributor.sendToPlayer(player, payload);
+            }
         }
     }
 }

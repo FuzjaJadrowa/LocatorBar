@@ -14,6 +14,7 @@ import java.util.PriorityQueue;
 
 public final class PlayerLocatorBroadcaster {
     public static final int UPDATE_INTERVAL_TICKS = 5;
+    private static final PlayerLocatorPayload EMPTY_PAYLOAD = new PlayerLocatorPayload(List.of());
 
     private PlayerLocatorBroadcaster() {
     }
@@ -24,7 +25,7 @@ public final class PlayerLocatorBroadcaster {
             settings = ServerSettings.defaults();
         }
         if (settings.playerMarkerType() == PlayerMarkerType.OFF) {
-            return new PlayerLocatorPayload(List.of());
+            return EMPTY_PAYLOAD;
         }
 
         int maxVisiblePlayers = settings.maxVisiblePlayers();
@@ -34,33 +35,29 @@ public final class PlayerLocatorBroadcaster {
                 maxVisiblePlayers,
                 Comparator.comparingDouble(PlayerEntry::distanceSquared).reversed()
         );
+        double viewerX = viewer.getX();
+        double viewerZ = viewer.getZ();
 
         for (ServerPlayer otherPlayer : players) {
             if (otherPlayer == viewer || LocatorBarUtils.shouldHidePlayerHead(viewer, otherPlayer)) {
                 continue;
             }
 
-            double dx = otherPlayer.getX() - viewer.getX();
-            double dz = otherPlayer.getZ() - viewer.getZ();
+            double dx = otherPlayer.getX() - viewerX;
+            double dz = otherPlayer.getZ() - viewerZ;
             double distanceSquared = dx * dx + dz * dz;
             if (distanceSquared < 1.0E-6D || distanceSquared >= maxDistanceSquared) {
                 continue;
             }
 
-            PlayerEntry entry = new PlayerEntry(
+            if (closestEntries.size() == maxVisiblePlayers) {
+                if (distanceSquared >= closestEntries.peek().distanceSquared()) continue;
+                closestEntries.poll();
+            }
+            closestEntries.add(new PlayerEntry(
                     new PlayerLocatorPayload.Entry(otherPlayer.getUUID(), otherPlayer.getX(), otherPlayer.getZ()),
                     distanceSquared
-            );
-            if (closestEntries.size() < maxVisiblePlayers) {
-                closestEntries.add(entry);
-                continue;
-            }
-
-            PlayerEntry farthestEntry = closestEntries.peek();
-            if (farthestEntry != null && distanceSquared < farthestEntry.distanceSquared()) {
-                closestEntries.poll();
-                closestEntries.add(entry);
-            }
+            ));
         }
 
         List<PlayerEntry> entries = new ArrayList<>(closestEntries);

@@ -1,8 +1,5 @@
 package pl.fuzjajadrowa.locatorbar.config;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.CoordinatesFormat;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.DaysDisplayOrder;
@@ -10,9 +7,6 @@ import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.LocatorBarStyle;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarServerConfig.ServerSettings;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -20,11 +14,11 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class LocatorBarConfig {
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path CONFIG_PATH = Path.of("config", "locatorbar.json");
     public static final float INFINITE_PLAYER_HEAD_DISTANCE = 60_000_000.0F;
     private static LocatorBarConfigData data = new LocatorBarConfigData();
     private static ServerSettings serverSettings;
+    private static final ConfigFile<LocatorBarConfigData> FILE = new ConfigFile<>(CONFIG_PATH, LocatorBarConfigData.class);
 
     private LocatorBarConfig() {
     }
@@ -35,63 +29,58 @@ public final class LocatorBarConfig {
             return;
         }
 
-        try (Reader reader = Files.newBufferedReader(CONFIG_PATH)) {
-            LocatorBarConfigData loaded = GSON.fromJson(reader, LocatorBarConfigData.class);
-            data = loaded == null ? new LocatorBarConfigData() : loaded;
-            if (data.style == null) {
-                data.style = LocatorBarStyle.REWORKED;
-            }
-            if (data.coordinatesFormat == null) {
-                data.coordinatesFormat = CoordinatesFormat.XYZ;
-            }
-            if (data.daysDisplayOrder == null) {
-                data.daysDisplayOrder = DaysDisplayOrder.DAYS_UNDER_COORDS;
-            }
-            if (data.waypoints == null) {
-                data.waypoints = new HashMap<>();
-            }
+        data = FILE.read(LocatorBarConfigData::new);
+        normalize();
+        save();
+    }
 
-            if (data.version < 2) {
-                if (!data.showPlayerHeads) {
-                    data.playerMarkerType = PlayerMarkerType.OFF;
-                } else {
-                    data.playerMarkerType = PlayerMarkerType.HEADS;
-                }
-                data.playerMarkersScale = data.playerHeadsScale;
-                data.playerMarkerOutline = data.playerHeadOutline;
-                data.version = 2;
-            }
-
-            data.scale = clamp(data.scale, 0.5F, 2.0F);
-            data.customOffsetX = clampInt(data.customOffsetX, -500, 500);
-            data.customOffsetY = clampInt(data.customOffsetY, -500, 500);
-            data.viewAngle = clamp(data.viewAngle, 30.0F, 180.0F);
-            data.worldDirectionsScale = clamp(data.worldDirectionsScale, 0.5F, 2.0F);
-            data.playerMarkersScale = clamp(data.playerMarkersScale, 0.5F, 2.0F);
-            data.playerMarkerFadeStartDistance = clamp(data.playerMarkerFadeStartDistance, 0.0F, INFINITE_PLAYER_HEAD_DISTANCE);
-            data.playerMarkerFadeToMinDistance = clamp(data.playerMarkerFadeToMinDistance, data.playerMarkerFadeStartDistance, INFINITE_PLAYER_HEAD_DISTANCE);
-            data.playerMarkerHideDistance = clamp(data.playerMarkerHideDistance, data.playerMarkerFadeToMinDistance, INFINITE_PLAYER_HEAD_DISTANCE);
-            data.playerMarkerMinAlphaPercent = clamp(data.playerMarkerMinAlphaPercent, 0.0F, 100.0F);
-            data.maxVisiblePlayers = clampInt(data.maxVisiblePlayers, 1, 64);
-            data.waypointsScale = clamp(data.waypointsScale, 0.5F, 2.0F);
-            data.maxVisibleWaypoints = clampInt(data.maxVisibleWaypoints, 1, 64);
-            
-            save(); // save migrated fields
-        } catch (IOException | JsonParseException exception) {
-            data = new LocatorBarConfigData();
-            save();
+    private static void normalize() {
+        if (data.style == null) {
+            data.style = LocatorBarStyle.REWORKED;
         }
+        if (data.coordinatesFormat == null) {
+            data.coordinatesFormat = CoordinatesFormat.XYZ;
+        }
+        if (data.daysDisplayOrder == null) {
+            data.daysDisplayOrder = DaysDisplayOrder.DAYS_UNDER_COORDS;
+        }
+        if (data.waypoints == null) {
+            data.waypoints = new HashMap<>();
+        }
+
+        if (data.version < 2) {
+            if (!data.showPlayerHeads) {
+                data.playerMarkerType = PlayerMarkerType.OFF;
+            } else {
+                data.playerMarkerType = PlayerMarkerType.HEADS;
+            }
+            data.playerMarkersScale = data.playerHeadsScale;
+            data.playerMarkerOutline = data.playerHeadOutline;
+            data.version = 2;
+        }
+
+        if (data.playerMarkerType == null) data.playerMarkerType = PlayerMarkerType.HEADS;
+        data.waypoints.entrySet().removeIf(entry -> entry.getValue() == null || entry.getValue().world == null);
+
+        data.scale = clamp(data.scale, 0.5F, 2.0F);
+        data.customOffsetX = clampInt(data.customOffsetX, -500, 500);
+        data.customOffsetY = clampInt(data.customOffsetY, -500, 500);
+        data.viewAngle = clamp(data.viewAngle, 30.0F, 180.0F);
+        data.worldDirectionsScale = clamp(data.worldDirectionsScale, 0.5F, 2.0F);
+        data.playerMarkersScale = clamp(data.playerMarkersScale, 0.5F, 2.0F);
+        data.playerMarkerFadeStartDistance = clamp(data.playerMarkerFadeStartDistance, 0.0F, INFINITE_PLAYER_HEAD_DISTANCE);
+        data.playerMarkerFadeToMinDistance = clamp(data.playerMarkerFadeToMinDistance, data.playerMarkerFadeStartDistance, INFINITE_PLAYER_HEAD_DISTANCE);
+        data.playerMarkerHideDistance = clamp(data.playerMarkerHideDistance, data.playerMarkerFadeToMinDistance, INFINITE_PLAYER_HEAD_DISTANCE);
+        data.playerMarkerMinAlphaPercent = clamp(data.playerMarkerMinAlphaPercent, 0.0F, 100.0F);
+        data.maxVisiblePlayers = clampInt(data.maxVisiblePlayers, 1, 64);
+        data.waypointsScale = clamp(data.waypointsScale, 0.5F, 2.0F);
+        data.maxVisibleWaypoints = clampInt(data.maxVisibleWaypoints, 1, 64);
+
     }
 
     public static void save() {
-        try {
-            Files.createDirectories(CONFIG_PATH.getParent());
-            try (Writer writer = Files.newBufferedWriter(CONFIG_PATH)) {
-                GSON.toJson(data, writer);
-            }
-        } catch (IOException ignored) {
-            // Keep runtime behavior stable even if saving fails.
-        }
+        normalize();
+        FILE.save(data);
     }
 
     public static LocatorBarStyle getStyle() {
@@ -232,6 +221,7 @@ public final class LocatorBarConfig {
 
     public static void setPlayerMarkerFadeStartDistance(float val) {
         data.playerMarkerFadeStartDistance = clamp(val, 0.0F, INFINITE_PLAYER_HEAD_DISTANCE);
+        normalize();
     }
 
     public static float getPlayerMarkerFadeToMinDistance() {
@@ -311,16 +301,8 @@ public final class LocatorBarConfig {
         serverSettings = null;
     }
 
-    public static boolean isUnsupportedVersionWarningShown() {
-        return data.unsupportedVersionWarningShown;
-    }
-
-    public static void setUnsupportedVersionWarningShown(boolean val) {
-        data.unsupportedVersionWarningShown = val;
-    }
-
     private static float clamp(float value, float min, float max) {
-        return Math.max(min, Math.min(max, value));
+        return Float.isNaN(value) ? min : Math.max(min, Math.min(max, value));
     }
 
     private static int clampInt(int value, int min, int max) {
@@ -347,7 +329,7 @@ public final class LocatorBarConfig {
 
     private static final class LocatorBarConfigData {
         @SerializedName("version")
-        private int version = 2;
+        private int version = 1;
 
         @SerializedName("style")
         private LocatorBarStyle style = LocatorBarStyle.REWORKED;

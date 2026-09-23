@@ -136,15 +136,15 @@ public final class LocatorBarCommands {
 
     private static int showHelp(CommandContext<CommandSourceStack> ctx, String option) {
         ctx.getSource().sendSystemMessage(Component.translatable("locatorbar.commands.help.header", option).withStyle(net.minecraft.ChatFormatting.GOLD));
-        
+
         ctx.getSource().sendSystemMessage(Component.translatable("locatorbar.commands.help.label.description")
                 .withStyle(net.minecraft.ChatFormatting.YELLOW)
                 .append(Component.translatable("locatorbar.commands.help." + option + ".desc").withStyle(net.minecraft.ChatFormatting.RESET)));
-                
+
         ctx.getSource().sendSystemMessage(Component.translatable("locatorbar.commands.help.label.type")
                 .withStyle(net.minecraft.ChatFormatting.YELLOW)
                 .append(Component.literal(getType(option)).withStyle(net.minecraft.ChatFormatting.GREEN)));
-                
+
         ctx.getSource().sendSystemMessage(Component.translatable("locatorbar.commands.help.label.default")
                 .withStyle(net.minecraft.ChatFormatting.YELLOW)
                 .append(Component.literal(getDefaultValue(option)).withStyle(net.minecraft.ChatFormatting.GREEN)));
@@ -190,308 +190,118 @@ public final class LocatorBarCommands {
     }
 
     private static int setStyle(CommandContext<CommandSourceStack> ctx, LocatorBarStyle style) {
-        ServerSettings settings = LocatorBarServerConfig.get();
-        ServerSettings newSettings = new ServerSettings(
-                style,
-                settings.showCoordinates(),
-                settings.showDays(),
-                settings.showWorldDirections(),
-                settings.playerMarkerType(),
-                settings.maxVisiblePlayers(),
-                settings.playerMarkerFadeStartDistance(),
-                settings.playerMarkerFadeToMinDistance(),
-                settings.playerMarkerHideDistance(),
-                settings.playerMarkerMinAlphaPercent(),
-                settings.showWaypoints(),
-                settings.maxVisibleWaypoints(),
-                settings.showDeathWaypoint()
-        );
+        ServerSettings settings = settingsForUpdate();
+        ServerSettings newSettings = settings.update(builder -> builder.style = style);
         updateSettings(ctx, newSettings, "style", style.name());
         return 1;
     }
 
     private static int setShowCoordinates(CommandContext<CommandSourceStack> ctx) {
         boolean val = BoolArgumentType.getBool(ctx, "value");
-        ServerSettings settings = LocatorBarServerConfig.get();
-        ServerSettings newSettings = new ServerSettings(
-                settings.style(),
-                val,
-                settings.showDays(),
-                settings.showWorldDirections(),
-                settings.playerMarkerType(),
-                settings.maxVisiblePlayers(),
-                settings.playerMarkerFadeStartDistance(),
-                settings.playerMarkerFadeToMinDistance(),
-                settings.playerMarkerHideDistance(),
-                settings.playerMarkerMinAlphaPercent(),
-                settings.showWaypoints(),
-                settings.maxVisibleWaypoints(),
-                settings.showDeathWaypoint()
-        );
+        ServerSettings settings = settingsForUpdate();
+        ServerSettings newSettings = settings.update(builder -> builder.showCoordinates = val);
         updateSettings(ctx, newSettings, "showCoordinates", val);
         return 1;
     }
 
     private static int setShowDays(CommandContext<CommandSourceStack> ctx) {
         boolean val = BoolArgumentType.getBool(ctx, "value");
-        ServerSettings settings = LocatorBarServerConfig.get();
-        ServerSettings newSettings = new ServerSettings(
-                settings.style(),
-                settings.showCoordinates(),
-                val,
-                settings.showWorldDirections(),
-                settings.playerMarkerType(),
-                settings.maxVisiblePlayers(),
-                settings.playerMarkerFadeStartDistance(),
-                settings.playerMarkerFadeToMinDistance(),
-                settings.playerMarkerHideDistance(),
-                settings.playerMarkerMinAlphaPercent(),
-                settings.showWaypoints(),
-                settings.maxVisibleWaypoints(),
-                settings.showDeathWaypoint()
-        );
+        ServerSettings settings = settingsForUpdate();
+        ServerSettings newSettings = settings.update(builder -> builder.showDays = val);
         updateSettings(ctx, newSettings, "showDays", val);
         return 1;
     }
 
     private static int setShowWorldDirections(CommandContext<CommandSourceStack> ctx) {
         boolean val = BoolArgumentType.getBool(ctx, "value");
-        ServerSettings settings = LocatorBarServerConfig.get();
-        ServerSettings newSettings = new ServerSettings(
-                settings.style(),
-                settings.showCoordinates(),
-                settings.showDays(),
-                val,
-                settings.playerMarkerType(),
-                settings.maxVisiblePlayers(),
-                settings.playerMarkerFadeStartDistance(),
-                settings.playerMarkerFadeToMinDistance(),
-                settings.playerMarkerHideDistance(),
-                settings.playerMarkerMinAlphaPercent(),
-                settings.showWaypoints(),
-                settings.maxVisibleWaypoints(),
-                settings.showDeathWaypoint()
-        );
+        ServerSettings settings = settingsForUpdate();
+        ServerSettings newSettings = settings.update(builder -> builder.showWorldDirections = val);
         updateSettings(ctx, newSettings, "showWorldDirections", val);
         return 1;
     }
 
     private static int setPlayerMarkerType(CommandContext<CommandSourceStack> ctx, PlayerMarkerType type) {
-        ServerSettings settings = LocatorBarServerConfig.get();
-        ServerSettings newSettings = new ServerSettings(
-                settings.style(),
-                settings.showCoordinates(),
-                settings.showDays(),
-                settings.showWorldDirections(),
-                type,
-                settings.maxVisiblePlayers(),
-                settings.playerMarkerFadeStartDistance(),
-                settings.playerMarkerFadeToMinDistance(),
-                settings.playerMarkerHideDistance(),
-                settings.playerMarkerMinAlphaPercent(),
-                settings.showWaypoints(),
-                settings.maxVisibleWaypoints(),
-                settings.showDeathWaypoint()
-        );
+        ServerSettings settings = settingsForUpdate();
+        ServerSettings newSettings = settings.update(builder -> builder.playerMarkerType = type);
         updateSettings(ctx, newSettings, "playerMarkerType", type.name());
         return 1;
     }
 
     private static int setMaxVisiblePlayers(CommandContext<CommandSourceStack> ctx) {
         int val = IntegerArgumentType.getInteger(ctx, "value");
-        ServerSettings settings = LocatorBarServerConfig.get();
-        ServerSettings newSettings = new ServerSettings(
-                settings.style(),
-                settings.showCoordinates(),
-                settings.showDays(),
-                settings.showWorldDirections(),
-                settings.playerMarkerType(),
-                val,
-                settings.playerMarkerFadeStartDistance(),
-                settings.playerMarkerFadeToMinDistance(),
-                settings.playerMarkerHideDistance(),
-                settings.playerMarkerMinAlphaPercent(),
-                settings.showWaypoints(),
-                settings.maxVisibleWaypoints(),
-                settings.showDeathWaypoint()
-        );
+        ServerSettings settings = settingsForUpdate();
+        ServerSettings newSettings = settings.update(builder -> builder.maxVisiblePlayers = val);
         updateSettings(ctx, newSettings, "maxVisiblePlayers", val);
         return 1;
     }
 
     private static int setPlayerMarkerFadeStartDistance(CommandContext<CommandSourceStack> ctx) {
         float val = FloatArgumentType.getFloat(ctx, "value");
-        ServerSettings settings = LocatorBarServerConfig.get();
-        ServerSettings newSettings = new ServerSettings(
-                settings.style(),
-                settings.showCoordinates(),
-                settings.showDays(),
-                settings.showWorldDirections(),
-                settings.playerMarkerType(),
-                settings.maxVisiblePlayers(),
-                val,
-                settings.playerMarkerFadeToMinDistance(),
-                settings.playerMarkerHideDistance(),
-                settings.playerMarkerMinAlphaPercent(),
-                settings.showWaypoints(),
-                settings.maxVisibleWaypoints(),
-                settings.showDeathWaypoint()
-        );
-        updateSettings(ctx, newSettings, "playerMarkerFadeStartDistance", val);
+        ServerSettings settings = settingsForUpdate();
+        ServerSettings newSettings = settings.update(builder -> builder.playerMarkerFadeStartDistance = val);
+        updateSettings(ctx, newSettings, "playerMarkerFadeStartDistance", newSettings.playerMarkerFadeStartDistance());
         return 1;
     }
 
     private static int setPlayerMarkerFadeToMinDistance(CommandContext<CommandSourceStack> ctx) {
         float val = FloatArgumentType.getFloat(ctx, "value");
-        ServerSettings settings = LocatorBarServerConfig.get();
-        ServerSettings newSettings = new ServerSettings(
-                settings.style(),
-                settings.showCoordinates(),
-                settings.showDays(),
-                settings.showWorldDirections(),
-                settings.playerMarkerType(),
-                settings.maxVisiblePlayers(),
-                settings.playerMarkerFadeStartDistance(),
-                val,
-                settings.playerMarkerHideDistance(),
-                settings.playerMarkerMinAlphaPercent(),
-                settings.showWaypoints(),
-                settings.maxVisibleWaypoints(),
-                settings.showDeathWaypoint()
-        );
-        updateSettings(ctx, newSettings, "playerMarkerFadeToMinDistance", val);
+        ServerSettings settings = settingsForUpdate();
+        ServerSettings newSettings = settings.update(builder -> builder.playerMarkerFadeToMinDistance = val);
+        updateSettings(ctx, newSettings, "playerMarkerFadeToMinDistance", newSettings.playerMarkerFadeToMinDistance());
         return 1;
     }
 
     private static int setPlayerMarkerHideDistance(CommandContext<CommandSourceStack> ctx) {
         float val = FloatArgumentType.getFloat(ctx, "value");
-        ServerSettings settings = LocatorBarServerConfig.get();
-        ServerSettings newSettings = new ServerSettings(
-                settings.style(),
-                settings.showCoordinates(),
-                settings.showDays(),
-                settings.showWorldDirections(),
-                settings.playerMarkerType(),
-                settings.maxVisiblePlayers(),
-                settings.playerMarkerFadeStartDistance(),
-                settings.playerMarkerFadeToMinDistance(),
-                val,
-                settings.playerMarkerMinAlphaPercent(),
-                settings.showWaypoints(),
-                settings.maxVisibleWaypoints(),
-                settings.showDeathWaypoint()
-        );
-        updateSettings(ctx, newSettings, "playerMarkerHideDistance", val);
+        ServerSettings settings = settingsForUpdate();
+        ServerSettings newSettings = settings.update(builder -> builder.playerMarkerHideDistance = val);
+        updateSettings(ctx, newSettings, "playerMarkerHideDistance", newSettings.playerMarkerHideDistance());
         return 1;
     }
 
     private static int setPlayerMarkerHideDistanceInf(CommandContext<CommandSourceStack> ctx) {
-        ServerSettings settings = LocatorBarServerConfig.get();
-        ServerSettings newSettings = new ServerSettings(
-                settings.style(),
-                settings.showCoordinates(),
-                settings.showDays(),
-                settings.showWorldDirections(),
-                settings.playerMarkerType(),
-                settings.maxVisiblePlayers(),
-                settings.playerMarkerFadeStartDistance(),
-                settings.playerMarkerFadeToMinDistance(),
-                LocatorBarServerConfig.INFINITE_PLAYER_HEAD_DISTANCE,
-                settings.playerMarkerMinAlphaPercent(),
-                settings.showWaypoints(),
-                settings.maxVisibleWaypoints(),
-                settings.showDeathWaypoint()
-        );
+        ServerSettings settings = settingsForUpdate();
+        ServerSettings newSettings = settings.update(builder -> builder.playerMarkerHideDistance = LocatorBarServerConfig.INFINITE_PLAYER_HEAD_DISTANCE);
         updateSettings(ctx, newSettings, "playerMarkerHideDistance", "inf");
         return 1;
     }
 
     private static int setPlayerMarkerMinAlphaPercent(CommandContext<CommandSourceStack> ctx) {
         float val = FloatArgumentType.getFloat(ctx, "value");
-        ServerSettings settings = LocatorBarServerConfig.get();
-        ServerSettings newSettings = new ServerSettings(
-                settings.style(),
-                settings.showCoordinates(),
-                settings.showDays(),
-                settings.showWorldDirections(),
-                settings.playerMarkerType(),
-                settings.maxVisiblePlayers(),
-                settings.playerMarkerFadeStartDistance(),
-                settings.playerMarkerFadeToMinDistance(),
-                settings.playerMarkerHideDistance(),
-                val,
-                settings.showWaypoints(),
-                settings.maxVisibleWaypoints(),
-                settings.showDeathWaypoint()
-        );
-        updateSettings(ctx, newSettings, "playerMarkerMinAlphaPercent", val);
+        ServerSettings settings = settingsForUpdate();
+        ServerSettings newSettings = settings.update(builder -> builder.playerMarkerMinAlphaPercent = val);
+        updateSettings(ctx, newSettings, "playerMarkerMinAlphaPercent", newSettings.playerMarkerMinAlphaPercent());
         return 1;
     }
 
     private static int setShowWaypoints(CommandContext<CommandSourceStack> ctx) {
         boolean val = BoolArgumentType.getBool(ctx, "value");
-        ServerSettings settings = LocatorBarServerConfig.get();
-        ServerSettings newSettings = new ServerSettings(
-                settings.style(),
-                settings.showCoordinates(),
-                settings.showDays(),
-                settings.showWorldDirections(),
-                settings.playerMarkerType(),
-                settings.maxVisiblePlayers(),
-                settings.playerMarkerFadeStartDistance(),
-                settings.playerMarkerFadeToMinDistance(),
-                settings.playerMarkerHideDistance(),
-                settings.playerMarkerMinAlphaPercent(),
-                val,
-                settings.maxVisibleWaypoints(),
-                settings.showDeathWaypoint()
-        );
+        ServerSettings settings = settingsForUpdate();
+        ServerSettings newSettings = settings.update(builder -> builder.showWaypoints = val);
         updateSettings(ctx, newSettings, "showWaypoints", val);
         return 1;
     }
 
     private static int setMaxVisibleWaypoints(CommandContext<CommandSourceStack> ctx) {
         int val = IntegerArgumentType.getInteger(ctx, "value");
-        ServerSettings settings = LocatorBarServerConfig.get();
-        ServerSettings newSettings = new ServerSettings(
-                settings.style(),
-                settings.showCoordinates(),
-                settings.showDays(),
-                settings.showWorldDirections(),
-                settings.playerMarkerType(),
-                settings.maxVisiblePlayers(),
-                settings.playerMarkerFadeStartDistance(),
-                settings.playerMarkerFadeToMinDistance(),
-                settings.playerMarkerHideDistance(),
-                settings.playerMarkerMinAlphaPercent(),
-                settings.showWaypoints(),
-                val,
-                settings.showDeathWaypoint()
-        );
+        ServerSettings settings = settingsForUpdate();
+        ServerSettings newSettings = settings.update(builder -> builder.maxVisibleWaypoints = val);
         updateSettings(ctx, newSettings, "maxVisibleWaypoints", val);
         return 1;
     }
 
     private static int setShowDeathWaypoint(CommandContext<CommandSourceStack> ctx) {
         boolean val = BoolArgumentType.getBool(ctx, "value");
-        ServerSettings settings = LocatorBarServerConfig.get();
-        ServerSettings newSettings = new ServerSettings(
-                settings.style(),
-                settings.showCoordinates(),
-                settings.showDays(),
-                settings.showWorldDirections(),
-                settings.playerMarkerType(),
-                settings.maxVisiblePlayers(),
-                settings.playerMarkerFadeStartDistance(),
-                settings.playerMarkerFadeToMinDistance(),
-                settings.playerMarkerHideDistance(),
-                settings.playerMarkerMinAlphaPercent(),
-                settings.showWaypoints(),
-                settings.maxVisibleWaypoints(),
-                val
-        );
+        ServerSettings settings = settingsForUpdate();
+        ServerSettings newSettings = settings.update(builder -> builder.showDeathWaypoint = val);
         updateSettings(ctx, newSettings, "showDeathWaypoint", val);
         return 1;
+    }
+
+    private static ServerSettings settingsForUpdate() {
+        // Integrated servers do not load server overrides until a LAN command needs them.
+        if (LocatorBarServerConfig.get() == null) LocatorBarServerConfig.load();
+        return LocatorBarServerConfig.get();
     }
 
     private static boolean isMultiplayerOrLan(CommandSourceStack source) {

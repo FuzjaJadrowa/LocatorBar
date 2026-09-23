@@ -23,7 +23,9 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 25
+          java-version: |
+            17
+            25
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -41,6 +43,9 @@ jobs:
 
       - name: Validate publish targets
         run: ./gradlew --no-daemon validatePublishTargets --stacktrace
+
+      - name: Test preprocessor, config and math
+        run: ./gradlew --no-daemon -p buildSrc test --stacktrace
 
       - name: Build all versioned mods
         run: ./gradlew --no-daemon buildAllVersionedMods --stacktrace

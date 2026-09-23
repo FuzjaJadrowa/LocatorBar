@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_${java}",
   "minVersion": "0.8",
   "client": [
+    "client.MinecraftTickMixin",
     "client.ExperienceBarMixin",
     "client.ExperienceLevelMixin",
     "client.LocatorBarRendererMixin",

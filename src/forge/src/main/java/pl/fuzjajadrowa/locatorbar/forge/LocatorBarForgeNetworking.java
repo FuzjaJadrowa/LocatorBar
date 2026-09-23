@@ -125,6 +125,7 @@ public final class LocatorBarForgeNetworking {
 
         public static PlayerLocatorPacket decode(FriendlyByteBuf buffer) {
             int count = buffer.readVarInt();
+            PlayerLocatorPayload.validateEntryCount(count);
             List<PlayerLocatorPayload.Entry> entries = new ArrayList<>(count);
             for (int idx = 0; idx < count; ++idx) {
                 entries.add(new PlayerLocatorPayload.Entry(buffer.readUUID(), buffer.readDouble(), buffer.readDouble()));

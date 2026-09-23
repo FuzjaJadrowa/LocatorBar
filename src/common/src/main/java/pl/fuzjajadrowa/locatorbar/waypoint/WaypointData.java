@@ -32,6 +32,10 @@ public final class WaypointData {
     }
 
     public static void ensureWaypointData(ItemStack stack, Player player) {
+        ensureWaypointData(stack, player, () -> findHighestWaypointIndex(player) + 1);
+    }
+
+    static void ensureWaypointData(ItemStack stack, Player player, java.util.function.IntSupplier nextIndex) {
         if (stack == null || stack.isEmpty()) {
             return;
         }
@@ -41,7 +45,7 @@ public final class WaypointData {
             return;
         }
         //?} else {
-        /*if (stack.isEmpty() || !stack.getOrCreateTag().contains("LodestonePos")) {
+        /*if (stack.getTag() == null || !stack.getTag().contains("LodestonePos")) {
             return;
         }
         *///?}
@@ -66,7 +70,7 @@ public final class WaypointData {
         if (!tag.contains(INDEX_TAG)) {
         //? if <1.21.11
         /*if (!tag.contains(INDEX_TAG, Tag.TAG_INT)) {*/
-            tag.putInt(INDEX_TAG, findHighestWaypointIndex(player) + 1);
+            tag.putInt(INDEX_TAG, nextIndex.getAsInt());
         }
 
         //? if >=1.20.5
@@ -264,104 +268,10 @@ public final class WaypointData {
     }
 
     public static void unlinkWaypoint(Player player, UUID waypointId) {
-        Inventory inventory = player.getInventory();
-        //? if >=1.21.11 {
-        for (ItemStack stack : inventory.getNonEquipmentItems()) {
-            clearWaypointDataIfMatches(stack, waypointId);
-        }
-        clearWaypointDataIfMatches(inventory.getItem(Inventory.SLOT_OFFHAND), waypointId);
-        //?} else {
-        /*for (ItemStack stack : inventory.items) {
-            clearWaypointDataIfMatches(stack, waypointId);
-        }
-        for (ItemStack stack : inventory.offhand) {
-            clearWaypointDataIfMatches(stack, waypointId);
-        }
-        *///?}
+        WaypointInventory.unlink(player, waypointId);
     }
 
-    private static void clearWaypointDataIfMatches(ItemStack stack, UUID waypointId) {
-        if (stack == null || stack.isEmpty()) {
-            return;
-        }
-
-        if (stack.is(net.minecraft.world.item.Items.BUNDLE)) {
-            clearWaypointInBundleIfMatches(stack, waypointId);
-            return;
-        }
-
-        UUID id = getWaypointId(stack);
-        if (id != null && id.equals(waypointId)) {
-            clearLocatorBarData(stack);
-        }
-    }
-
-    private static boolean clearWaypointInBundleIfMatches(ItemStack bundleStack, UUID waypointId) {
-        //? if >=1.20.5 {
-        net.minecraft.world.item.component.BundleContents bundleContents = bundleStack.get(DataComponents.BUNDLE_CONTENTS);
-        if (bundleContents == null) {
-            return false;
-        }
-
-        java.util.List<ItemStack> updatedItems = new java.util.ArrayList<>();
-        boolean modified = false;
-        for (ItemStack item : bundleContents.itemCopyStream().toList()) {
-            ItemStack copy = item.copy();
-            if (getWaypointId(copy) != null && getWaypointId(copy).equals(waypointId)) {
-                clearLocatorBarData(copy);
-                modified = true;
-            } else if (copy.is(net.minecraft.world.item.Items.BUNDLE)) {
-                if (clearWaypointInBundleIfMatches(copy, waypointId)) {
-                    modified = true;
-                }
-            }
-            updatedItems.add(copy);
-        }
-
-        if (modified) {
-            //? if >=26.1 {
-            /*bundleStack.set(DataComponents.BUNDLE_CONTENTS, new net.minecraft.world.item.component.BundleContents(
-                    updatedItems.stream().map(st -> new net.minecraft.world.item.ItemStackTemplate(st.getItem().builtInRegistryHolder(), st.getCount(), st.getComponentsPatch())).toList()
-            ));*/
-            //?} else {
-            bundleStack.set(DataComponents.BUNDLE_CONTENTS, new net.minecraft.world.item.component.BundleContents(updatedItems));
-            //?}
-        }
-        return modified;
-        //?} else {
-        /*CompoundTag tag = bundleStack.getTag();
-        if (tag == null || !tag.contains("Items", 9)) {
-            return false;
-        }
-
-        net.minecraft.nbt.ListTag itemsList = tag.getList("Items", 10);
-        boolean modified = false;
-        for (int i = 0; i < itemsList.size(); i++) {
-            CompoundTag itemTag = itemsList.getCompound(i);
-            ItemStack innerStack = ItemStack.of(itemTag);
-            if (!innerStack.isEmpty()) {
-                if (getWaypointId(innerStack) != null && getWaypointId(innerStack).equals(waypointId)) {
-                    clearLocatorBarData(innerStack);
-                    itemsList.set(i, innerStack.save(new CompoundTag()));
-                    modified = true;
-                } else if (innerStack.is(net.minecraft.world.item.Items.BUNDLE)) {
-                    if (clearWaypointInBundleIfMatches(innerStack, waypointId)) {
-                        itemsList.set(i, innerStack.save(new CompoundTag()));
-                        modified = true;
-                    }
-                }
-            }
-        }
-
-        if (modified) {
-            tag.put("Items", itemsList);
-            bundleStack.setTag(tag);
-        }
-        return modified;
-        *///?}
-    }
-
-    private static void clearLocatorBarData(ItemStack stack) {
+    static void clearLocatorBarData(ItemStack stack) {
         CompoundTag tag = getCustomDataTagNullable(stack);
         if (tag == null) {
             return;
@@ -387,41 +297,17 @@ public final class WaypointData {
         *///?}
     }
 
-    private static int findHighestWaypointIndex(Player player) {
-        int highest = 0;
+    static int findHighestWaypointIndex(Player player) {
+        int[] highest = {0};
         UUID owner = player.getUUID();
-
-        //? if >=1.21.11 {
-        for (ItemStack stack : player.getInventory().getNonEquipmentItems()) {
-            highest = Math.max(highest, readWaypointIndexForOwner(stack, owner));
-        }
-        ItemStack offhand = player.getInventory().getItem(Inventory.SLOT_OFFHAND);
-        if (!offhand.isEmpty()) {
-            highest = Math.max(highest, readWaypointIndexForOwner(offhand, owner));
-        }
-        //?} else {
-        /*for (ItemStack stack : player.getInventory().items) {
-            highest = Math.max(highest, readWaypointIndexForOwner(stack, owner));
-        }
-        for (ItemStack stack : player.getInventory().offhand) {
-            highest = Math.max(highest, readWaypointIndexForOwner(stack, owner));
-        }
-        *///?}
-
-        return highest;
+        WaypointInventory.forEachLeaf(player, stack ->
+                highest[0] = Math.max(highest[0], readWaypointIndexForOwner(stack, owner)));
+        return highest[0];
     }
 
     private static int readWaypointIndexForOwner(ItemStack stack, UUID owner) {
         if (stack == null || stack.isEmpty()) {
             return 0;
-        }
-
-        if (stack.is(net.minecraft.world.item.Items.BUNDLE)) {
-            int[] highest = new int[]{0};
-            pl.fuzjajadrowa.locatorbar.util.LocatorBarUtils.forEachBundleItem(stack, inner -> {
-                highest[0] = Math.max(highest[0], readWaypointIndexForOwner(inner, owner));
-            });
-            return highest[0];
         }
 
         UUID stackOwner = getOwner(stack);

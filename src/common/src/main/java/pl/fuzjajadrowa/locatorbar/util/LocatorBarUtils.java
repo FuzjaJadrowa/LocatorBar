@@ -14,17 +14,11 @@ public final class LocatorBarUtils {
     }
 
     public static float wrapTo180(float degrees) {
-        float wrapped = degrees % 360.0F;
-        if (wrapped >= 180.0F) {
-            wrapped -= 360.0F;
-        } else if (wrapped < -180.0F) {
-            wrapped += 360.0F;
-        }
-        return wrapped;
+        return MarkerMath.wrapTo180(degrees);
     }
 
     public static float quantizeToHalfPixel(float value) {
-        return Math.round(value * 2.0F) / 2.0F;
+        return MarkerMath.quantizeToHalfPixel(value);
     }
 
     public static int colorFromId(UUID id, float saturationMin, float saturationRange, float valueMin, float valueRange) {
@@ -83,16 +77,18 @@ public final class LocatorBarUtils {
         //? if >=1.20.5 {
         net.minecraft.world.item.component.BundleContents bundleContents = stack.get(net.minecraft.core.component.DataComponents.BUNDLE_CONTENTS);
         if (bundleContents != null) {
-            for (ItemStack innerStack : bundleContents.itemCopyStream().toList()) {
+            java.util.Iterator<ItemStack> items = bundleContents.itemCopyStream().iterator();
+            while (items.hasNext()) {
+                ItemStack innerStack = items.next();
                 if (!innerStack.isEmpty()) {
-                    consumer.accept(innerStack);
                     if (innerStack.is(Items.BUNDLE)) {
                         forEachBundleItem(innerStack, consumer);
+                    } else {
+                        consumer.accept(innerStack);
                     }
                 }
             }
         }
-        //?} else {
         //?} else {
         /*net.minecraft.nbt.CompoundTag tag = stack.getTag();
         if (tag != null && tag.contains("Items", 9)) {
@@ -101,9 +97,10 @@ public final class LocatorBarUtils {
                 net.minecraft.nbt.CompoundTag itemTag = itemsList.getCompound(i);
                 ItemStack innerStack = ItemStack.of(itemTag);
                 if (!innerStack.isEmpty()) {
-                    consumer.accept(innerStack);
                     if (innerStack.is(Items.BUNDLE)) {
                         forEachBundleItem(innerStack, consumer);
+                    } else {
+                        consumer.accept(innerStack);
                     }
                 }
             }

@@ -26,6 +26,7 @@ public record PlayerLocatorPayload(List<Entry> entries) implements CustomPacketP
 
     private static PlayerLocatorPayload read(RegistryFriendlyByteBuf buffer) {
         int size = buffer.readVarInt();
+        validateEntryCount(size);
         List<Entry> entries = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
             entries.add(new Entry(buffer.readUUID(), buffer.readDouble(), buffer.readDouble()));
@@ -47,6 +48,12 @@ public record PlayerLocatorPayload(List<Entry> entries) implements CustomPacketP
         return TYPE;
     }
     //?}
+
+    public static void validateEntryCount(int count) {
+        if (count < 0 || count > 64) {
+            throw new IllegalArgumentException("Invalid player marker count: " + count);
+        }
+    }
 
     public record Entry(UUID playerId, double x, double z) {
     }

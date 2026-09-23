@@ -1,52 +1,19 @@
 package pl.fuzjajadrowa.locatorbar.client;
 
-import com.google.common.collect.ImmutableList;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.AbstractSliderButton;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.ContainerObjectSelectionList;
-import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig;
-import pl.fuzjajadrowa.locatorbar.config.LocatorBarServerConfig;
-import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.CoordinatesFormat;
-import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.DaysDisplayOrder;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.LocatorBarStyle;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType;
 
-import net.minecraft.client.gui.components.EditBox;
-//? if >=1.20.5 {
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.item.component.LodestoneTracker;
-//?}
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.ItemStack;
-import pl.fuzjajadrowa.locatorbar.LocatorBar;
-import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig;
-import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig.WaypointConfig;
-import pl.fuzjajadrowa.locatorbar.waypoint.WaypointData;
-
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.Consumer;
-import java.util.function.Function;
+
+import pl.fuzjajadrowa.locatorbar.client.WaypointConfigPage.ManagedWaypoint;
 
 public final class LocatorBarConfigScreen extends Screen {
-    private static final Identifier WAYPOINT_TEXTURE = Identifier.fromNamespaceAndPath(
-            LocatorBar.MOD_ID,
-            "textures/gui/waypoint.png"
-    );
     private static final int TOTAL_PAGES = 3;
     private static final float SCALE_MIN = 0.5F;
     private static final float SCALE_MAX = 2.0F;
@@ -68,26 +35,7 @@ public final class LocatorBarConfigScreen extends Screen {
     private static final int PAGE_NAV_WIDTH = (PAGE_BUTTON_WIDTH * 2) + PAGE_BUTTON_GAP;
 
     private final Screen parent;
-    private LocatorBarStyle selectedStyle;
-    private float selectedScale;
-    private int selectedCustomOffsetX;
-    private int selectedCustomOffsetY;
-    private float selectedViewAngle;
-    private boolean selectedShowCoordinates;
-    private boolean selectedElementsOnXpBar;
-    private CoordinatesFormat selectedCoordinatesFormat;
-    private boolean selectedShowDays;
-    private DaysDisplayOrder selectedDaysDisplayOrder;
-    private boolean selectedShowWorldDirections;
-    private float selectedWorldDirectionsScale;
-    private PlayerMarkerType selectedPlayerMarkerType;
-    private float selectedPlayerMarkersScale;
-    private boolean selectedPlayerMarkerOutline;
-    private int selectedMaxVisiblePlayers;
-    private boolean selectedShowWaypoints;
-    private boolean selectedShowDeathWaypoint;
-    private float selectedWaypointsScale;
-    private int selectedMaxVisibleWaypoints;
+    private final ConfigScreenState state = new ConfigScreenState();
     private int page = 0;
 
     private ConfigList list;
@@ -121,26 +69,6 @@ public final class LocatorBarConfigScreen extends Screen {
     public LocatorBarConfigScreen(Screen parent) {
         super(Component.translatable("locatorbar.config.title"));
         this.parent = parent;
-        this.selectedStyle = LocatorBarConfig.getStyle();
-        this.selectedScale = LocatorBarConfig.getScale();
-        this.selectedCustomOffsetX = LocatorBarConfig.getCustomOffsetX();
-        this.selectedCustomOffsetY = LocatorBarConfig.getCustomOffsetY();
-        this.selectedViewAngle = LocatorBarConfig.getViewAngle();
-        this.selectedShowCoordinates = LocatorBarConfig.isShowCoordinates();
-        this.selectedElementsOnXpBar = LocatorBarConfig.isElementsOnXpBar();
-        this.selectedCoordinatesFormat = LocatorBarConfig.getCoordinatesFormat();
-        this.selectedShowDays = LocatorBarConfig.isShowDays();
-        this.selectedDaysDisplayOrder = LocatorBarConfig.getDaysDisplayOrder();
-        this.selectedShowWorldDirections = LocatorBarConfig.isShowWorldDirections();
-        this.selectedWorldDirectionsScale = LocatorBarConfig.getWorldDirectionsScale();
-        this.selectedPlayerMarkerType = LocatorBarConfig.getPlayerMarkerType();
-        this.selectedPlayerMarkersScale = LocatorBarConfig.getPlayerMarkersScale();
-        this.selectedPlayerMarkerOutline = LocatorBarConfig.isPlayerMarkerOutline();
-        this.selectedMaxVisiblePlayers = LocatorBarConfig.getMaxVisiblePlayers();
-        this.selectedShowWaypoints = LocatorBarConfig.isShowWaypoints();
-        this.selectedShowDeathWaypoint = LocatorBarConfig.isShowDeathWaypoint();
-        this.selectedWaypointsScale = LocatorBarConfig.getWaypointsScale();
-        this.selectedMaxVisibleWaypoints = LocatorBarConfig.getMaxVisibleWaypoints();
     }
 
     @Override
@@ -153,35 +81,35 @@ public final class LocatorBarConfigScreen extends Screen {
         int pageNavX = doneX + DONE_BUTTON_WIDTH + FOOTER_SECTION_GAP;
 
         int listHeight = this.height - 90;
-        this.list = new ConfigList(this.minecraft, this.width, listHeight, 50, 25);
+        this.list = new ConfigList(this.minecraft, this.width, listHeight, 50, 25, this.height, this::updatePageState);
         this.addRenderableWidget(this.list);
 
         styleButton = Button.builder(styleButtonText(), button -> cycleStyle()).bounds(0, 0, 120, 20).build();
 
         scaleSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.scale"),
-                SCALE_MIN, SCALE_MAX, SCALE_STEP, selectedScale,
-                value -> { selectedScale = value; applyAndSave(); },
+                SCALE_MIN, SCALE_MAX, SCALE_STEP, state.selectedScale,
+                value -> { state.selectedScale = value; applyRuntime(); },
                 value -> String.format(Locale.ROOT, "%.2fx", value));
 
         customOffsetXSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.custom_offset_x"),
-                -500.0F, 500.0F, 1.0F, (float) selectedCustomOffsetX,
-                value -> { selectedCustomOffsetX = Math.round(value); applyAndSave(); },
+                -500.0F, 500.0F, 1.0F, (float) state.selectedCustomOffsetX,
+                value -> { state.selectedCustomOffsetX = Math.round(value); applyRuntime(); },
                 value -> {
                     int val = Math.round(value);
                     return val >= 0 ? "+" + val + "px" : val + "px";
                 });
 
         customOffsetYSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.custom_offset_y"),
-                -500.0F, 500.0F, 1.0F, (float) selectedCustomOffsetY,
-                value -> { selectedCustomOffsetY = Math.round(value); applyAndSave(); },
+                -500.0F, 500.0F, 1.0F, (float) state.selectedCustomOffsetY,
+                value -> { state.selectedCustomOffsetY = Math.round(value); applyRuntime(); },
                 value -> {
                     int val = Math.round(value);
                     return val >= 0 ? "+" + val + "px" : val + "px";
                 });
 
         viewAngleSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.view_angle"),
-                VIEW_ANGLE_MIN, VIEW_ANGLE_MAX, VIEW_ANGLE_STEP, selectedViewAngle,
-                value -> { selectedViewAngle = value; applyAndSave(); },
+                VIEW_ANGLE_MIN, VIEW_ANGLE_MAX, VIEW_ANGLE_STEP, state.selectedViewAngle,
+                value -> { state.selectedViewAngle = value; applyRuntime(); },
                 value -> Integer.toString(Math.round(value)) + "\u00b0");
 
         showCoordinatesButton = Button.builder(showCoordinatesButtonText(), button -> toggleShowCoordinates()).bounds(0, 0, 120, 20).build();
@@ -193,37 +121,35 @@ public final class LocatorBarConfigScreen extends Screen {
         showWorldDirectionsButton = Button.builder(showWorldDirectionsButtonText(), button -> toggleShowWorldDirections()).bounds(0, 0, 120, 20).build();
 
         worldDirectionsScaleSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.directions_size"),
-                MARKER_SCALE_MIN, MARKER_SCALE_MAX, MARKER_SCALE_STEP, selectedWorldDirectionsScale,
-                value -> { selectedWorldDirectionsScale = value; applyAndSave(); },
+                MARKER_SCALE_MIN, MARKER_SCALE_MAX, MARKER_SCALE_STEP, state.selectedWorldDirectionsScale,
+                value -> { state.selectedWorldDirectionsScale = value; applyRuntime(); },
                 value -> String.format(Locale.ROOT, "%.2fx", value));
 
         showPlayerHeadsButton = Button.builder(playerMarkerTypeButtonText(), button -> cyclePlayerMarkerType()).bounds(0, 0, 120, 20).build();
 
         playerHeadsScaleSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.heads_size"),
-                MARKER_SCALE_MIN, MARKER_SCALE_MAX, MARKER_SCALE_STEP, selectedPlayerMarkersScale,
-                value -> { selectedPlayerMarkersScale = value; applyAndSave(); },
+                MARKER_SCALE_MIN, MARKER_SCALE_MAX, MARKER_SCALE_STEP, state.selectedPlayerMarkersScale,
+                value -> { state.selectedPlayerMarkersScale = value; applyRuntime(); },
                 value -> String.format(Locale.ROOT, "%.2fx", value));
 
         playerHeadOutlineButton = Button.builder(playerMarkerOutlineButtonText(), button -> togglePlayerMarkerOutline()).bounds(0, 0, 120, 20).build();
 
         maxVisiblePlayersSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.max_players"),
-                MAX_PLAYERS_MIN, MAX_PLAYERS_MAX, 1.0F, (float) selectedMaxVisiblePlayers,
-                value -> { selectedMaxVisiblePlayers = Math.round(value); applyAndSave(); },
+                MAX_PLAYERS_MIN, MAX_PLAYERS_MAX, 1.0F, (float) state.selectedMaxVisiblePlayers,
+                value -> { state.selectedMaxVisiblePlayers = Math.round(value); applyRuntime(); },
                 value -> Integer.toString(Math.round(value)));
-
-
 
         showWaypointsButton = Button.builder(showWaypointsButtonText(), button -> toggleShowWaypoints()).bounds(0, 0, 120, 20).build();
         showDeathWaypointButton = Button.builder(showDeathWaypointButtonText(), button -> toggleShowDeathWaypoint()).bounds(0, 0, 120, 20).build();
 
         waypointsScaleSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.waypoints_size"),
-                MARKER_SCALE_MIN, MARKER_SCALE_MAX, MARKER_SCALE_STEP, selectedWaypointsScale,
-                value -> { selectedWaypointsScale = value; applyAndSave(); },
+                MARKER_SCALE_MIN, MARKER_SCALE_MAX, MARKER_SCALE_STEP, state.selectedWaypointsScale,
+                value -> { state.selectedWaypointsScale = value; applyRuntime(); },
                 value -> String.format(Locale.ROOT, "%.2fx", value));
 
         maxVisibleWaypointsSlider = new ConfigSlider(0, 0, 120, 20, Component.translatable("locatorbar.config.field.max_waypoints"),
-                MAX_WAYPOINTS_MIN, MAX_WAYPOINTS_MAX, 1.0F, selectedMaxVisibleWaypoints,
-                value -> { selectedMaxVisibleWaypoints = Math.round(value); applyAndSave(); },
+                MAX_WAYPOINTS_MIN, MAX_WAYPOINTS_MAX, 1.0F, state.selectedMaxVisibleWaypoints,
+                value -> { state.selectedMaxVisibleWaypoints = Math.round(value); applyRuntime(); },
                 value -> Integer.toString(Math.round(value)));
 
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> onClose())
@@ -294,146 +220,144 @@ public final class LocatorBarConfigScreen extends Screen {
     }
 
     private void cycleStyle() {
-        selectedStyle = selectedStyle.next();
+        state.selectedStyle = state.selectedStyle.next();
         styleButton.setMessage(styleButtonText());
-        applyAndSave();
+        applyRuntime();
         updatePageState();
         updateControlStates();
     }
 
     private Component styleButtonText() {
-        return Component.translatable(selectedStyle.translationKey());
+        return Component.translatable(state.selectedStyle.translationKey());
     }
 
-
-
     private void toggleShowCoordinates() {
-        selectedShowCoordinates = !selectedShowCoordinates;
+        state.selectedShowCoordinates = !state.selectedShowCoordinates;
         showCoordinatesButton.setMessage(showCoordinatesButtonText());
-        applyAndSave();
+        applyRuntime();
         updateControlStates();
     }
 
     private Component showCoordinatesButtonText() {
-        return Component.translatable(selectedShowCoordinates ? "locatorbar.option.on" : "locatorbar.option.off");
+        return Component.translatable(state.selectedShowCoordinates ? "locatorbar.option.on" : "locatorbar.option.off");
     }
 
     private void toggleElementsOnXpBar() {
-        selectedElementsOnXpBar = !selectedElementsOnXpBar;
+        state.selectedElementsOnXpBar = !state.selectedElementsOnXpBar;
         elementsOnXpBarButton.setMessage(elementsOnXpBarButtonText());
-        applyAndSave();
+        applyRuntime();
         updateControlStates();
     }
 
     private Component elementsOnXpBarButtonText() {
-        return Component.translatable(selectedElementsOnXpBar ? "locatorbar.option.on" : "locatorbar.option.off");
+        return Component.translatable(state.selectedElementsOnXpBar ? "locatorbar.option.on" : "locatorbar.option.off");
     }
 
     private void cycleCoordinatesFormat() {
-        selectedCoordinatesFormat = selectedCoordinatesFormat.next();
+        state.selectedCoordinatesFormat = state.selectedCoordinatesFormat.next();
         coordinatesFormatButton.setMessage(coordinatesFormatButtonText());
-        applyAndSave();
+        applyRuntime();
     }
 
     private Component coordinatesFormatButtonText() {
-        return Component.translatable(selectedCoordinatesFormat.translationKey());
+        return Component.translatable(state.selectedCoordinatesFormat.translationKey());
     }
 
     private void toggleShowDays() {
-        selectedShowDays = !selectedShowDays;
+        state.selectedShowDays = !state.selectedShowDays;
         showDaysButton.setMessage(showDaysButtonText());
-        applyAndSave();
+        applyRuntime();
         updateControlStates();
     }
 
     private Component showDaysButtonText() {
-        return Component.translatable(selectedShowDays ? "locatorbar.option.on" : "locatorbar.option.off");
+        return Component.translatable(state.selectedShowDays ? "locatorbar.option.on" : "locatorbar.option.off");
     }
 
     private void cycleDaysDisplayOrder() {
-        selectedDaysDisplayOrder = selectedDaysDisplayOrder.next();
+        state.selectedDaysDisplayOrder = state.selectedDaysDisplayOrder.next();
         daysDisplayOrderButton.setMessage(daysDisplayOrderButtonText());
-        applyAndSave();
+        applyRuntime();
     }
 
     private Component daysDisplayOrderButtonText() {
-        return Component.translatable(selectedDaysDisplayOrder.translationKey());
+        return Component.translatable(state.selectedDaysDisplayOrder.translationKey());
     }
 
     private void toggleShowWorldDirections() {
-        selectedShowWorldDirections = !selectedShowWorldDirections;
+        state.selectedShowWorldDirections = !state.selectedShowWorldDirections;
         showWorldDirectionsButton.setMessage(showWorldDirectionsButtonText());
-        applyAndSave();
+        applyRuntime();
         updateControlStates();
     }
 
     private Component showWorldDirectionsButtonText() {
-        return Component.translatable(selectedShowWorldDirections ? "locatorbar.option.on" : "locatorbar.option.off");
+        return Component.translatable(state.selectedShowWorldDirections ? "locatorbar.option.on" : "locatorbar.option.off");
     }
 
     private void cyclePlayerMarkerType() {
         if (LocatorBarConfig.hasServerSettings()) {
             var server = LocatorBarConfig.getServerSettings();
             if (server != null && server.playerMarkerType() == PlayerMarkerType.DOTS) {
-                selectedPlayerMarkerType = selectedPlayerMarkerType == PlayerMarkerType.DOTS ? PlayerMarkerType.OFF : PlayerMarkerType.DOTS;
+                state.selectedPlayerMarkerType = state.selectedPlayerMarkerType == PlayerMarkerType.DOTS ? PlayerMarkerType.OFF : PlayerMarkerType.DOTS;
             } else {
-                selectedPlayerMarkerType = selectedPlayerMarkerType.next();
+                state.selectedPlayerMarkerType = state.selectedPlayerMarkerType.next();
             }
         } else {
-            selectedPlayerMarkerType = selectedPlayerMarkerType.next();
+            state.selectedPlayerMarkerType = state.selectedPlayerMarkerType.next();
         }
         showPlayerHeadsButton.setMessage(playerMarkerTypeButtonText());
-        applyAndSave();
+        applyRuntime();
         updateControlStates();
         updatePageState();
     }
 
     private Component playerMarkerTypeButtonText() {
-        return Component.translatable(selectedPlayerMarkerType.translationKey());
+        return Component.translatable(state.selectedPlayerMarkerType.translationKey());
     }
 
     private void togglePlayerMarkerOutline() {
-        selectedPlayerMarkerOutline = !selectedPlayerMarkerOutline;
+        state.selectedPlayerMarkerOutline = !state.selectedPlayerMarkerOutline;
         playerHeadOutlineButton.setMessage(playerMarkerOutlineButtonText());
-        applyAndSave();
+        applyRuntime();
     }
 
     private Component playerMarkerOutlineButtonText() {
-        return Component.translatable(selectedPlayerMarkerOutline ? "locatorbar.option.on" : "locatorbar.option.off");
+        return Component.translatable(state.selectedPlayerMarkerOutline ? "locatorbar.option.on" : "locatorbar.option.off");
     }
 
     private void toggleShowWaypoints() {
-        selectedShowWaypoints = !selectedShowWaypoints;
+        state.selectedShowWaypoints = !state.selectedShowWaypoints;
         showWaypointsButton.setMessage(showWaypointsButtonText());
-        applyAndSave();
+        applyRuntime();
         updateControlStates();
     }
 
     private Component showWaypointsButtonText() {
-        return Component.translatable(selectedShowWaypoints ? "locatorbar.option.on" : "locatorbar.option.off");
+        return Component.translatable(state.selectedShowWaypoints ? "locatorbar.option.on" : "locatorbar.option.off");
     }
 
     private void toggleShowDeathWaypoint() {
-        selectedShowDeathWaypoint = !selectedShowDeathWaypoint;
+        state.selectedShowDeathWaypoint = !state.selectedShowDeathWaypoint;
         showDeathWaypointButton.setMessage(showDeathWaypointButtonText());
-        applyAndSave();
+        applyRuntime();
         updateControlStates();
     }
 
     private Component showDeathWaypointButtonText() {
-        return Component.translatable(selectedShowDeathWaypoint ? "locatorbar.option.on" : "locatorbar.option.off");
+        return Component.translatable(state.selectedShowDeathWaypoint ? "locatorbar.option.on" : "locatorbar.option.off");
     }
 
     private void updateControlStates() {
-        boolean styleEnabled = selectedStyle != LocatorBarStyle.OFF;
-        boolean classicStyle = selectedStyle == LocatorBarStyle.CLASSIC;
-        boolean reworkedStyle = selectedStyle == LocatorBarStyle.REWORKED;
-        boolean canChangeCoordinatesFormat = styleEnabled && !classicStyle && selectedShowCoordinates;
-        boolean canChangeDaysOrder = styleEnabled && !classicStyle && selectedShowCoordinates && selectedShowDays;
-        boolean canChangeDirectionScale = styleEnabled && selectedShowWorldDirections;
-        boolean canChangeMarkerSettings = styleEnabled && selectedPlayerMarkerType != PlayerMarkerType.OFF;
-        boolean canChangeOutline = canChangeMarkerSettings && selectedPlayerMarkerType == PlayerMarkerType.HEADS;
-        boolean canChangeWaypoints = styleEnabled && selectedShowWaypoints;
+        boolean styleEnabled = state.selectedStyle != LocatorBarStyle.OFF;
+        boolean classicStyle = state.selectedStyle == LocatorBarStyle.CLASSIC;
+        boolean reworkedStyle = state.selectedStyle == LocatorBarStyle.REWORKED;
+        boolean canChangeCoordinatesFormat = styleEnabled && !classicStyle && state.selectedShowCoordinates;
+        boolean canChangeDaysOrder = styleEnabled && !classicStyle && state.selectedShowCoordinates && state.selectedShowDays;
+        boolean canChangeDirectionScale = styleEnabled && state.selectedShowWorldDirections;
+        boolean canChangeMarkerSettings = styleEnabled && state.selectedPlayerMarkerType != PlayerMarkerType.OFF;
+        boolean canChangeOutline = canChangeMarkerSettings && state.selectedPlayerMarkerType == PlayerMarkerType.HEADS;
+        boolean canChangeWaypoints = styleEnabled && state.selectedShowWaypoints;
 
         var server = LocatorBarConfig.getServerSettings();
         boolean hasServer = LocatorBarConfig.hasServerSettings() && server != null;
@@ -455,7 +379,7 @@ public final class LocatorBarConfigScreen extends Screen {
         maxVisiblePlayersSlider.active = canChangeMarkerSettings && !hasServer;
 
         showWaypointsButton.active = styleEnabled && !hasServer;
-        showDeathWaypointButton.active = styleEnabled && selectedShowWaypoints && !hasServer;
+        showDeathWaypointButton.active = styleEnabled && state.selectedShowWaypoints && !hasServer;
         waypointsScaleSlider.active = canChangeWaypoints;
         maxVisibleWaypointsSlider.active = canChangeWaypoints && !hasServer;
     }
@@ -466,7 +390,7 @@ public final class LocatorBarConfigScreen extends Screen {
 
             if (page == 0) {
                 this.list.addEntry(Component.translatable("locatorbar.config.field.style"), styleButton);
-                if (selectedStyle == LocatorBarStyle.REWORKED) {
+                if (state.selectedStyle == LocatorBarStyle.REWORKED) {
                     this.list.addEntry(Component.translatable("locatorbar.config.field.scale"), scaleSlider);
                     this.list.addEntry(Component.translatable("locatorbar.config.field.custom_offset_x"), customOffsetXSlider);
                     this.list.addEntry(Component.translatable("locatorbar.config.field.custom_offset_y"), customOffsetYSlider);
@@ -475,7 +399,7 @@ public final class LocatorBarConfigScreen extends Screen {
                     this.list.addEntry(Component.translatable("locatorbar.config.field.coordinates_format"), coordinatesFormatButton);
                     this.list.addEntry(Component.translatable("locatorbar.config.field.show_days"), showDaysButton);
                     this.list.addEntry(Component.translatable("locatorbar.config.field.days_display_order"), daysDisplayOrderButton);
-                } else if (selectedStyle == LocatorBarStyle.CLASSIC) {
+                } else if (state.selectedStyle == LocatorBarStyle.CLASSIC) {
                     this.list.addEntry(Component.translatable("locatorbar.config.field.elements_on_xp_bar"), elementsOnXpBarButton);
                     this.list.addEntry(Component.translatable("locatorbar.config.field.custom_offset_x"), customOffsetXSlider);
                     this.list.addEntry(Component.translatable("locatorbar.config.field.custom_offset_y"), customOffsetYSlider);
@@ -493,8 +417,8 @@ public final class LocatorBarConfigScreen extends Screen {
                 this.list.addEntry(Component.translatable("locatorbar.config.field.waypoints_size"), waypointsScaleSlider);
                 this.list.addEntry(Component.translatable("locatorbar.config.field.max_visible_waypoints"), maxVisibleWaypointsSlider);
 
-                if (selectedStyle != LocatorBarStyle.OFF && selectedShowWaypoints) {
-                    List<ManagedWaypoint> waypoints = collectManagedWaypoints();
+                if (state.selectedStyle != LocatorBarStyle.OFF && state.selectedShowWaypoints) {
+                    List<ManagedWaypoint> waypoints = WaypointConfigPage.collectManagedWaypoints();
                     if (!waypoints.isEmpty()) {
                         this.list.addHeaderEntry(Component.translatable("locatorbar.config.header.waypoint_manager"));
                         for (ManagedWaypoint waypoint : waypoints) {
@@ -509,131 +433,20 @@ public final class LocatorBarConfigScreen extends Screen {
         nextPageButton.active = page < TOTAL_PAGES - 1;
     }
 
-    private List<ManagedWaypoint> collectManagedWaypoints() {
-        List<ManagedWaypoint> waypoints = new ArrayList<>();
-        Set<UUID> seenIds = new HashSet<>();
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) {
-            return waypoints;
-        }
+    private boolean dirty;
 
-        String currentWorld = mc.level.dimension().identifier().toString();
-
-        Inventory inventory = mc.player.getInventory();
-        //? if >=1.21.11 {
-        for (ItemStack stack : inventory.getNonEquipmentItems()) {
-            addManagedWaypoint(waypoints, seenIds, stack, currentWorld);
-        }
-        ItemStack offhand = inventory.getItem(Inventory.SLOT_OFFHAND);
-        if (!offhand.isEmpty()) {
-            addManagedWaypoint(waypoints, seenIds, offhand, currentWorld);
-        }
-        //?} else {
-        /*for (ItemStack stack : inventory.items) {
-            addManagedWaypoint(waypoints, seenIds, stack, currentWorld);
-        }
-        for (ItemStack stack : inventory.offhand) {
-            addManagedWaypoint(waypoints, seenIds, stack, currentWorld);
-        }
-        *///?}
-
-        LocatorBarConfig.getWaypoints().forEach((id, config) -> {
-            if (config.world.equals(currentWorld) && !seenIds.contains(id)) {
-                waypoints.add(new ManagedWaypoint(id, config.character, config.color, config.visible, config.world, -1));
-                seenIds.add(id);
-            }
-        });
-
-        return waypoints;
+    private void applyRuntime() {
+        state.apply();
+        dirty = true;
     }
 
-    private void addManagedWaypoint(List<ManagedWaypoint> waypoints, Set<UUID> seenIds, ItemStack stack, String currentWorld) {
-        if (stack == null || stack.isEmpty()) {
-            return;
+    @Override
+    public void removed() {
+        if (dirty) {
+            LocatorBarConfig.save();
+            dirty = false;
         }
-
-        if (stack.is(net.minecraft.world.item.Items.BUNDLE)) {
-            pl.fuzjajadrowa.locatorbar.util.LocatorBarUtils.forEachBundleItem(stack, innerStack -> addManagedWaypoint(waypoints, seenIds, innerStack, currentWorld));
-            return;
-        }
-
-        //? if >=1.20.5 {
-        LodestoneTracker tracker = stack.get(DataComponents.LODESTONE_TRACKER);
-        if (tracker == null || tracker.target().isEmpty()) {
-            return;
-        }
-
-        if (!tracker.target().get().dimension().identifier().toString().equals(currentWorld)) {
-            return;
-        }
-        //?} else {
-        /*CompoundTag tag = stack.getTag();
-        if (tag == null || !tag.contains("LodestonePos") || !tag.contains("LodestoneDimension")) {
-            return;
-        }
-
-        String dimensionStr = tag.getString("LodestoneDimension");
-        if (!dimensionStr.equals(currentWorld)) {
-            return;
-        }
-        *///?}
-
-        UUID waypointId = WaypointData.getWaypointId(stack);
-        if (waypointId == null) {
-            return;
-        }
-
-        if (seenIds.contains(waypointId)) {
-            return;
-        }
-
-        WaypointConfig config = LocatorBarConfig.getWaypointConfig(waypointId);
-        String symbol = config != null ? config.character : WaypointData.getWaypointSymbol(stack);
-        int color = config != null ? config.color : (WaypointData.getCustomColor(stack) != null ? WaypointData.getCustomColor(stack) : LocatorBarHudHelper.colorFromWaypointId(waypointId));
-        boolean visible = config == null ? !WaypointData.isHidden(stack) : config.visible;
-        int index = WaypointData.getWaypointIndex(stack);
-
-        waypoints.add(new ManagedWaypoint(waypointId, symbol, color, visible, currentWorld, index));
-        seenIds.add(waypointId);
-    }
-
-    private void applyAndSave() {
-        boolean serverControlled = LocatorBarConfig.hasServerSettings();
-        if (!serverControlled) {
-            LocatorBarConfig.setStyle(selectedStyle);
-        }
-        LocatorBarConfig.setScale(selectedScale);
-        LocatorBarConfig.setViewAngle(selectedViewAngle);
-        if (!serverControlled) {
-            LocatorBarConfig.setShowCoordinates(selectedShowCoordinates);
-        }
-        LocatorBarConfig.setElementsOnXpBar(selectedElementsOnXpBar);
-        LocatorBarConfig.setCoordinatesFormat(selectedCoordinatesFormat);
-        if (!serverControlled) {
-            LocatorBarConfig.setShowDays(selectedShowDays);
-        }
-        LocatorBarConfig.setDaysDisplayOrder(selectedDaysDisplayOrder);
-        if (!serverControlled) {
-            LocatorBarConfig.setShowWorldDirections(selectedShowWorldDirections);
-        }
-        LocatorBarConfig.setWorldDirectionsScale(selectedWorldDirectionsScale);
-        if (!serverControlled) {
-            LocatorBarConfig.setPlayerMarkerType(selectedPlayerMarkerType);
-        }
-        LocatorBarConfig.setPlayerMarkersScale(selectedPlayerMarkersScale);
-        LocatorBarConfig.setPlayerMarkerOutline(selectedPlayerMarkerOutline);
-        if (!serverControlled) {
-            LocatorBarConfig.setMaxVisiblePlayers(selectedMaxVisiblePlayers);
-            LocatorBarConfig.setShowWaypoints(selectedShowWaypoints);
-        }
-        LocatorBarConfig.setWaypointsScale(selectedWaypointsScale);
-        if (!serverControlled) {
-            LocatorBarConfig.setMaxVisibleWaypoints(selectedMaxVisibleWaypoints);
-            LocatorBarConfig.setShowDeathWaypoint(selectedShowDeathWaypoint);
-        }
-        LocatorBarConfig.setCustomOffsetX(selectedCustomOffsetX);
-        LocatorBarConfig.setCustomOffsetY(selectedCustomOffsetY);
-        LocatorBarConfig.save();
+        super.removed();
     }
 
     private void previousPage() {
@@ -646,385 +459,4 @@ public final class LocatorBarConfigScreen extends Screen {
         updatePageState();
     }
 
-    private record ManagedWaypoint(UUID id, String symbol, int color, boolean visible, String world, int index) {
-    }
-
-    private final class ConfigList extends ContainerObjectSelectionList<ConfigList.AbstractEntry> {
-        public ConfigList(Minecraft minecraft, int width, int height, int y, int itemHeight) {
-            //? if >=1.21 {
-            super(minecraft, width, height, y, itemHeight);
-            //?} else {
-            /*super(minecraft, width, LocatorBarConfigScreen.this.height, y, y + height, itemHeight);
-            *///?}
-        }
-
-        public void clearList() {
-            this.clearEntries();
-            this.setScrollAmount(0);
-        }
-
-        public void addEntry(Component label, AbstractWidget widget) {
-            super.addEntry(new Entry(label, widget));
-        }
-
-        public void addWaypointEntry(ManagedWaypoint waypoint) {
-            super.addEntry(new WaypointEntry(waypoint));
-        }
-
-        public void addHeaderEntry(Component label) {
-            super.addEntry(new HeaderEntry(label));
-        }
-
-        @Override
-        public int getRowWidth() {
-            return 340;
-        }
-
-        //? if >=1.21.11 {
-        private int getScrollbarPosition() {
-            return this.width / 2 + 160;
-        }
-        //?} else {
-        /*protected int getScrollbarPosition() {
-            return this.width / 2 + 160;
-        }
-        *///?}
-
-        abstract class AbstractEntry extends ContainerObjectSelectionList.Entry<AbstractEntry> {
-            //? if >=26.1 {
-            @Override
-            public void extractContent(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, boolean isMouseOver, float partialTick) {
-                int top = this.getContentY();
-                int height = this.getContentHeight();
-                renderEntry(guiGraphics, top, height, mouseX, mouseY, partialTick);
-            }
-            //?} elif >=1.21.11 {
-            /*@Override
-            public void renderContent(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, boolean isMouseOver, float partialTick) {
-                int top = this.getContentY();
-                int height = this.getContentHeight();
-                renderEntry(guiGraphics, top, height, mouseX, mouseY, partialTick);
-            }
-            *///?} else {
-            /*@Override
-            public void render(GuiGraphicsExtractor guiGraphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean isMouseOver, float partialTick) {
-                renderEntry(guiGraphics, top, height, mouseX, mouseY, partialTick);
-            }
-            *///?}
-
-            protected abstract void renderEntry(GuiGraphicsExtractor guiGraphics, int top, int height, int mouseX, int mouseY, float partialTick);
-        }
-
-        class HeaderEntry extends AbstractEntry {
-            private final Component label;
-
-            public HeaderEntry(Component label) {
-                this.label = label;
-            }
-
-            @Override
-            protected void renderEntry(GuiGraphicsExtractor guiGraphics, int top, int height, int mouseX, int mouseY, float partialTick) {
-                int centerX = LocatorBarConfigScreen.this.width / 2;
-                int centerY = top + (height - LocatorBarConfigScreen.this.font.lineHeight) / 2;
-                guiGraphics.centeredText(LocatorBarConfigScreen.this.font, label, centerX, centerY, 0xFFFFFFFF);
-            }
-
-            @Override
-            public List<? extends NarratableEntry> narratables() {
-                return ImmutableList.of();
-            }
-
-            @Override
-            public List<? extends GuiEventListener> children() {
-                return ImmutableList.of();
-            }
-        }
-
-        class Entry extends AbstractEntry {
-            private final Component label;
-            private final AbstractWidget widget;
-            private final List<AbstractWidget> children;
-
-            public Entry(Component label, AbstractWidget widget) {
-                this.label = label;
-                this.widget = widget;
-                this.children = ImmutableList.of(widget);
-            }
-
-            @Override
-            protected void renderEntry(GuiGraphicsExtractor guiGraphics, int top, int height, int mouseX, int mouseY, float partialTick) {
-                int centerY = top + (height - LocatorBarConfigScreen.this.font.lineHeight) / 2;
-
-                guiGraphics.text(LocatorBarConfigScreen.this.font, label, LocatorBarConfigScreen.this.width / 2 - 138, centerY, 0xFFFFFFFF, false);
-
-                widget.setX(LocatorBarConfigScreen.this.width / 2 + 20);
-                widget.setY(top);
-                //? if >=26.1
-                widget.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
-                //? if <26.1
-                /*widget.render(guiGraphics, mouseX, mouseY, partialTick);*/
-            }
-
-            @Override
-            public List<? extends NarratableEntry> narratables() {
-                return this.children;
-            }
-
-            @Override
-            public List<? extends GuiEventListener> children() {
-                return this.children;
-            }
-        }
-
-        class WaypointEntry extends AbstractEntry {
-            private final ManagedWaypoint waypoint;
-            private final EditBox symbolBox;
-            private final EditBox colorBox;
-            private final Button visibilityButton;
-            private final Button deleteButton;
-            private final List<AbstractWidget> children;
-
-            public WaypointEntry(ManagedWaypoint waypoint) {
-                this.waypoint = waypoint;
-
-                String initialSymbol = waypoint.symbol;
-                if ((initialSymbol == null || initialSymbol.isEmpty()) && waypoint.index > 0) {
-                    initialSymbol = Integer.toString(waypoint.index);
-                }
-
-                this.symbolBox = new EditBox(LocatorBarConfigScreen.this.font, 0, 0, 20, 20, Component.empty());
-                this.symbolBox.setValue(initialSymbol != null ? initialSymbol : "");
-                this.symbolBox.setMaxLength(4);
-                this.symbolBox.setResponder(value -> updateWaypoint());
-                saveDefaultWaypointConfigIfNeeded(initialSymbol);
-
-                this.colorBox = new EditBox(LocatorBarConfigScreen.this.font, 0, 0, 50, 20, Component.empty());
-                this.colorBox.setValue(String.format("%06X", waypoint.color & 0xFFFFFF));
-                this.colorBox.setMaxLength(6);
-                this.colorBox.setResponder(value -> updateWaypoint());
-
-                this.visibilityButton = Button.builder(
-                        Component.translatable(waypoint.visible ? "locatorbar.option.on" : "locatorbar.option.off"),
-                        button -> {
-                            toggleVisibility();
-                        }
-                ).bounds(0, 0, 40, 20).build();
-
-                this.deleteButton = Button.builder(
-                        Component.translatable("locatorbar.config.button.delete"),
-                        button -> {
-                            deleteWaypoint();
-                        }
-                ).bounds(0, 0, 50, 20).build();
-
-                this.children = ImmutableList.of(symbolBox, colorBox, visibilityButton, deleteButton);
-            }
-
-            private void toggleVisibility() {
-                boolean next = visibilityButton.getMessage().getString().equals(Component.translatable("locatorbar.option.off").getString());
-                visibilityButton.setMessage(Component.translatable(next ? "locatorbar.option.on" : "locatorbar.option.off"));
-                updateWaypoint();
-            }
-
-            private void deleteWaypoint() {
-                Minecraft mc = Minecraft.getInstance();
-                if (mc.player != null) {
-                    WaypointData.unlinkWaypoint(mc.player, waypoint.id);
-                }
-
-                LocatorBarConfig.removeWaypointConfig(waypoint.id);
-                LocatorBarConfig.save();
-
-                LocatorBarConfigScreen.this.updatePageState();
-            }
-
-            private void updateWaypoint() {
-                String symbol = symbolBox.getValue();
-                int color;
-                try {
-                    color = Integer.parseInt(colorBox.getValue(), 16);
-                } catch (NumberFormatException e) {
-                    color = LocatorBarHudHelper.colorFromWaypointId(waypoint.id);
-                }
-                boolean visible = visibilityButton.getMessage().getString().equals(Component.translatable("locatorbar.option.on").getString());
-
-                LocatorBarConfig.setWaypointConfig(waypoint.id, new WaypointConfig(waypoint.world, color, symbol, visible));
-                LocatorBarConfig.save();
-            }
-
-            private void saveDefaultWaypointConfigIfNeeded(String initialSymbol) {
-                if (LocatorBarConfig.getWaypointConfig(waypoint.id) != null || initialSymbol == null || initialSymbol.isEmpty()) {
-                    return;
-                }
-
-                LocatorBarConfig.setWaypointConfig(waypoint.id, new WaypointConfig(waypoint.world, waypoint.color, initialSymbol, waypoint.visible));
-                LocatorBarConfig.save();
-            }
-
-            @Override
-            protected void renderEntry(GuiGraphicsExtractor guiGraphics, int top, int height, int mouseX, int mouseY, float partialTick) {
-                int centerX = LocatorBarConfigScreen.this.width / 2;
-
-                int totalWidth = 220;
-                int startX = centerX - (totalWidth / 2);
-
-                int previewX = startX;
-                int previewSize = 20;
-                int previewY = top + (height - previewSize) / 2;
-
-                // Preview
-                int color;
-                try {
-                    color = Integer.parseInt(colorBox.getValue(), 16);
-                } catch (NumberFormatException e) {
-                    color = LocatorBarHudHelper.colorFromWaypointId(waypoint.id);
-                }
-                String symbol = symbolBox.getValue();
-                if (symbol.isEmpty()) {
-                    if (waypoint.symbol != null && !waypoint.symbol.isEmpty()) {
-                        symbol = waypoint.symbol;
-                    } else if (waypoint.index > 0) {
-                        symbol = Integer.toString(waypoint.index);
-                    }
-                }
-
-                RenderCompat.push(guiGraphics);
-                RenderCompat.translate(guiGraphics, previewX, previewY);
-                RenderCompat.blitTinted(
-                        guiGraphics,
-                        WAYPOINT_TEXTURE,
-                        0,
-                        0,
-                        0,
-                        0,
-                        previewSize,
-                        previewSize,
-                        36,
-                        36,
-                        36,
-                        36,
-                        0xFF000000 | color
-                );
-
-                if (!symbol.isEmpty()) {
-                    float dynamicTextScale = 0.75F * (previewSize / 14.0F);
-                    float textWidth = LocatorBarConfigScreen.this.font.width(symbol) * dynamicTextScale;
-                    float textHeight = LocatorBarConfigScreen.this.font.lineHeight * dynamicTextScale;
-                    float textX = ((previewSize - textWidth) / 2.0F) + 0.45F;
-                    float textY = (previewSize - textHeight) / 2.0F;
-                    RenderCompat.push(guiGraphics);
-                    RenderCompat.translate(guiGraphics, textX, textY);
-                    RenderCompat.scale(guiGraphics, dynamicTextScale, dynamicTextScale);
-                    RenderCompat.text(guiGraphics, symbol, 0, 0, 0xFFFFFFFF, false);
-                    RenderCompat.pop(guiGraphics);
-                }
-                RenderCompat.pop(guiGraphics);
-
-                int currentX = startX + 20 + 10;
-                symbolBox.setX(currentX);
-                symbolBox.setY(top);
-                //? if >=26.1
-                symbolBox.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
-                //? if <26.1
-                /*symbolBox.render(guiGraphics, mouseX, mouseY, partialTick);*/
-
-                currentX += 20 + 10;
-                colorBox.setX(currentX);
-                colorBox.setY(top);
-                //? if >=26.1
-                colorBox.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
-                //? if <26.1
-                /*colorBox.render(guiGraphics, mouseX, mouseY, partialTick);*/
-
-                currentX += 50 + 10;
-                visibilityButton.setX(currentX);
-                visibilityButton.setY(top);
-                //? if >=26.1
-                visibilityButton.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
-                //? if <26.1
-                /*visibilityButton.render(guiGraphics, mouseX, mouseY, partialTick);*/
-
-                currentX += 40 + 10;
-                deleteButton.setX(currentX);
-                deleteButton.setY(top);
-                //? if >=26.1
-                deleteButton.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
-                //? if <26.1
-                /*deleteButton.render(guiGraphics, mouseX, mouseY, partialTick);*/
-            }
-
-            @Override
-            public List<? extends NarratableEntry> narratables() {
-                return this.children;
-            }
-
-            @Override
-            public List<? extends GuiEventListener> children() {
-                return this.children;
-            }
-        }
-    }
-
-    private static final class ConfigSlider extends AbstractSliderButton {
-        private final Component label;
-        private final float min;
-        private final float max;
-        private final float step;
-        private final Consumer<Float> onChange;
-        private final Function<Float, String> valueText;
-
-        private ConfigSlider(
-                int x,
-                int y,
-                int width,
-                int height,
-                Component label,
-                float min,
-                float max,
-                float step,
-                float initial,
-                Consumer<Float> onChange,
-                Function<Float, String> valueText
-        ) {
-            super(x, y, width, height, Component.empty(), toNormalized(snap(initial, min, max, step), min, max));
-            this.label = label;
-            this.min = min;
-            this.max = max;
-            this.step = step;
-            this.onChange = onChange;
-            this.valueText = valueText;
-            updateMessage();
-        }
-
-        @Override
-        protected void updateMessage() {
-            float value = currentValue();
-            setMessage(Component.translatable("locatorbar.config.slider_value", label, valueText.apply(value)));
-        }
-
-        @Override
-        protected void applyValue() {
-            float snapped = snap(fromNormalized(this.value, min, max), min, max, step);
-            this.value = toNormalized(snapped, min, max);
-            onChange.accept(snapped);
-            updateMessage();
-        }
-
-        private float currentValue() {
-            return snap(fromNormalized(this.value, min, max), min, max, step);
-        }
-
-        private static double toNormalized(float value, float min, float max) {
-            return (value - min) / (max - min);
-        }
-
-        private static float fromNormalized(double normalized, float min, float max) {
-            return (float) (min + (max - min) * normalized);
-        }
-
-        private static float snap(float value, float min, float max, float step) {
-            float clamped = Math.max(min, Math.min(max, value));
-            return Math.round(clamped / step) * step;
-        }
-    }
 }
