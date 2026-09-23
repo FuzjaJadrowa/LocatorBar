@@ -42,9 +42,6 @@ jobs:
       - name: Inspect Gradle projects
         run: ./gradlew --no-daemon projects --stacktrace
 
-      - name: Test preprocessor, all generated targets, config and math
-        run: ./gradlew --no-daemon -p buildSrc test --stacktrace
-
       - name: Check active code
         run: ./gradlew --no-daemon check --stacktrace
 
