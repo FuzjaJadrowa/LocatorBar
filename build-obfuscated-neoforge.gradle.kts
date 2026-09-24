@@ -96,6 +96,7 @@ tasks.processResources {
         listOf("META-INF/neoforge.mods.toml"),
         "id" to mod.id,
         "name" to mod.name,
+        "iconProperty" to "logoFile",
         "version" to mod.version,
         "minecraft" to mod.prop("mc_targets"),
         "loader" to mod.dep("neoforge_loader_range"),
