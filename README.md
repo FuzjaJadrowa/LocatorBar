@@ -56,4 +56,4 @@
 - pl_pl.json - Fuzja Jądrowa
 - pt_br.json - guigiffoni
 ## License
-This project is distributed under the **GPL-3.0** license.
+This project is distributed under the **PIF-1.0** license.

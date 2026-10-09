@@ -1,7 +1,7 @@
 modLoader = "javafml"
 loaderVersion = "${loader}"
 issueTrackerURL = "https://github.com/FuzjaJadrowa/LocatorBar/issues"
-license = "GPL-3.0"
+license = "PIF-1.0"
 
 [[mods]]
 modId = "locatorbar"
