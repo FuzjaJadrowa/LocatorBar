@@ -23,6 +23,11 @@ neoForge {
         }
     }
 
+    unitTest {
+        enable()
+        testedMod = mods.named(mod.id)
+    }
+
     runs {
         register("client") {
             gameDirectory = rootProject.file("run/$projectName/client")

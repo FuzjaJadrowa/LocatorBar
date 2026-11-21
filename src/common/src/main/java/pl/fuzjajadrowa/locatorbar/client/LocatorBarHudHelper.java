@@ -51,12 +51,16 @@ public final class LocatorBarHudHelper {
             }
         }
 
-        //? if >=26.2 {
+        //? if >=1.21.11 {
         if (mc.getConnection() != null) {
             var waypointManager = mc.getConnection().getWaypointManager();
             if (waypointManager != null) {
                 float partialTicks = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+                //? if >=26.2 {
                 var mainCamera = mc.gameRenderer.mainCamera();
+                //?} else {
+                /*var mainCamera = mc.gameRenderer.getMainCamera();
+                *///?}
                 var cameraEntity = camera.entity();
 
                 waypointManager.forEachWaypoint(cameraEntity, trackedWaypoint -> {

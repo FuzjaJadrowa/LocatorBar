@@ -114,13 +114,15 @@ public final class PlayerLocatorClient {
     private static List<Marker> collectEntityMarkers(Player localPlayer, AlphaFunction alphaFunction) {
         Minecraft minecraft = Minecraft.getInstance();
         CameraView camera = LocatorBarUtils.getCameraView(minecraft, localPlayer);
-        //? if >=1.21 {
+        //? if >=1.21.11 {
         float partialTicks = minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-        //?} else {
+        //?} elif >=1.21 {
+        /*float partialTicks = minecraft.getTimer().getGameTimeDeltaPartialTick(false);
+        *///?} else {
         /*float partialTicks = minecraft.getFrameTime();
         *///?}
         List<Marker> markers = new ArrayList<>();
-        //? if >=26.2
+        //? if >=1.21.11
         java.util.Set<java.util.UUID> addedPlayers = new java.util.HashSet<>();
 
         for (Player otherPlayer : localPlayer.level().players()) {
@@ -166,15 +168,19 @@ public final class PlayerLocatorClient {
                     dx, dy, dz, camera.yaw(), camera.pitch(), MarkerMath.BASE_HUD_FOV
             );
             markers.add(new Marker(otherPlayer.getUUID(), skinTexture, directionYaw, alpha, distance, teamColor, pitchDirection));
-            //? if >=26.2
+            //? if >=1.21.11
             addedPlayers.add(otherPlayer.getUUID());
         }
 
-        //? if >=26.2 {
+        //? if >=1.21.11 {
         if (minecraft.getConnection() != null) {
             var waypointManager = minecraft.getConnection().getWaypointManager();
             if (waypointManager != null) {
+                //? if >=26.2 {
                 var mainCamera = minecraft.gameRenderer.mainCamera();
+                //?} else {
+                /*var mainCamera = minecraft.gameRenderer.getMainCamera();
+                *///?}
                 var cameraEntity = camera.entity();
 
                 waypointManager.forEachWaypoint(cameraEntity, trackedWaypoint -> {
@@ -204,9 +210,15 @@ public final class PlayerLocatorClient {
                         } else if (playerInfo != null) {
                             String playerName = playerInfo.getProfile().name();
                             net.minecraft.world.scores.PlayerTeam team = localPlayer.level().getScoreboard().getPlayersTeam(playerName);
+                            //? if >=26.2 {
                             teamColor = (team != null && team.getColor().isPresent())
                                     ? LocatorBarUtils.normalizeTeamColor(team.getColor().get().rgb())
                                     : null;
+                            //?} else {
+                            /*teamColor = (team != null && team.getColor() != null && team.getColor().getColor() != null)
+                                    ? LocatorBarUtils.normalizeTeamColor(team.getColor().getColor())
+                                    : null;
+                            *///?}
                         }
 
                         var vanillaPitch = trackedWaypoint.pitchDirectionToCamera(localPlayer.level(), minecraft.gameRenderer, entity -> partialTicks);
