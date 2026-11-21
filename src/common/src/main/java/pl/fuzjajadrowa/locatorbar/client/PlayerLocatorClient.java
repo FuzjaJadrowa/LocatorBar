@@ -39,7 +39,7 @@ public final class PlayerLocatorClient {
 
     public static List<Marker> collectMarkers(Player localPlayer, AlphaFunction alphaFunction) {
         List<PlayerLocatorPayload.Entry> currentEntries = entries;
-        if (currentEntries.isEmpty() || System.currentTimeMillis() - lastUpdateMillis > MAX_PAYLOAD_AGE_MILLIS) {
+        if (System.currentTimeMillis() - lastUpdateMillis > MAX_PAYLOAD_AGE_MILLIS) {
             return collectEntityMarkers(localPlayer, alphaFunction);
         }
 
@@ -49,11 +49,17 @@ public final class PlayerLocatorClient {
         }
 
         CameraView camera = LocatorBarUtils.getCameraView(minecraft, localPlayer);
+        UUID cameraEntityId = camera.entity() != null ? camera.entity().getUUID() : null;
         List<Marker> markers = new ArrayList<>();
         for (PlayerLocatorPayload.Entry entry : currentEntries) {
-            double dx = entry.x() - camera.x();
-            double dy = entry.y() - camera.y();
-            double dz = entry.z() - camera.z();
+            if (entry.playerId().equals(localPlayer.getUUID()) || entry.playerId().equals(cameraEntityId)) {
+                continue;
+            }
+
+            boolean quantizedFar = Double.isNaN(entry.y());
+            double dx = quantizedFar ? entry.x() : (entry.x() - camera.x());
+            double dy = quantizedFar ? 0.0D : (entry.y() - camera.y());
+            double dz = quantizedFar ? entry.z() : (entry.z() - camera.z());
             if (dx * dx + dz * dz < 1.0E-6D) {
                 continue;
             }
@@ -95,7 +101,7 @@ public final class PlayerLocatorClient {
                     ? LocatorBarUtils.normalizeTeamColor(team.getColor().getColor())
                     : null;
             *///?}
-            PitchDirection pitchDirection = distance > 332.0F
+            PitchDirection pitchDirection = (quantizedFar || distance > 332.0F)
                     ? MarkerMath.calculateHorizonPitchDirection(camera.pitch(), MarkerMath.BASE_HUD_FOV)
                     : MarkerMath.calculatePitchDirection(dx, dy, dz, camera.yaw(), camera.pitch(), MarkerMath.BASE_HUD_FOV);
             markers.add(new Marker(entry.playerId(), skinTexture, directionYaw, alpha, distance, teamColor, pitchDirection));
@@ -108,6 +114,11 @@ public final class PlayerLocatorClient {
     private static List<Marker> collectEntityMarkers(Player localPlayer, AlphaFunction alphaFunction) {
         Minecraft minecraft = Minecraft.getInstance();
         CameraView camera = LocatorBarUtils.getCameraView(minecraft, localPlayer);
+        //? if >=1.21 {
+        float partialTicks = minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        //?} else {
+        /*float partialTicks = minecraft.getFrameTime();
+        *///?}
         List<Marker> markers = new ArrayList<>();
         //? if >=26.2
         java.util.Set<java.util.UUID> addedPlayers = new java.util.HashSet<>();
@@ -117,9 +128,10 @@ public final class PlayerLocatorClient {
                 continue;
             }
 
-            double dx = otherPlayer.getX() - camera.x();
-            double dy = otherPlayer.getEyeY() - camera.y();
-            double dz = otherPlayer.getZ() - camera.z();
+            net.minecraft.world.phys.Vec3 otherEyePos = otherPlayer.getEyePosition(partialTicks);
+            double dx = otherEyePos.x - camera.x();
+            double dy = otherEyePos.y - camera.y();
+            double dz = otherEyePos.z - camera.z();
             if (dx * dx + dz * dz < 1.0E-6D) {
                 continue;
             }
@@ -162,7 +174,6 @@ public final class PlayerLocatorClient {
         if (minecraft.getConnection() != null) {
             var waypointManager = minecraft.getConnection().getWaypointManager();
             if (waypointManager != null) {
-                float partialTicks = minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false);
                 var mainCamera = minecraft.gameRenderer.mainCamera();
                 var cameraEntity = camera.entity();
 

@@ -114,18 +114,8 @@ final class RenderCompat {
     }
 
     static void blitPlayerHead(GuiGraphicsExtractor guiGraphics, Identifier texture, int x, int y, int size, int tint) {
-        //? if <1.21.11 {
-        /*float alpha = ((tint >> 24) & 0xFF) / 255.0F;
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
-        *///?}
         blitTinted(guiGraphics, texture, x, y, 8, 8, size, size, 8, 8, 64, 64, tint);
         blitTinted(guiGraphics, texture, x, y, 40, 8, size, size, 8, 8, 64, 64, tint);
-        //? if <1.21.11 {
-        /*RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.disableBlend();
-        *///?}
     }
 
     static void text(GuiGraphicsExtractor guiGraphics, String text, int x, int y, int color, boolean shadow) {

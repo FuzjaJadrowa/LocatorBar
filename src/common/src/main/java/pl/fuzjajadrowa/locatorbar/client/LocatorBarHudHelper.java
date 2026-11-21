@@ -162,15 +162,4 @@ public final class LocatorBarHudHelper {
     public static boolean hasRecoveryCompass(Player player) {
         return ClientWaypointInventory.hasRecoveryCompass(player);
     }
-
-    public static boolean hasAnyBarElements(Player player) {
-        if (LocatorBarConfig.isShowWorldDirections()) {
-            return true;
-        }
-        if (LocatorBarConfig.getPlayerMarkerType() != pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType.OFF
-                && !collectPlayerMarkers(player).isEmpty()) {
-            return true;
-        }
-        return LocatorBarConfig.isShowWaypoints() && !collectWaypointMarkers(player).isEmpty();
-    }
 }

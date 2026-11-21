@@ -236,15 +236,29 @@ public final class LocatorBarConfig {
         return server == null ? data.playerMarkerFadeToMinDistance : server.playerMarkerFadeToMinDistance();
     }
 
+    public static void setPlayerMarkerFadeToMinDistance(float val) {
+        data.playerMarkerFadeToMinDistance = clamp(val, 0.0F, INFINITE_PLAYER_HEAD_DISTANCE);
+        normalize();
+    }
+
     public static float getPlayerMarkerHideDistance() {
         ServerSettings server = serverSettings;
         return server == null ? data.playerMarkerHideDistance : server.playerMarkerHideDistance();
+    }
+
+    public static void setPlayerMarkerHideDistance(float val) {
+        data.playerMarkerHideDistance = clamp(val, 0.0F, INFINITE_PLAYER_HEAD_DISTANCE);
+        normalize();
     }
 
     public static float getPlayerMarkerMinAlpha() {
         ServerSettings server = serverSettings;
         float percent = server == null ? data.playerMarkerMinAlphaPercent : server.playerMarkerMinAlphaPercent();
         return clamp(percent, 0.0F, 100.0F) / 100.0F;
+    }
+
+    public static void setPlayerMarkerMinAlphaPercent(float val) {
+        data.playerMarkerMinAlphaPercent = clamp(val, 0.0F, 100.0F);
     }
 
     public static boolean isShowWaypoints() {
@@ -399,16 +413,16 @@ public final class LocatorBarConfig {
         private boolean playerMarkerOutline = false;
 
         @SerializedName("playerMarkerFadeStartDistance")
-        private float playerMarkerFadeStartDistance = 50.0F;
+        private float playerMarkerFadeStartDistance = ServerSettings.DEFAULT_PLAYER_MARKER_FADE_START_DISTANCE;
 
         @SerializedName("playerMarkerFadeToMinDistance")
-        private float playerMarkerFadeToMinDistance = 125.0F;
+        private float playerMarkerFadeToMinDistance = ServerSettings.DEFAULT_PLAYER_MARKER_FADE_TO_MIN_DISTANCE;
 
         @SerializedName("playerMarkerHideDistance")
-        private float playerMarkerHideDistance = LocatorBarConfig.INFINITE_PLAYER_HEAD_DISTANCE;
+        private float playerMarkerHideDistance = ServerSettings.DEFAULT_PLAYER_MARKER_HIDE_DISTANCE;
 
         @SerializedName("playerMarkerMinAlphaPercent")
-        private float playerMarkerMinAlphaPercent = 40.0F;
+        private float playerMarkerMinAlphaPercent = ServerSettings.DEFAULT_PLAYER_MARKER_MIN_ALPHA_PERCENT;
 
         @SerializedName("maxVisiblePlayers")
         private int maxVisiblePlayers = 16;

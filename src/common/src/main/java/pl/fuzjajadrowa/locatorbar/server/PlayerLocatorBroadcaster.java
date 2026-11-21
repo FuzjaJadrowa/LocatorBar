@@ -68,9 +68,9 @@ public final class PlayerLocatorBroadcaster {
                 double quantizedDistance = Math.max(REALLY_FAR_DISTANCE, Math.round(distance / DISTANCE_QUANTIZATION_BLOCKS) * DISTANCE_QUANTIZATION_BLOCKS);
                 double angle = Math.atan2(dz, dx);
                 double quantizedAngle = Math.round(angle / AZIMUTH_QUANTIZATION_RAD) * AZIMUTH_QUANTIZATION_RAD;
-                transmittedX = viewerX + Math.cos(quantizedAngle) * quantizedDistance;
-                transmittedY = viewerY;
-                transmittedZ = viewerZ + Math.sin(quantizedAngle) * quantizedDistance;
+                transmittedX = Math.cos(quantizedAngle) * quantizedDistance;
+                transmittedY = Double.NaN;
+                transmittedZ = Math.sin(quantizedAngle) * quantizedDistance;
             } else {
                 transmittedX = otherPlayer.getX();
                 transmittedY = otherPlayer.getEyeY();
