@@ -137,22 +137,27 @@ object Preprocessor {
         if (evalVersion(version, loader, "<26.1")) {
             result = result
                 .replace("GuiGraphicsExtractor", "GuiGraphics")
-                .replace(".text(", ".drawString(")
-                .replace(".centeredText(", ".drawCenteredString(")
-                .replace("RenderCompat.drawString(", "RenderCompat.text(")
         }
         return result
     }
 
-    private fun evalVersion(version: String, loader: String, condition: String): Boolean {
-        if (condition == "fabric") return loader == "fabric"
-        if (condition == "!fabric") return loader != "fabric"
-        if (condition == "neoforge") return loader == "neoforge"
-        if (condition == "!neoforge") return loader != "neoforge"
-        if (condition == "forge") return loader == "forge"
-        if (condition == "!forge") return loader != "forge"
+    internal fun evalVersion(version: String, loader: String, condition: String): Boolean {
+        val trimmed = condition.trim()
+        if (trimmed.contains("||")) {
+            return trimmed.split("||").any { evalVersion(version, loader, it) }
+        }
+        if (trimmed.contains("&&")) {
+            return trimmed.split("&&").all { evalVersion(version, loader, it) }
+        }
 
-        val parts = condition.trim().split(Regex("\\s+"), limit = 2)
+        if (trimmed == "fabric") return loader == "fabric"
+        if (trimmed == "!fabric") return loader != "fabric"
+        if (trimmed == "neoforge") return loader == "neoforge"
+        if (trimmed == "!neoforge") return loader != "neoforge"
+        if (trimmed == "forge") return loader == "forge"
+        if (trimmed == "!forge") return loader != "forge"
+
+        val parts = trimmed.split(Regex("\\s+"), limit = 2)
         val operator: String
         val compared: String
         if (parts.size == 1) {

@@ -25,11 +25,11 @@ public record ServerConfigPayload(ServerSettings settings) implements CustomPack
 
     private static ServerConfigPayload read(RegistryFriendlyByteBuf buffer) {
         return new ServerConfigPayload(new ServerSettings(
-                LocatorBarStyle.values()[buffer.readVarInt()],
+                LocatorBarStyle.fromOrdinal(buffer.readVarInt()),
                 buffer.readBoolean(),
                 buffer.readBoolean(),
                 buffer.readBoolean(),
-                PlayerMarkerType.values()[buffer.readVarInt()],
+                PlayerMarkerType.fromOrdinal(buffer.readVarInt()),
                 buffer.readVarInt(),
                 buffer.readFloat(),
                 buffer.readFloat(),

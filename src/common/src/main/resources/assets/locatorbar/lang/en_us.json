@@ -50,6 +50,8 @@
   "locatorbar.config.field.max_visible_waypoints": "Max visible waypoints",
   "locatorbar.config.header.waypoint_manager": "Waypoint Manager",
   "locatorbar.config.button.delete": "Delete",
+  "locatorbar.config.server_controlled": "Controlled by server",
+  "locatorbar.hud.day": "Day %s",
 
   "locatorbar.commands.help.title": "=== Locator Bar Help ===",
   "locatorbar.commands.help.usage": "Use: /locatorbar help <option> to get details about an option.",

@@ -5,6 +5,7 @@ import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.ModLoadingContext;
+import pl.fuzjajadrowa.locatorbar.LocatorBar;
 import pl.fuzjajadrowa.locatorbar.client.LocatorBarConfigScreen;
 import pl.fuzjajadrowa.locatorbar.client.LocatorBarHudRenderer;
 import pl.fuzjajadrowa.locatorbar.client.PlayerLocatorClient;
@@ -21,6 +22,11 @@ public final class LocatorBarForgeClient {
         );
         MinecraftForge.EVENT_BUS.addListener(LocatorBarForgeClient::onRenderGui);
         MinecraftForge.EVENT_BUS.addListener(LocatorBarForgeClient::onLoggingOut);
+        LocatorBar.setUnlinkWaypointSender(waypointId -> {
+            if (LocatorBarConfig.hasServerSettings()) {
+                LocatorBarForgeNetworking.INSTANCE.sendToServer(new LocatorBarForgeNetworking.UnlinkWaypointPacket(waypointId));
+            }
+        });
     }
 
     private static void onRenderGui(RenderGuiEvent.Post event) {

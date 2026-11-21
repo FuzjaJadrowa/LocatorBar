@@ -3,7 +3,9 @@ package pl.fuzjajadrowa.locatorbar.client;
 //? if <1.21.11
 /*import com.mojang.blaze3d.systems.RenderSystem;*/
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
 //? if >=1.21.11
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
@@ -127,6 +129,26 @@ final class RenderCompat {
     }
 
     static void text(GuiGraphicsExtractor guiGraphics, String text, int x, int y, int color, boolean shadow) {
+        //? if >=26.1 {
         guiGraphics.text(Minecraft.getInstance().font, text, x, y, color, shadow);
+        //?} else {
+        /*guiGraphics.drawString(Minecraft.getInstance().font, text, x, y, color, shadow);
+        *///?}
+    }
+
+    static void text(GuiGraphicsExtractor guiGraphics, Font font, Component text, int x, int y, int color, boolean shadow) {
+        //? if >=26.1 {
+        guiGraphics.text(font, text, x, y, color, shadow);
+        //?} else {
+        /*guiGraphics.drawString(font, text, x, y, color, shadow);
+        *///?}
+    }
+
+    static void centeredText(GuiGraphicsExtractor guiGraphics, Font font, Component text, int centerX, int y, int color) {
+        //? if >=26.1 {
+        guiGraphics.centeredText(font, text, centerX, y, color);
+        //?} else {
+        /*guiGraphics.drawCenteredString(font, text, centerX, y, color);
+        *///?}
     }
 }

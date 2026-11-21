@@ -17,7 +17,7 @@ public final class LocatorBarConfig {
     private static final Path CONFIG_PATH = Path.of("config", "locatorbar.json");
     public static final float INFINITE_PLAYER_HEAD_DISTANCE = 60_000_000.0F;
     private static LocatorBarConfigData data = new LocatorBarConfigData();
-    private static ServerSettings serverSettings;
+    private static volatile ServerSettings serverSettings;
     private static final ConfigFile<LocatorBarConfigData> FILE = new ConfigFile<>(CONFIG_PATH, LocatorBarConfigData.class);
 
     private LocatorBarConfig() {
@@ -84,7 +84,8 @@ public final class LocatorBarConfig {
     }
 
     public static LocatorBarStyle getStyle() {
-        return serverSettings == null ? data.style : serverSettings.style();
+        ServerSettings server = serverSettings;
+        return server == null ? data.style : server.style();
     }
 
     public static void setStyle(LocatorBarStyle style) {
@@ -128,7 +129,8 @@ public final class LocatorBarConfig {
     }
 
     public static boolean isShowCoordinates() {
-        return serverSettings == null ? data.showCoordinates : serverSettings.showCoordinates();
+        ServerSettings server = serverSettings;
+        return server == null ? data.showCoordinates : server.showCoordinates();
     }
 
     public static void setShowCoordinates(boolean showCoordinates) {
@@ -152,7 +154,8 @@ public final class LocatorBarConfig {
     }
 
     public static boolean isShowDays() {
-        return serverSettings == null ? data.showDays : serverSettings.showDays();
+        ServerSettings server = serverSettings;
+        return server == null ? data.showDays : server.showDays();
     }
 
     public static void setShowDays(boolean showDays) {
@@ -168,7 +171,8 @@ public final class LocatorBarConfig {
     }
 
     public static boolean isShowWorldDirections() {
-        return serverSettings == null ? data.showWorldDirections : serverSettings.showWorldDirections();
+        ServerSettings server = serverSettings;
+        return server == null ? data.showWorldDirections : server.showWorldDirections();
     }
 
     public static void setShowWorldDirections(boolean showWorldDirections) {
@@ -184,7 +188,8 @@ public final class LocatorBarConfig {
     }
 
     public static PlayerMarkerType getPlayerMarkerType() {
-        return serverSettings == null ? data.playerMarkerType : serverSettings.playerMarkerType();
+        ServerSettings server = serverSettings;
+        return server == null ? data.playerMarkerType : server.playerMarkerType();
     }
 
     public static void setPlayerMarkerType(PlayerMarkerType type) {
@@ -208,7 +213,8 @@ public final class LocatorBarConfig {
     }
 
     public static int getMaxVisiblePlayers() {
-        return serverSettings == null ? data.maxVisiblePlayers : serverSettings.maxVisiblePlayers();
+        ServerSettings server = serverSettings;
+        return server == null ? data.maxVisiblePlayers : server.maxVisiblePlayers();
     }
 
     public static void setMaxVisiblePlayers(int maxVisiblePlayers) {
@@ -216,7 +222,8 @@ public final class LocatorBarConfig {
     }
 
     public static float getPlayerMarkerFadeStartDistance() {
-        return serverSettings == null ? data.playerMarkerFadeStartDistance : serverSettings.playerMarkerFadeStartDistance();
+        ServerSettings server = serverSettings;
+        return server == null ? data.playerMarkerFadeStartDistance : server.playerMarkerFadeStartDistance();
     }
 
     public static void setPlayerMarkerFadeStartDistance(float val) {
@@ -225,20 +232,24 @@ public final class LocatorBarConfig {
     }
 
     public static float getPlayerMarkerFadeToMinDistance() {
-        return serverSettings == null ? data.playerMarkerFadeToMinDistance : serverSettings.playerMarkerFadeToMinDistance();
+        ServerSettings server = serverSettings;
+        return server == null ? data.playerMarkerFadeToMinDistance : server.playerMarkerFadeToMinDistance();
     }
 
     public static float getPlayerMarkerHideDistance() {
-        return serverSettings == null ? data.playerMarkerHideDistance : serverSettings.playerMarkerHideDistance();
+        ServerSettings server = serverSettings;
+        return server == null ? data.playerMarkerHideDistance : server.playerMarkerHideDistance();
     }
 
     public static float getPlayerMarkerMinAlpha() {
-        float percent = serverSettings == null ? data.playerMarkerMinAlphaPercent : serverSettings.playerMarkerMinAlphaPercent();
+        ServerSettings server = serverSettings;
+        float percent = server == null ? data.playerMarkerMinAlphaPercent : server.playerMarkerMinAlphaPercent();
         return clamp(percent, 0.0F, 100.0F) / 100.0F;
     }
 
     public static boolean isShowWaypoints() {
-        return serverSettings == null ? data.showWaypoints : serverSettings.showWaypoints();
+        ServerSettings server = serverSettings;
+        return server == null ? data.showWaypoints : server.showWaypoints();
     }
 
     public static void setShowWaypoints(boolean showWaypoints) {
@@ -246,7 +257,8 @@ public final class LocatorBarConfig {
     }
 
     public static boolean isShowDeathWaypoint() {
-        return serverSettings == null ? data.showDeathWaypoint : serverSettings.showDeathWaypoint();
+        ServerSettings server = serverSettings;
+        return server == null ? data.showDeathWaypoint : server.showDeathWaypoint();
     }
 
     public static void setShowDeathWaypoint(boolean showDeathWaypoint) {
@@ -262,7 +274,8 @@ public final class LocatorBarConfig {
     }
 
     public static int getMaxVisibleWaypoints() {
-        return serverSettings == null ? data.maxVisibleWaypoints : serverSettings.maxVisibleWaypoints();
+        ServerSettings server = serverSettings;
+        return server == null ? data.maxVisibleWaypoints : server.maxVisibleWaypoints();
     }
 
     public static void setMaxVisibleWaypoints(int maxVisibleWaypoints) {
@@ -414,8 +427,5 @@ public final class LocatorBarConfig {
 
         @SerializedName("waypoints")
         private Map<UUID, WaypointConfig> waypoints = new HashMap<>();
-
-        @SerializedName("unsupportedVersionWarningShown")
-        private boolean unsupportedVersionWarningShown = false;
     }
 }

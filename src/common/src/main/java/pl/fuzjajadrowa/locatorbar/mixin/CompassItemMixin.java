@@ -29,6 +29,10 @@ public abstract class CompassItemMixin {
             return;
         }
 
-        WaypointData.ensureClickedLodestoneWaypoint(player, level.dimension(), context.getClickedPos());
+        if (WaypointData.ensureClickedLodestoneWaypoint(player, level.dimension(), context.getClickedPos()) && level.isClientSide()) {
+            pl.fuzjajadrowa.locatorbar.client.ClientWaypointInventory.onLodestoneLinked(
+                    WaypointData.deriveDeterministicId(level.dimension().identifier().toString(), context.getClickedPos())
+            );
+        }
     }
 }

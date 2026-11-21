@@ -2,6 +2,7 @@ package pl.fuzjajadrowa.locatorbar.client;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig;
@@ -81,7 +82,7 @@ public final class LocatorBarConfigScreen extends Screen {
         int pageNavX = doneX + DONE_BUTTON_WIDTH + FOOTER_SECTION_GAP;
 
         int listHeight = this.height - 90;
-        this.list = new ConfigList(this.minecraft, this.width, listHeight, 50, 25, this.height, this::updatePageState);
+        this.list = new ConfigList(this.minecraft, this.width, listHeight, 50, 25, this.height, this::updatePageState, () -> this.dirty = true);
         this.addRenderableWidget(this.list);
 
         styleButton = Button.builder(styleButtonText(), button -> cycleStyle()).bounds(0, 0, 120, 20).build();
@@ -204,8 +205,8 @@ public final class LocatorBarConfigScreen extends Screen {
             default -> Component.translatable("locatorbar.config.page.waypoints");
         };
 
-        guiGraphics.centeredText(this.font, Component.translatable("locatorbar.config.header"), centerX, 14, 0xFFFFFFFF);
-        guiGraphics.centeredText(this.font, pageTitle, centerX, 30, 0xFFFFFFFF);
+        RenderCompat.centeredText(guiGraphics, this.font, Component.translatable("locatorbar.config.header"), centerX, 14, 0xFFFFFFFF);
+        RenderCompat.centeredText(guiGraphics, this.font, pageTitle, centerX, 30, 0xFFFFFFFF);
     }
 
     @Override
@@ -296,16 +297,7 @@ public final class LocatorBarConfigScreen extends Screen {
     }
 
     private void cyclePlayerMarkerType() {
-        if (LocatorBarConfig.hasServerSettings()) {
-            var server = LocatorBarConfig.getServerSettings();
-            if (server != null && server.playerMarkerType() == PlayerMarkerType.DOTS) {
-                state.selectedPlayerMarkerType = state.selectedPlayerMarkerType == PlayerMarkerType.DOTS ? PlayerMarkerType.OFF : PlayerMarkerType.DOTS;
-            } else {
-                state.selectedPlayerMarkerType = state.selectedPlayerMarkerType.next();
-            }
-        } else {
-            state.selectedPlayerMarkerType = state.selectedPlayerMarkerType.next();
-        }
+        state.selectedPlayerMarkerType = state.selectedPlayerMarkerType.next();
         showPlayerHeadsButton.setMessage(playerMarkerTypeButtonText());
         applyRuntime();
         updateControlStates();
@@ -361,27 +353,37 @@ public final class LocatorBarConfigScreen extends Screen {
 
         var server = LocatorBarConfig.getServerSettings();
         boolean hasServer = LocatorBarConfig.hasServerSettings() && server != null;
+        Tooltip serverTooltip = hasServer ? Tooltip.create(Component.translatable("locatorbar.config.server_controlled")) : null;
 
         styleButton.active = !hasServer;
+        styleButton.setTooltip(serverTooltip);
         scaleSlider.active = reworkedStyle;
         viewAngleSlider.active = reworkedStyle;
         showCoordinatesButton.active = reworkedStyle && !hasServer;
+        showCoordinatesButton.setTooltip(serverTooltip);
         elementsOnXpBarButton.active = classicStyle;
         coordinatesFormatButton.active = canChangeCoordinatesFormat;
         showDaysButton.active = reworkedStyle && !hasServer;
+        showDaysButton.setTooltip(serverTooltip);
         daysDisplayOrderButton.active = canChangeDaysOrder;
 
         showWorldDirectionsButton.active = styleEnabled && !hasServer;
+        showWorldDirectionsButton.setTooltip(serverTooltip);
         worldDirectionsScaleSlider.active = canChangeDirectionScale;
         showPlayerHeadsButton.active = styleEnabled && !hasServer;
+        showPlayerHeadsButton.setTooltip(serverTooltip);
         playerHeadsScaleSlider.active = canChangeMarkerSettings;
         playerHeadOutlineButton.active = canChangeOutline;
         maxVisiblePlayersSlider.active = canChangeMarkerSettings && !hasServer;
+        maxVisiblePlayersSlider.setTooltip(serverTooltip);
 
         showWaypointsButton.active = styleEnabled && !hasServer;
+        showWaypointsButton.setTooltip(serverTooltip);
         showDeathWaypointButton.active = styleEnabled && state.selectedShowWaypoints && !hasServer;
+        showDeathWaypointButton.setTooltip(serverTooltip);
         waypointsScaleSlider.active = canChangeWaypoints;
         maxVisibleWaypointsSlider.active = canChangeWaypoints && !hasServer;
+        maxVisibleWaypointsSlider.setTooltip(serverTooltip);
     }
 
     private void updatePageState() {

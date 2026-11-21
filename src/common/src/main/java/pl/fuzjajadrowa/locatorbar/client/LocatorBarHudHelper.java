@@ -1,20 +1,11 @@
 package pl.fuzjajadrowa.locatorbar.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
-//? if >=1.20.5 {
-import net.minecraft.core.component.DataComponents;
-//?}
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-//? if >=1.20.5 {
-import net.minecraft.world.item.component.LodestoneTracker;
-//?}
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig;
-import pl.fuzjajadrowa.locatorbar.waypoint.WaypointData;
 import pl.fuzjajadrowa.locatorbar.util.LocatorBarUtils;
+import pl.fuzjajadrowa.locatorbar.waypoint.WaypointData.CompassWaypoint;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,9 +22,10 @@ public final class LocatorBarHudHelper {
     public static List<WaypointMarker> collectWaypointMarkers(Player localPlayer) {
         List<WaypointMarker> markers = new ArrayList<>();
         java.util.Set<UUID> seenWaypointIds = new java.util.HashSet<>();
+        String currentDimension = localPlayer.level().dimension().identifier().toString();
 
-        for (ItemStack stack : ClientWaypointInventory.items(localPlayer)) {
-            addWaypointMarker(markers, seenWaypointIds, stack, localPlayer);
+        for (CompassWaypoint compass : ClientWaypointInventory.waypoints(localPlayer)) {
+            addWaypointMarker(markers, seenWaypointIds, compass, localPlayer, currentDimension);
         }
 
         if (LocatorBarConfig.isShowDeathWaypoint()) {
@@ -114,67 +106,44 @@ public final class LocatorBarHudHelper {
         return markers;
     }
 
-    private static void addWaypointMarker(List<WaypointMarker> markers, java.util.Set<UUID> seenWaypointIds, ItemStack stack, Player localPlayer) {
-        if (stack == null || stack.isEmpty()) {
+    private static void addWaypointMarker(
+            List<WaypointMarker> markers,
+            java.util.Set<UUID> seenWaypointIds,
+            CompassWaypoint compass,
+            Player localPlayer,
+            String currentDimension
+    ) {
+        if (compass == null || !compass.dimensionId().equals(currentDimension)) {
             return;
         }
 
-        //? if >=1.20.5 {
-        LodestoneTracker tracker = stack.get(DataComponents.LODESTONE_TRACKER);
-        if (tracker == null || tracker.target().isEmpty()) {
-            return;
-        }
-        //?} else {
-        /*CompoundTag tag = stack.getTag();
-        if (tag == null || !tag.contains("LodestonePos") || !tag.contains("LodestoneDimension")) {
-            return;
-        }
-        *///?}
-
-        //? if >=1.20.5 {
-        GlobalPos target = tracker.target().get();
-        if (!target.dimension().equals(localPlayer.level().dimension())) {
-            return;
-        }
-
-        double dx = target.pos().getX() + 0.5D - localPlayer.getX();
-        double dz = target.pos().getZ() + 0.5D - localPlayer.getZ();
-        //?} else {
-        /*CompoundTag posTag = tag.getCompound("LodestonePos");
-        BlockPos targetPos = net.minecraft.nbt.NbtUtils.readBlockPos(posTag);
-        String dimensionStr = tag.getString("LodestoneDimension");
-        if (!dimensionStr.equals(localPlayer.level().dimension().location().toString())) {
-            return;
-        }
-
-        double dx = targetPos.getX() + 0.5D - localPlayer.getX();
-        double dz = targetPos.getZ() + 0.5D - localPlayer.getZ();
-        *///?}
+        double dx = compass.pos().getX() + 0.5D - localPlayer.getX();
+        double dz = compass.pos().getZ() + 0.5D - localPlayer.getZ();
         if (dx * dx + dz * dz < 1.0E-6D) {
             return;
         }
 
-        UUID waypointId = WaypointData.getWaypointId(stack);
+        UUID waypointId = compass.id();
         if (waypointId == null || !seenWaypointIds.add(waypointId)) {
             return;
         }
 
         LocatorBarConfig.WaypointConfig config = LocatorBarConfig.getWaypointConfig(waypointId);
-        boolean visible = config == null ? !WaypointData.isHidden(stack) : config.visible;
+        boolean visible = config == null ? !compass.hidden() : config.visible;
         if (!visible) {
             return;
         }
 
-        int index = WaypointData.getWaypointIndex(stack);
+        int index = compass.index();
         int color;
         if (config != null) {
             color = config.color;
         } else {
-            Integer customColor = WaypointData.getCustomColor(stack);
+            Integer customColor = compass.customColor();
             color = customColor == null ? colorFromWaypointId(waypointId) : customColor;
         }
 
-        String symbol = config != null ? config.character : WaypointData.getWaypointSymbol(stack);
+        String symbol = config != null ? config.character : compass.symbol();
 
         float directionYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
         markers.add(new WaypointMarker(waypointId, LocatorBarUtils.wrapTo180(directionYaw), color, index, symbol, false));

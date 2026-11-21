@@ -18,8 +18,8 @@ import java.util.UUID;
 
 public final class PlayerLocatorClient {
     private static final long MAX_PAYLOAD_AGE_MILLIS = 2000L;
-    private static List<PlayerLocatorPayload.Entry> entries = List.of();
-    private static long lastUpdateMillis;
+    private static volatile List<PlayerLocatorPayload.Entry> entries = List.of();
+    private static volatile long lastUpdateMillis;
 
     private PlayerLocatorClient() {
     }
@@ -35,7 +35,8 @@ public final class PlayerLocatorClient {
     }
 
     public static List<Marker> collectMarkers(Player localPlayer, AlphaFunction alphaFunction) {
-        if (entries.isEmpty() || System.currentTimeMillis() - lastUpdateMillis > MAX_PAYLOAD_AGE_MILLIS) {
+        List<PlayerLocatorPayload.Entry> currentEntries = entries;
+        if (currentEntries.isEmpty() || System.currentTimeMillis() - lastUpdateMillis > MAX_PAYLOAD_AGE_MILLIS) {
             return collectEntityMarkers(localPlayer, alphaFunction);
         }
 
@@ -45,7 +46,7 @@ public final class PlayerLocatorClient {
         }
 
         List<Marker> markers = new ArrayList<>();
-        for (PlayerLocatorPayload.Entry entry : entries) {
+        for (PlayerLocatorPayload.Entry entry : currentEntries) {
             double dx = entry.x() - localPlayer.getX();
             double dz = entry.z() - localPlayer.getZ();
             if (dx * dx + dz * dz < 1.0E-6D) {

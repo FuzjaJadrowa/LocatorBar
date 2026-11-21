@@ -9,10 +9,14 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import pl.fuzjajadrowa.locatorbar.LocatorBar;
 import pl.fuzjajadrowa.locatorbar.client.PlayerLocatorClient;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig;
+import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarServerConfig;
 import pl.fuzjajadrowa.locatorbar.network.PlayerLocatorPayload;
 import pl.fuzjajadrowa.locatorbar.network.ServerConfigPayload;
+import pl.fuzjajadrowa.locatorbar.network.UnlinkWaypointPayload;
 import pl.fuzjajadrowa.locatorbar.server.PlayerLocatorBroadcaster;
+import pl.fuzjajadrowa.locatorbar.waypoint.WaypointData;
+import pl.fuzjajadrowa.locatorbar.waypoint.WaypointInventory;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.MinecraftServer;
@@ -31,7 +35,7 @@ public final class LocatorBarFabricNetworking {
         ServerLifecycleEvents.SERVER_STARTING.register(server -> currentServer = server);
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> currentServer = null);
 
-        LocatorBar.broadcaster = settings -> {
+        LocatorBar.setBroadcaster(settings -> {
             if (currentServer != null) {
                 for (ServerPlayer player : currentServer.getPlayerList().getPlayers()) {
                     if (ServerPlayNetworking.canSend(player, ServerConfigPayload.TYPE)) {
@@ -39,16 +43,23 @@ public final class LocatorBarFabricNetworking {
                     }
                 }
             }
-        };
+        });
 
         //? if >=26.1 {
         PayloadTypeRegistry.clientboundPlay().register(ServerConfigPayload.TYPE, ServerConfigPayload.STREAM_CODEC);
         PayloadTypeRegistry.clientboundPlay().register(PlayerLocatorPayload.TYPE, PlayerLocatorPayload.STREAM_CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(UnlinkWaypointPayload.TYPE, UnlinkWaypointPayload.STREAM_CODEC);
         //?} else {
         /*PayloadTypeRegistry.playS2C().register(ServerConfigPayload.TYPE, ServerConfigPayload.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(PlayerLocatorPayload.TYPE, PlayerLocatorPayload.STREAM_CODEC);
+        PayloadTypeRegistry.playC2S().register(UnlinkWaypointPayload.TYPE, UnlinkWaypointPayload.STREAM_CODEC);
         *///?}
+        ServerPlayNetworking.registerGlobalReceiver(UnlinkWaypointPayload.TYPE, (payload, context) -> {
+            ServerPlayer player = context.player();
+            context.server().execute(() -> WaypointData.unlinkWaypoint(player, payload.waypointId()));
+        });
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            WaypointInventory.migrate(handler.getPlayer());
             var settings = LocatorBarServerConfig.get();
             if (settings != null && ServerPlayNetworking.canSend(handler, ServerConfigPayload.TYPE)) {
                 sender.sendPacket(new ServerConfigPayload(settings));
@@ -63,6 +74,15 @@ public final class LocatorBarFabricNetworking {
 
             List<ServerPlayer> players = server.getPlayerList().getPlayers();
             for (ServerPlayer player : players) {
+                WaypointInventory.migrate(player);
+            }
+
+            var settings = LocatorBarServerConfig.get();
+            if (settings != null && settings.playerMarkerType() == PlayerMarkerType.OFF) {
+                return;
+            }
+
+            for (ServerPlayer player : players) {
                 if (ServerPlayNetworking.canSend(player, PlayerLocatorPayload.TYPE)) {
                     ServerPlayNetworking.send(player, PlayerLocatorBroadcaster.createPayload(player, players));
                 }
@@ -71,6 +91,11 @@ public final class LocatorBarFabricNetworking {
     }
 
     public static void initClient() {
+        LocatorBar.setUnlinkWaypointSender(waypointId -> {
+            if (ClientPlayNetworking.canSend(UnlinkWaypointPayload.TYPE)) {
+                ClientPlayNetworking.send(new UnlinkWaypointPayload(waypointId));
+            }
+        });
         ClientPlayNetworking.registerGlobalReceiver(ServerConfigPayload.TYPE, (payload, context) -> {
             LocatorBarConfig.applyServerSettings(payload.settings());
         });

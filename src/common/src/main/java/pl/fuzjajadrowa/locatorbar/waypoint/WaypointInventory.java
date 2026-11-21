@@ -36,7 +36,7 @@ public final class WaypointInventory {
     public static void migrate(Player player) {
         int[] highest = {-1};
         forEachStack(player, stack -> updateStack(stack, item -> {
-            if (WaypointData.getWaypointId(item) != null) return false;
+            if (WaypointData.isUnlinked(item) || WaypointData.getWaypointId(item) != null) return false;
             WaypointData.ensureWaypointData(item, player, () -> {
                 if (highest[0] < 0) highest[0] = WaypointData.findHighestWaypointIndex(player);
                 return ++highest[0];
@@ -47,7 +47,7 @@ public final class WaypointInventory {
 
     public static void unlink(Player player, UUID waypointId) {
         forEachStack(player, stack -> updateStack(stack, item -> {
-            UUID id = WaypointData.getWaypointId(item);
+            UUID id = WaypointData.getOrDeriveWaypointId(item);
             if (!waypointId.equals(id)) return false;
             WaypointData.clearLocatorBarData(item);
             return true;

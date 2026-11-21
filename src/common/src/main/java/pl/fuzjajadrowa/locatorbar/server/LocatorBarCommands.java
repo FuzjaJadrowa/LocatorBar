@@ -95,9 +95,7 @@ public final class LocatorBarCommands {
     private static void updateSettings(CommandContext<CommandSourceStack> ctx, ServerSettings newSettings, String option, Object value) {
         LocatorBarServerConfig.set(newSettings);
         LocatorBarServerConfig.save();
-        if (LocatorBar.broadcaster != null) {
-            LocatorBar.broadcaster.broadcastConfig(newSettings);
-        }
+        LocatorBar.broadcastServerConfig(newSettings);
         ctx.getSource().sendSystemMessage(Component.literal(
                 "Server config option '" + option + "' set to " + value
         ));

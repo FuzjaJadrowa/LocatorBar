@@ -29,7 +29,6 @@
   "locatorbar.config.field.show_coordinates": "Mostrar coordenadas",
   "locatorbar.config.field.coordinates_format": "Formato das coordenadas",
   "locatorbar.config.field.show_days": "Mostrar dias",
-  "locatorbar.config.field.days_display_order": "Days display order",
 
   "locatorbar.config.field.show_world_directions": "Mostrar direções do mundo",
   "locatorbar.config.field.directions_size": "Tamanho das direções",

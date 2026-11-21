@@ -19,12 +19,12 @@ public final class LocatorBarForge {
         MinecraftForge.EVENT_BUS.addListener(LocatorBarForgeNetworking::onServerTick);
         MinecraftForge.EVENT_BUS.addListener(LocatorBarForge::onRegisterCommands);
 
-        LocatorBar.broadcaster = settings -> {
+        LocatorBar.setBroadcaster(settings -> {
             LocatorBarForgeNetworking.INSTANCE.send(
                 net.minecraftforge.network.PacketDistributor.ALL.noArg(),
                 new LocatorBarForgeNetworking.ServerConfigPacket(settings)
             );
-        };
+        });
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
             LocatorBarForgeClient.init();

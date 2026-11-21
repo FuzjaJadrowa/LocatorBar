@@ -2,6 +2,7 @@ package pl.fuzjajadrowa.locatorbar.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import pl.fuzjajadrowa.locatorbar.LocatorBar;
@@ -25,6 +26,16 @@ public final class ReworkedLocatorBarHudRenderer {
     private static final int BASE_WAYPOINT_MARKER_SIZE = 14;
 
     private static final MarkerRenderer.Layout MARKER_LAYOUT = new MarkerRenderer.Layout(10, 14, 0.75F, 0);
+
+    private static int cachedBlockX = Integer.MIN_VALUE;
+    private static int cachedBlockY = Integer.MIN_VALUE;
+    private static int cachedBlockZ = Integer.MIN_VALUE;
+    private static CoordinatesFormat cachedCoordsFormat;
+    private static String cachedCoordsText;
+
+    private static long cachedDays = Long.MIN_VALUE;
+    private static String cachedDaysLanguage;
+    private static String cachedDaysText;
 
     private ReworkedLocatorBarHudRenderer() {
     }
@@ -104,11 +115,22 @@ public final class ReworkedLocatorBarHudRenderer {
     private static void renderInfoText(GuiGraphicsExtractor guiGraphics, Player player, float centerX, int startY, float scale) {
         String coordsText = null;
         if (LocatorBarConfig.isShowCoordinates()) {
-            if (LocatorBarConfig.getCoordinatesFormat() == CoordinatesFormat.XZ) {
-                coordsText = "(" + player.getBlockX() + " " + player.getBlockZ() + ")";
-            } else {
-                coordsText = "(" + player.getBlockX() + " " + player.getBlockY() + " " + player.getBlockZ() + ")";
+            int bx = player.getBlockX();
+            int by = player.getBlockY();
+            int bz = player.getBlockZ();
+            CoordinatesFormat format = LocatorBarConfig.getCoordinatesFormat();
+            if (cachedCoordsText == null || bx != cachedBlockX || by != cachedBlockY || bz != cachedBlockZ || format != cachedCoordsFormat) {
+                cachedBlockX = bx;
+                cachedBlockY = by;
+                cachedBlockZ = bz;
+                cachedCoordsFormat = format;
+                if (format == CoordinatesFormat.XZ) {
+                    cachedCoordsText = "(" + bx + " " + bz + ")";
+                } else {
+                    cachedCoordsText = "(" + bx + " " + by + " " + bz + ")";
+                }
             }
+            coordsText = cachedCoordsText;
         }
 
         String daysText = null;
@@ -117,7 +139,13 @@ public final class ReworkedLocatorBarHudRenderer {
             long days = player.level().getOverworldClockTime() / 24000L;
             //? if <26.1
             /*long days = player.level().getDayTime() / 24000L;*/
-            daysText = "Day " + days;
+            String languageCode = Minecraft.getInstance().getLanguageManager().getSelected();
+            if (cachedDaysText == null || days != cachedDays || !java.util.Objects.equals(languageCode, cachedDaysLanguage)) {
+                cachedDays = days;
+                cachedDaysLanguage = languageCode;
+                cachedDaysText = Component.translatable("locatorbar.hud.day", days).getString();
+            }
+            daysText = cachedDaysText;
         }
 
         RenderCompat.push(guiGraphics);

@@ -26,6 +26,12 @@ public final class LocatorBarEnums {
                 case OFF -> REWORKED;
             };
         }
+
+        private static final LocatorBarStyle[] VALUES = values();
+
+        public static LocatorBarStyle fromOrdinal(int ordinal) {
+            return ordinal >= 0 && ordinal < VALUES.length ? VALUES[ordinal] : REWORKED;
+        }
     }
 
 
@@ -88,6 +94,12 @@ public final class LocatorBarEnums {
                 case DOTS -> OFF;
                 case OFF -> HEADS;
             };
+        }
+
+        private static final PlayerMarkerType[] VALUES = values();
+
+        public static PlayerMarkerType fromOrdinal(int ordinal) {
+            return ordinal >= 0 && ordinal < VALUES.length ? VALUES[ordinal] : HEADS;
         }
     }
 }

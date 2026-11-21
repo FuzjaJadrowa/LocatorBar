@@ -8,10 +8,14 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import pl.fuzjajadrowa.locatorbar.client.PlayerLocatorClient;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig;
+import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarServerConfig;
 import pl.fuzjajadrowa.locatorbar.network.PlayerLocatorPayload;
 import pl.fuzjajadrowa.locatorbar.network.ServerConfigPayload;
+import pl.fuzjajadrowa.locatorbar.network.UnlinkWaypointPayload;
 import pl.fuzjajadrowa.locatorbar.server.PlayerLocatorBroadcaster;
+import pl.fuzjajadrowa.locatorbar.waypoint.WaypointData;
+import pl.fuzjajadrowa.locatorbar.waypoint.WaypointInventory;
 
 import java.util.List;
 
@@ -29,12 +33,22 @@ public final class LocatorBarNeoForgeNetworking {
         registrar.playToClient(PlayerLocatorPayload.TYPE, PlayerLocatorPayload.STREAM_CODEC, (payload, context) -> {
             PlayerLocatorClient.apply(payload);
         });
+        registrar.playToServer(UnlinkWaypointPayload.TYPE, UnlinkWaypointPayload.STREAM_CODEC, (payload, context) -> {
+            context.enqueueWork(() -> {
+                if (context.player() instanceof ServerPlayer serverPlayer) {
+                    WaypointData.unlinkWaypoint(serverPlayer, payload.waypointId());
+                }
+            });
+        });
     }
 
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        var settings = LocatorBarServerConfig.get();
-        if (settings != null && event.getEntity() instanceof ServerPlayer player && player.connection.hasChannel(ServerConfigPayload.TYPE)) {
-            PacketDistributor.sendToPlayer(player, new ServerConfigPayload(settings));
+        if (event.getEntity() instanceof ServerPlayer player) {
+            WaypointInventory.migrate(player);
+            var settings = LocatorBarServerConfig.get();
+            if (settings != null && player.connection.hasChannel(ServerConfigPayload.TYPE)) {
+                PacketDistributor.sendToPlayer(player, new ServerConfigPayload(settings));
+            }
         }
     }
 
@@ -46,6 +60,15 @@ public final class LocatorBarNeoForgeNetworking {
         locatorUpdateTick = 0;
 
         List<ServerPlayer> players = event.getServer().getPlayerList().getPlayers();
+        for (ServerPlayer player : players) {
+            WaypointInventory.migrate(player);
+        }
+
+        var settings = LocatorBarServerConfig.get();
+        if (settings != null && settings.playerMarkerType() == PlayerMarkerType.OFF) {
+            return;
+        }
+
         for (ServerPlayer player : players) {
             if (player.connection.hasChannel(PlayerLocatorPayload.TYPE)) {
                 PacketDistributor.sendToPlayer(player, PlayerLocatorBroadcaster.createPayload(player, players));

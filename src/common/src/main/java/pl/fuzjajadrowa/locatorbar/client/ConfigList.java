@@ -24,8 +24,9 @@ import pl.fuzjajadrowa.locatorbar.client.WaypointConfigPage.ManagedWaypoint;
 final class ConfigList extends ContainerObjectSelectionList<ConfigList.AbstractEntry> {
     private final net.minecraft.client.gui.Font font;
     private final Runnable refreshPage;
+    private final Runnable markDirty;
     private static final Identifier WAYPOINT_TEXTURE = Identifier.fromNamespaceAndPath(LocatorBar.MOD_ID, "textures/gui/waypoint.png");
-    public ConfigList(Minecraft minecraft, int width, int height, int y, int itemHeight, int screenHeight, Runnable refreshPage) {
+    public ConfigList(Minecraft minecraft, int width, int height, int y, int itemHeight, int screenHeight, Runnable refreshPage, Runnable markDirty) {
         //? if >=1.21 {
         super(minecraft, width, height, y, itemHeight);
         //?} else {
@@ -33,6 +34,7 @@ final class ConfigList extends ContainerObjectSelectionList<ConfigList.AbstractE
         *///?}
         this.font = minecraft.font;
         this.refreshPage = refreshPage;
+        this.markDirty = markDirty;
     }
 
     public void clearList() {
@@ -103,7 +105,7 @@ final class ConfigList extends ContainerObjectSelectionList<ConfigList.AbstractE
         protected void renderEntry(GuiGraphicsExtractor guiGraphics, int top, int height, int mouseX, int mouseY, float partialTick) {
             int centerX = ConfigList.this.width / 2;
             int centerY = top + (height - font.lineHeight) / 2;
-            guiGraphics.centeredText(font, label, centerX, centerY, 0xFFFFFFFF);
+            RenderCompat.centeredText(guiGraphics, font, label, centerX, centerY, 0xFFFFFFFF);
         }
 
         @Override
@@ -132,7 +134,7 @@ final class ConfigList extends ContainerObjectSelectionList<ConfigList.AbstractE
         protected void renderEntry(GuiGraphicsExtractor guiGraphics, int top, int height, int mouseX, int mouseY, float partialTick) {
             int centerY = top + (height - font.lineHeight) / 2;
 
-            guiGraphics.text(font, label, ConfigList.this.width / 2 - 138, centerY, 0xFFFFFFFF, false);
+            RenderCompat.text(guiGraphics, font, label, ConfigList.this.width / 2 - 138, centerY, 0xFFFFFFFF, false);
 
             widget.setX(ConfigList.this.width / 2 + 20);
             widget.setY(top);
@@ -155,6 +157,7 @@ final class ConfigList extends ContainerObjectSelectionList<ConfigList.AbstractE
 
     class WaypointEntry extends AbstractEntry {
         private final ManagedWaypoint waypoint;
+        private boolean visible;
         private final EditBox symbolBox;
         private final EditBox colorBox;
         private final Button visibilityButton;
@@ -163,6 +166,7 @@ final class ConfigList extends ContainerObjectSelectionList<ConfigList.AbstractE
 
         public WaypointEntry(ManagedWaypoint waypoint) {
             this.waypoint = waypoint;
+            this.visible = waypoint.visible();
 
             String initialSymbol = waypoint.symbol();
             if ((initialSymbol == null || initialSymbol.isEmpty()) && waypoint.index() > 0) {
@@ -181,7 +185,7 @@ final class ConfigList extends ContainerObjectSelectionList<ConfigList.AbstractE
             this.colorBox.setResponder(value -> updateWaypoint());
 
             this.visibilityButton = Button.builder(
-                    Component.translatable(waypoint.visible() ? "locatorbar.option.on" : "locatorbar.option.off"),
+                    Component.translatable(this.visible ? "locatorbar.option.on" : "locatorbar.option.off"),
                     button -> {
                         toggleVisibility();
                     }
@@ -198,19 +202,17 @@ final class ConfigList extends ContainerObjectSelectionList<ConfigList.AbstractE
         }
 
         private void toggleVisibility() {
-            boolean next = visibilityButton.getMessage().getString().equals(Component.translatable("locatorbar.option.off").getString());
-            visibilityButton.setMessage(Component.translatable(next ? "locatorbar.option.on" : "locatorbar.option.off"));
+            this.visible = !this.visible;
+            visibilityButton.setMessage(Component.translatable(this.visible ? "locatorbar.option.on" : "locatorbar.option.off"));
             updateWaypoint();
         }
 
         private void deleteWaypoint() {
             Minecraft mc = Minecraft.getInstance();
-            if (mc.player != null) {
-                WaypointData.unlinkWaypoint(mc.player, waypoint.id());
-            }
+            ClientWaypointInventory.unlink(mc.player, waypoint.id());
 
             LocatorBarConfig.removeWaypointConfig(waypoint.id());
-            LocatorBarConfig.save();
+            markDirty.run();
 
             refreshPage.run();
         }
@@ -223,10 +225,9 @@ final class ConfigList extends ContainerObjectSelectionList<ConfigList.AbstractE
             } catch (NumberFormatException e) {
                 color = LocatorBarHudHelper.colorFromWaypointId(waypoint.id());
             }
-            boolean visible = visibilityButton.getMessage().getString().equals(Component.translatable("locatorbar.option.on").getString());
 
-            LocatorBarConfig.setWaypointConfig(waypoint.id(), new WaypointConfig(waypoint.world(), color, symbol, visible));
-            LocatorBarConfig.save();
+            LocatorBarConfig.setWaypointConfig(waypoint.id(), new WaypointConfig(waypoint.world(), color, symbol, this.visible));
+            markDirty.run();
         }
 
         private void saveDefaultWaypointConfigIfNeeded(String initialSymbol) {
@@ -234,8 +235,8 @@ final class ConfigList extends ContainerObjectSelectionList<ConfigList.AbstractE
                 return;
             }
 
-            LocatorBarConfig.setWaypointConfig(waypoint.id(), new WaypointConfig(waypoint.world(), waypoint.color(), initialSymbol, waypoint.visible()));
-            LocatorBarConfig.save();
+            LocatorBarConfig.setWaypointConfig(waypoint.id(), new WaypointConfig(waypoint.world(), waypoint.color(), initialSymbol, this.visible));
+            markDirty.run();
         }
 
         @Override

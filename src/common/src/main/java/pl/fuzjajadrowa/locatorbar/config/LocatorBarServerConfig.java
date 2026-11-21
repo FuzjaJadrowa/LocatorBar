@@ -1,5 +1,6 @@
 package pl.fuzjajadrowa.locatorbar.config;
 
+import com.google.gson.annotations.SerializedName;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.LocatorBarStyle;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType;
 
@@ -19,27 +20,27 @@ public final class LocatorBarServerConfig {
     private LocatorBarServerConfig() {
     }
 
-    private static final ConfigFile<ServerSettings> FILE = new ConfigFile<>(JSON_CONFIG_PATH, ServerSettings.class);
+    private static final ConfigFile<ServerConfigData> FILE = new ConfigFile<>(JSON_CONFIG_PATH, ServerConfigData.class);
 
     public static void load() {
         if (!Files.exists(JSON_CONFIG_PATH)) {
             ServerSettings migrated = loadFromLegacyToml();
             data = migrated == null ? ServerSettings.defaults() : migrated;
-            if (FILE.save(data) && migrated != null) {
+            if (FILE.save(ServerConfigData.fromSettings(data)) && migrated != null) {
                 try {
                     Files.deleteIfExists(TOML_CONFIG_PATH);
                 } catch (IOException exception) {
-                    ConfigFile.LOGGER.log(java.util.logging.Level.WARNING, "Cannot remove legacy configuration: " + TOML_CONFIG_PATH, exception);
+                    ConfigFile.LOGGER.warn("Cannot remove legacy configuration: {}", TOML_CONFIG_PATH, exception);
                 }
             }
             return;
         }
-        data = FILE.read(ServerSettings::defaults);
+        data = FILE.read(ServerConfigData::new).toSettings();
         save();
     }
 
     public static void save() {
-        if (data != null) FILE.save(data);
+        if (data != null) FILE.save(ServerConfigData.fromSettings(data));
     }
 
     public static ServerSettings get() {
@@ -108,7 +109,7 @@ public final class LocatorBarServerConfig {
                     readBoolean(properties, "showDeathWaypoint", true)
             );
         } catch (IOException | IllegalArgumentException e) {
-            ConfigFile.LOGGER.log(java.util.logging.Level.WARNING, "Cannot migrate configuration: " + TOML_CONFIG_PATH, e);
+            ConfigFile.LOGGER.warn("Cannot migrate configuration: {}", TOML_CONFIG_PATH, e);
             return null;
         }
     }
@@ -260,6 +261,74 @@ public final class LocatorBarServerConfig {
                     true,
                     16,
                     true
+            );
+        }
+    }
+
+    static final class ServerConfigData {
+        @SerializedName("style")
+        LocatorBarStyle style = LocatorBarStyle.REWORKED;
+        @SerializedName("showCoordinates")
+        boolean showCoordinates = true;
+        @SerializedName("showDays")
+        boolean showDays = false;
+        @SerializedName("showWorldDirections")
+        boolean showWorldDirections = true;
+        @SerializedName("playerMarkerType")
+        PlayerMarkerType playerMarkerType = PlayerMarkerType.HEADS;
+        @SerializedName("maxVisiblePlayers")
+        int maxVisiblePlayers = 16;
+        @SerializedName("playerMarkerFadeStartDistance")
+        float playerMarkerFadeStartDistance = ServerSettings.DEFAULT_PLAYER_MARKER_FADE_START_DISTANCE;
+        @SerializedName("playerMarkerFadeToMinDistance")
+        float playerMarkerFadeToMinDistance = ServerSettings.DEFAULT_PLAYER_MARKER_FADE_TO_MIN_DISTANCE;
+        @SerializedName("playerMarkerHideDistance")
+        float playerMarkerHideDistance = ServerSettings.DEFAULT_PLAYER_MARKER_HIDE_DISTANCE;
+        @SerializedName("playerMarkerMinAlphaPercent")
+        float playerMarkerMinAlphaPercent = ServerSettings.DEFAULT_PLAYER_MARKER_MIN_ALPHA_PERCENT;
+        @SerializedName("showWaypoints")
+        boolean showWaypoints = true;
+        @SerializedName("maxVisibleWaypoints")
+        int maxVisibleWaypoints = 16;
+        @SerializedName("showDeathWaypoint")
+        boolean showDeathWaypoint = true;
+
+        ServerConfigData() {
+        }
+
+        static ServerConfigData fromSettings(ServerSettings settings) {
+            ServerConfigData dto = new ServerConfigData();
+            dto.style = settings.style();
+            dto.showCoordinates = settings.showCoordinates();
+            dto.showDays = settings.showDays();
+            dto.showWorldDirections = settings.showWorldDirections();
+            dto.playerMarkerType = settings.playerMarkerType();
+            dto.maxVisiblePlayers = settings.maxVisiblePlayers();
+            dto.playerMarkerFadeStartDistance = settings.playerMarkerFadeStartDistance();
+            dto.playerMarkerFadeToMinDistance = settings.playerMarkerFadeToMinDistance();
+            dto.playerMarkerHideDistance = settings.playerMarkerHideDistance();
+            dto.playerMarkerMinAlphaPercent = settings.playerMarkerMinAlphaPercent();
+            dto.showWaypoints = settings.showWaypoints();
+            dto.maxVisibleWaypoints = settings.maxVisibleWaypoints();
+            dto.showDeathWaypoint = settings.showDeathWaypoint();
+            return dto;
+        }
+
+        ServerSettings toSettings() {
+            return new ServerSettings(
+                    style,
+                    showCoordinates,
+                    showDays,
+                    showWorldDirections,
+                    playerMarkerType,
+                    maxVisiblePlayers,
+                    playerMarkerFadeStartDistance,
+                    playerMarkerFadeToMinDistance,
+                    playerMarkerHideDistance,
+                    playerMarkerMinAlphaPercent,
+                    showWaypoints,
+                    maxVisibleWaypoints,
+                    showDeathWaypoint
             );
         }
     }

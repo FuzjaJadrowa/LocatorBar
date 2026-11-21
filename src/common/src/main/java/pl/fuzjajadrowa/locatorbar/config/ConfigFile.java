@@ -3,6 +3,9 @@ package pl.fuzjajadrowa.locatorbar.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import pl.fuzjajadrowa.locatorbar.LocatorBar;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -12,11 +15,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 final class ConfigFile<T> {
-    static final Logger LOGGER = Logger.getLogger("locatorbar.config");
+    static final Logger LOGGER = LoggerFactory.getLogger(LocatorBar.MOD_ID);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private final Path path;
     private final Class<T> type;
@@ -35,25 +36,25 @@ final class ConfigFile<T> {
             if (result == null) throw new JsonParseException("Empty configuration");
             return result;
         } catch (JsonParseException exception) {
-            LOGGER.log(Level.WARNING, "Invalid configuration: " + path, exception);
+            LOGGER.warn("Invalid configuration: {}", path, exception);
             try {
                 Path backup = Files.createTempFile(path.toAbsolutePath().getParent(), path.getFileName() + ".", ".bak");
                 Files.copy(path, backup, StandardCopyOption.REPLACE_EXISTING);
-                LOGGER.warning("Configuration backup: " + backup);
+                LOGGER.warn("Configuration backup: {}", backup);
             } catch (IOException backupFailure) {
                 writable = false;
-                LOGGER.log(Level.WARNING, "Cannot back up configuration; preserving original: " + path, backupFailure);
+                LOGGER.warn("Cannot back up configuration; preserving original: {}", path, backupFailure);
             }
         } catch (IOException exception) {
             writable = false;
-            LOGGER.log(Level.WARNING, "Cannot read configuration; preserving original: " + path, exception);
+            LOGGER.warn("Cannot read configuration; preserving original: {}", path, exception);
         }
         return defaults.get();
     }
 
     boolean save(T data) {
         if (!writable) {
-            LOGGER.warning("Skipped configuration write to preserve unreadable original: " + path);
+            LOGGER.warn("Skipped configuration write to preserve unreadable original: {}", path);
             return false;
         }
         Path temporary = null;
@@ -71,14 +72,14 @@ final class ConfigFile<T> {
             }
             return true;
         } catch (IOException | RuntimeException exception) {
-            LOGGER.log(Level.WARNING, "Cannot save configuration: " + path, exception);
+            LOGGER.warn("Cannot save configuration: {}", path, exception);
             return false;
         } finally {
             if (temporary != null) {
                 try {
                     Files.deleteIfExists(temporary);
                 } catch (IOException exception) {
-                    LOGGER.log(Level.WARNING, "Cannot remove temporary configuration: " + temporary, exception);
+                    LOGGER.warn("Cannot remove temporary configuration: {}", temporary, exception);
                 }
             }
         }

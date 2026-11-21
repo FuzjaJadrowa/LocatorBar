@@ -20,9 +20,12 @@ import pl.fuzjajadrowa.locatorbar.config.LocatorBarServerConfig;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarServerConfig.ServerSettings;
 import pl.fuzjajadrowa.locatorbar.server.PlayerLocatorBroadcaster;
 import pl.fuzjajadrowa.locatorbar.network.PlayerLocatorPayload;
+import pl.fuzjajadrowa.locatorbar.waypoint.WaypointData;
+import pl.fuzjajadrowa.locatorbar.waypoint.WaypointInventory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 public final class LocatorBarForgeNetworking {
@@ -55,6 +58,13 @@ public final class LocatorBarForgeNetworking {
                 PlayerLocatorPacket::decode,
                 PlayerLocatorPacket::handle
         );
+        INSTANCE.registerMessage(
+                id++,
+                UnlinkWaypointPacket.class,
+                UnlinkWaypointPacket::encode,
+                UnlinkWaypointPacket::decode,
+                UnlinkWaypointPacket::handle
+        );
     }
 
     public static class ServerConfigPacket {
@@ -82,11 +92,11 @@ public final class LocatorBarForgeNetworking {
 
         public static ServerConfigPacket decode(FriendlyByteBuf buffer) {
             return new ServerConfigPacket(new ServerSettings(
-                    LocatorBarStyle.values()[buffer.readVarInt()],
+                    LocatorBarStyle.fromOrdinal(buffer.readVarInt()),
                     buffer.readBoolean(),
                     buffer.readBoolean(),
                     buffer.readBoolean(),
-                    PlayerMarkerType.values()[buffer.readVarInt()],
+                    PlayerMarkerType.fromOrdinal(buffer.readVarInt()),
                     buffer.readVarInt(),
                     buffer.readFloat(),
                     buffer.readFloat(),
@@ -142,17 +152,40 @@ public final class LocatorBarForgeNetworking {
         }
     }
 
-    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        var settings = LocatorBarServerConfig.get();
-        if (settings != null && event.getEntity() instanceof ServerPlayer player) {
-            INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new ServerConfigPacket(settings));
+    public static class UnlinkWaypointPacket {
+        private final UUID waypointId;
+
+        public UnlinkWaypointPacket(UUID waypointId) {
+            this.waypointId = waypointId;
+        }
+
+        public static void encode(UnlinkWaypointPacket msg, FriendlyByteBuf buffer) {
+            buffer.writeUUID(msg.waypointId);
+        }
+
+        public static UnlinkWaypointPacket decode(FriendlyByteBuf buffer) {
+            return new UnlinkWaypointPacket(buffer.readUUID());
+        }
+
+        public static void handle(UnlinkWaypointPacket msg, Supplier<NetworkEvent.Context> ctxGetter) {
+            NetworkEvent.Context ctx = ctxGetter.get();
+            ctx.enqueueWork(() -> {
+                ServerPlayer sender = ctx.getSender();
+                if (sender != null) {
+                    WaypointData.unlinkWaypoint(sender, msg.waypointId);
+                }
+            });
+            ctx.setPacketHandled(true);
         }
     }
 
-    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
-        var settings = LocatorBarServerConfig.get();
-        if (settings != null && event.getEntity() instanceof ServerPlayer player) {
-            INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new ServerConfigPacket(settings));
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            WaypointInventory.migrate(player);
+            var settings = LocatorBarServerConfig.get();
+            if (settings != null) {
+                INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new ServerConfigPacket(settings));
+            }
         }
     }
 
@@ -167,6 +200,15 @@ public final class LocatorBarForgeNetworking {
         locatorUpdateTick = 0;
 
         List<ServerPlayer> players = event.getServer().getPlayerList().getPlayers();
+        for (ServerPlayer player : players) {
+            WaypointInventory.migrate(player);
+        }
+
+        var settings = LocatorBarServerConfig.get();
+        if (settings != null && settings.playerMarkerType() == PlayerMarkerType.OFF) {
+            return;
+        }
+
         for (ServerPlayer player : players) {
             PlayerLocatorPayload payload = PlayerLocatorBroadcaster.createPayload(player, players);
             if (payload != null) {

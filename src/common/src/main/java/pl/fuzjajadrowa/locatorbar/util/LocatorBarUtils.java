@@ -43,13 +43,21 @@ public final class LocatorBarUtils {
         }
 
         Item helmetItem = helmet.getItem();
-        return helmetItem == Items.CARVED_PUMPKIN
+        if (helmetItem == Items.CARVED_PUMPKIN
                 || helmetItem == Items.SKELETON_SKULL
                 || helmetItem == Items.WITHER_SKELETON_SKULL
                 || helmetItem == Items.ZOMBIE_HEAD
                 || helmetItem == Items.CREEPER_HEAD
                 || helmetItem == Items.DRAGON_HEAD
-                || helmetItem == Items.PIGLIN_HEAD;
+                || helmetItem == Items.PIGLIN_HEAD) {
+            return true;
+        }
+        //? if >=1.21.11 {
+        return helmet.is(net.minecraft.tags.ItemTags.SKULLS)
+                || helmet.is(net.minecraft.tags.ItemTags.GAZE_DISGUISE_EQUIPMENT);
+        //?} else {
+        /*return false;
+        *///?}
     }
 
     public static int setBrightness(int color, float brightness) {
