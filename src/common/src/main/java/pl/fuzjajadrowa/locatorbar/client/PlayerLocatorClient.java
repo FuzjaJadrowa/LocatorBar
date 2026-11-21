@@ -10,6 +10,9 @@ import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.client.player.AbstractClientPlayer;
 import pl.fuzjajadrowa.locatorbar.network.PlayerLocatorPayload;
 import pl.fuzjajadrowa.locatorbar.util.LocatorBarUtils;
+import pl.fuzjajadrowa.locatorbar.util.LocatorBarUtils.CameraView;
+import pl.fuzjajadrowa.locatorbar.util.MarkerMath;
+import pl.fuzjajadrowa.locatorbar.util.MarkerMath.PitchDirection;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -45,10 +48,12 @@ public final class PlayerLocatorClient {
             return List.of();
         }
 
+        CameraView camera = LocatorBarUtils.getCameraView(minecraft, localPlayer);
         List<Marker> markers = new ArrayList<>();
         for (PlayerLocatorPayload.Entry entry : currentEntries) {
-            double dx = entry.x() - localPlayer.getX();
-            double dz = entry.z() - localPlayer.getZ();
+            double dx = entry.x() - camera.x();
+            double dy = entry.y() - camera.y();
+            double dz = entry.z() - camera.z();
             if (dx * dx + dz * dz < 1.0E-6D) {
                 continue;
             }
@@ -74,23 +79,26 @@ public final class PlayerLocatorClient {
             /*Identifier skinTexture = playerInfo.getSkinLocation();
             *///?}
             float directionYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
-            //? if >=26.2 {
-            String playerName = playerInfo.getProfile().name();
-            //?} elif >=1.21.11 {
+            //? if >=1.21.11 {
             String playerName = playerInfo.getProfile().name();
             //?} else {
             /*String playerName = playerInfo.getProfile().getName();
-            */
-            //?}
+            *///?}
             //? if >=26.2 {
             net.minecraft.world.scores.PlayerTeam team = localPlayer.level().getScoreboard().getPlayersTeam(playerName);
-            Integer teamColor = (team != null && team.getColor().isPresent()) ? team.getColor().get().rgb() : null;
+            Integer teamColor = (team != null && team.getColor().isPresent())
+                    ? LocatorBarUtils.normalizeTeamColor(team.getColor().get().rgb())
+                    : null;
             //?} else {
             /*net.minecraft.world.scores.PlayerTeam team = localPlayer.level().getScoreboard().getPlayersTeam(playerName);
-            Integer teamColor = (team != null && team.getColor() != null && team.getColor().getColor() != null) ? team.getColor().getColor() : null;
-            */
-            //?}
-            markers.add(new Marker(entry.playerId(), skinTexture, directionYaw, alpha, distance, teamColor));
+            Integer teamColor = (team != null && team.getColor() != null && team.getColor().getColor() != null)
+                    ? LocatorBarUtils.normalizeTeamColor(team.getColor().getColor())
+                    : null;
+            *///?}
+            PitchDirection pitchDirection = distance > 332.0F
+                    ? MarkerMath.calculateHorizonPitchDirection(camera.pitch(), MarkerMath.BASE_HUD_FOV)
+                    : MarkerMath.calculatePitchDirection(dx, dy, dz, camera.yaw(), camera.pitch(), MarkerMath.BASE_HUD_FOV);
+            markers.add(new Marker(entry.playerId(), skinTexture, directionYaw, alpha, distance, teamColor, pitchDirection));
         }
 
         markers.sort(Comparator.comparingDouble(Marker::distance));
@@ -98,17 +106,20 @@ public final class PlayerLocatorClient {
     }
 
     private static List<Marker> collectEntityMarkers(Player localPlayer, AlphaFunction alphaFunction) {
+        Minecraft minecraft = Minecraft.getInstance();
+        CameraView camera = LocatorBarUtils.getCameraView(minecraft, localPlayer);
         List<Marker> markers = new ArrayList<>();
         //? if >=26.2
         java.util.Set<java.util.UUID> addedPlayers = new java.util.HashSet<>();
 
         for (Player otherPlayer : localPlayer.level().players()) {
-            if (otherPlayer == localPlayer || LocatorBarUtils.shouldHidePlayerHead(localPlayer, otherPlayer)) {
+            if (otherPlayer == localPlayer || otherPlayer == camera.entity() || LocatorBarUtils.shouldHidePlayerHead(localPlayer, otherPlayer)) {
                 continue;
             }
 
-            double dx = otherPlayer.getX() - localPlayer.getX();
-            double dz = otherPlayer.getZ() - localPlayer.getZ();
+            double dx = otherPlayer.getX() - camera.x();
+            double dy = otherPlayer.getEyeY() - camera.y();
+            double dz = otherPlayer.getZ() - camera.z();
             if (dx * dx + dz * dz < 1.0E-6D) {
                 continue;
             }
@@ -122,7 +133,7 @@ public final class PlayerLocatorClient {
             //? if >=1.21.11 {
             Identifier skinTexture = otherPlayer instanceof net.minecraft.client.player.AbstractClientPlayer clientPlayer ? skinTexture(clientPlayer.getSkin()) : skinTexture(net.minecraft.client.resources.DefaultPlayerSkin.get(otherPlayer.getUUID()));
             //?} elif >=1.20.2 {
-            /*PlayerSkin playerSkin = Minecraft.getInstance().getSkinManager().getInsecureSkin(otherPlayer.getGameProfile());
+            /*PlayerSkin playerSkin = minecraft.getSkinManager().getInsecureSkin(otherPlayer.getGameProfile());
             Identifier skinTexture = skinTexture(playerSkin);
             *///?} else {
             /*Identifier skinTexture = otherPlayer instanceof AbstractClientPlayer ? ((AbstractClientPlayer) otherPlayer).getSkinTextureLocation() : net.minecraft.client.resources.DefaultPlayerSkin.getDefaultSkin(otherPlayer.getUUID());
@@ -130,58 +141,71 @@ public final class PlayerLocatorClient {
             float directionYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
             //? if >=26.2 {
             net.minecraft.world.scores.Team team = otherPlayer.getTeam();
-            Integer teamColor = (team != null && team.getColor().isPresent()) ? team.getColor().get().rgb() : null;
+            Integer teamColor = (team != null && team.getColor().isPresent())
+                    ? LocatorBarUtils.normalizeTeamColor(team.getColor().get().rgb())
+                    : null;
             //?} else {
             /*net.minecraft.world.scores.Team team = otherPlayer.getTeam();
-            Integer teamColor = (team != null && team.getColor() != null && team.getColor().getColor() != null) ? team.getColor().getColor() : null;
-            */
-            //?}
-            markers.add(new Marker(otherPlayer.getUUID(), skinTexture, directionYaw, alpha, distance, teamColor));
+            Integer teamColor = (team != null && team.getColor() != null && team.getColor().getColor() != null)
+                    ? LocatorBarUtils.normalizeTeamColor(team.getColor().getColor())
+                    : null;
+            *///?}
+            PitchDirection pitchDirection = MarkerMath.calculatePitchDirection(
+                    dx, dy, dz, camera.yaw(), camera.pitch(), MarkerMath.BASE_HUD_FOV
+            );
+            markers.add(new Marker(otherPlayer.getUUID(), skinTexture, directionYaw, alpha, distance, teamColor, pitchDirection));
             //? if >=26.2
             addedPlayers.add(otherPlayer.getUUID());
         }
 
         //? if >=26.2 {
-        Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.getConnection() != null) {
             var waypointManager = minecraft.getConnection().getWaypointManager();
             if (waypointManager != null) {
                 float partialTicks = minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-                net.minecraft.world.waypoints.TrackedWaypoint.Camera camera = new net.minecraft.world.waypoints.TrackedWaypoint.Camera() {
-                    @Override
-                    public float yaw() { return localPlayer.getYRot(); }
-                    @Override
-                    public net.minecraft.world.phys.Vec3 position() { return localPlayer.getEyePosition(partialTicks); }
-                };
+                var mainCamera = minecraft.gameRenderer.mainCamera();
+                var cameraEntity = camera.entity();
 
-                waypointManager.forEachWaypoint(localPlayer, trackedWaypoint -> {
+                waypointManager.forEachWaypoint(cameraEntity, trackedWaypoint -> {
                     trackedWaypoint.id().left().ifPresent(uuid -> {
-                        if (uuid.equals(localPlayer.getUUID()) || addedPlayers.contains(uuid)) {
+                        if (uuid.equals(localPlayer.getUUID()) || uuid.equals(cameraEntity.getUUID()) || addedPlayers.contains(uuid)) {
                             return;
                         }
 
-                        double distanceSq = trackedWaypoint.distanceSquared(localPlayer);
-                        float distance = (float) Math.sqrt(distanceSq);
+                        double distanceSq = trackedWaypoint.distanceSquared(cameraEntity);
+                        float distance = Double.isInfinite(distanceSq) ? 333.0F : (float) Math.sqrt(distanceSq);
 
                         float alpha = alphaFunction.compute(distance);
                         if (alpha <= 0.0F) {
                             return;
                         }
 
-                        double yawRad = trackedWaypoint.yawAngleToCamera(localPlayer.level(), camera, entity -> partialTicks);
-                        float directionYaw = (float) Math.toDegrees(yawRad);
+                        double yawDiffDeg = trackedWaypoint.yawAngleToCamera(localPlayer.level(), mainCamera, entity -> partialTicks);
+                        float directionYaw = LocatorBarUtils.wrapTo180(camera.yaw() + (float) yawDiffDeg);
 
                         var playerInfo = minecraft.getConnection().getPlayerInfo(uuid);
                         Identifier skinTexture = (playerInfo != null) ? skinTexture(playerInfo.getSkin()) : skinTexture(net.minecraft.client.resources.DefaultPlayerSkin.get(uuid));
 
                         Integer teamColor = null;
-                        if (playerInfo != null) {
+                        var icon = trackedWaypoint.icon();
+                        if (icon != null && icon.color != null && icon.color.isPresent()) {
+                            teamColor = LocatorBarUtils.normalizeTeamColor(icon.color.get());
+                        } else if (playerInfo != null) {
                             String playerName = playerInfo.getProfile().name();
                             net.minecraft.world.scores.PlayerTeam team = localPlayer.level().getScoreboard().getPlayersTeam(playerName);
-                            teamColor = (team != null && team.getColor().isPresent()) ? team.getColor().get().rgb() : null;
+                            teamColor = (team != null && team.getColor().isPresent())
+                                    ? LocatorBarUtils.normalizeTeamColor(team.getColor().get().rgb())
+                                    : null;
                         }
 
-                        markers.add(new Marker(uuid, skinTexture, directionYaw, alpha, distance, teamColor));
+                        var vanillaPitch = trackedWaypoint.pitchDirectionToCamera(localPlayer.level(), minecraft.gameRenderer, entity -> partialTicks);
+                        PitchDirection pitchDirection = switch (vanillaPitch) {
+                            case UP -> PitchDirection.UP;
+                            case DOWN -> PitchDirection.DOWN;
+                            default -> PitchDirection.NONE;
+                        };
+
+                        markers.add(new Marker(uuid, skinTexture, directionYaw, alpha, distance, teamColor, pitchDirection));
                         addedPlayers.add(uuid);
                     });
                 });
@@ -207,6 +231,14 @@ public final class PlayerLocatorClient {
         float compute(float distance);
     }
 
-    public record Marker(UUID playerId, Identifier skinTexture, float directionYaw, float alpha, float distance, Integer teamColor) {
+    public record Marker(
+            UUID playerId,
+            Identifier skinTexture,
+            float directionYaw,
+            float alpha,
+            float distance,
+            Integer teamColor,
+            PitchDirection pitchDirection
+    ) {
     }
 }

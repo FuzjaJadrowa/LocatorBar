@@ -125,28 +125,47 @@ public final class LocatorBarCommands {
     }
 
     private static int showGeneralHelp(CommandContext<CommandSourceStack> ctx) {
-        ctx.getSource().sendSystemMessage(Component.translatable("locatorbar.commands.help.title").withStyle(net.minecraft.ChatFormatting.GOLD));
-        ctx.getSource().sendSystemMessage(Component.translatable("locatorbar.commands.help.usage"));
-        ctx.getSource().sendSystemMessage(Component.translatable("locatorbar.commands.help.options_list"));
+        ctx.getSource().sendSystemMessage(Component.literal("=== Locator Bar Help ===").withStyle(net.minecraft.ChatFormatting.GOLD));
+        ctx.getSource().sendSystemMessage(Component.literal("Use: /locatorbar help <option> to get details about an option."));
+        ctx.getSource().sendSystemMessage(Component.literal("Available options:"));
         ctx.getSource().sendSystemMessage(Component.literal("§7style, showCoordinates, showDays, showWorldDirections, playerMarkerType, maxVisiblePlayers, playerMarkerFadeStartDistance, playerMarkerFadeToMinDistance, playerMarkerHideDistance, playerMarkerMinAlphaPercent, showWaypoints, maxVisibleWaypoints, showDeathWaypoint"));
         return 1;
     }
 
     private static int showHelp(CommandContext<CommandSourceStack> ctx, String option) {
-        ctx.getSource().sendSystemMessage(Component.translatable("locatorbar.commands.help.header", option).withStyle(net.minecraft.ChatFormatting.GOLD));
+        ctx.getSource().sendSystemMessage(Component.literal("=== Help: " + option + " ===").withStyle(net.minecraft.ChatFormatting.GOLD));
 
-        ctx.getSource().sendSystemMessage(Component.translatable("locatorbar.commands.help.label.description")
+        ctx.getSource().sendSystemMessage(Component.literal("Description: ")
                 .withStyle(net.minecraft.ChatFormatting.YELLOW)
-                .append(Component.translatable("locatorbar.commands.help." + option + ".desc").withStyle(net.minecraft.ChatFormatting.RESET)));
+                .append(Component.literal(getDescription(option)).withStyle(net.minecraft.ChatFormatting.RESET)));
 
-        ctx.getSource().sendSystemMessage(Component.translatable("locatorbar.commands.help.label.type")
+        ctx.getSource().sendSystemMessage(Component.literal("Type: ")
                 .withStyle(net.minecraft.ChatFormatting.YELLOW)
                 .append(Component.literal(getType(option)).withStyle(net.minecraft.ChatFormatting.GREEN)));
 
-        ctx.getSource().sendSystemMessage(Component.translatable("locatorbar.commands.help.label.default")
+        ctx.getSource().sendSystemMessage(Component.literal("Default: ")
                 .withStyle(net.minecraft.ChatFormatting.YELLOW)
                 .append(Component.literal(getDefaultValue(option)).withStyle(net.minecraft.ChatFormatting.GREEN)));
         return 1;
+    }
+
+    private static String getDescription(String option) {
+        return switch (option) {
+            case "style" -> "Locator bar style.";
+            case "showCoordinates" -> "Displays player coordinates on the bar.";
+            case "showDays" -> "Displays the number of world days on the bar.";
+            case "showWorldDirections" -> "Displays world directions (N, S, E, W, etc.).";
+            case "playerMarkerType" -> "Method of showing other players on the bar.";
+            case "maxVisiblePlayers" -> "Maximum number of concurrently visible players on the bar.";
+            case "playerMarkerFadeStartDistance" -> "Distance (in blocks) at which other players' markers start to fade.";
+            case "playerMarkerFadeToMinDistance" -> "Distance (in blocks) at which other players' markers reach minimum transparency.";
+            case "playerMarkerHideDistance" -> "Distance (in blocks) at which other players' markers disappear. Can be set to 'inf' for infinity.";
+            case "playerMarkerMinAlphaPercent" -> "Minimum visibility (in percent) of player markers at maximum fade distance.";
+            case "showWaypoints" -> "Whether waypoints from compasses should be visible on the bar.";
+            case "maxVisibleWaypoints" -> "Maximum number of concurrently visible waypoints on the bar.";
+            case "showDeathWaypoint" -> "Whether a waypoint should appear at the player's death location upon death.";
+            default -> "";
+        };
     }
 
     private static String getType(String option) {

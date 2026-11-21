@@ -27,4 +27,28 @@ class MarkerMathTest {
         assertEquals(0.4F, MarkerMath.playerAlpha(250.0F, 50.0F, 150.0F, 300.0F, 0.4F), 1.0E-5F);
         assertEquals(0.0F, MarkerMath.playerAlpha(300.0F, 50.0F, 150.0F, 300.0F, 0.4F), 1.0E-5F);
     }
+
+    @Test
+    void calculatePitchDirectionDetectsTargetsAboveAndBelowView() {
+        assertEquals(
+                MarkerMath.PitchDirection.NONE,
+                MarkerMath.calculatePitchDirection(0.0D, 0.0D, 20.0D, 0.0F, 0.0F, 70.0F)
+        );
+        assertEquals(
+                MarkerMath.PitchDirection.UP,
+                MarkerMath.calculatePitchDirection(0.0D, 25.0D, 20.0D, 0.0F, 0.0F, 70.0F)
+        );
+        assertEquals(
+                MarkerMath.PitchDirection.DOWN,
+                MarkerMath.calculatePitchDirection(0.0D, -25.0D, 20.0D, 0.0F, 0.0F, 70.0F)
+        );
+        assertEquals(
+                MarkerMath.PitchDirection.UP,
+                MarkerMath.calculateHorizonPitchDirection(60.0F, 70.0F)
+        );
+        assertEquals(
+                MarkerMath.PitchDirection.DOWN,
+                MarkerMath.calculateHorizonPitchDirection(-60.0F, 70.0F)
+        );
+    }
 }

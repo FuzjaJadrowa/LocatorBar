@@ -14,6 +14,10 @@ import java.util.PriorityQueue;
 
 public final class PlayerLocatorBroadcaster {
     public static final int UPDATE_INTERVAL_TICKS = 5;
+    public static final double REALLY_FAR_DISTANCE = 332.0D;
+    public static final double REALLY_FAR_DISTANCE_SQUARED = REALLY_FAR_DISTANCE * REALLY_FAR_DISTANCE;
+    private static final double AZIMUTH_QUANTIZATION_RAD = Math.toRadians(0.5D);
+    private static final double DISTANCE_QUANTIZATION_BLOCKS = 16.0D;
     private static final PlayerLocatorPayload EMPTY_PAYLOAD = new PlayerLocatorPayload(List.of());
 
     private PlayerLocatorBroadcaster() {
@@ -36,6 +40,7 @@ public final class PlayerLocatorBroadcaster {
                 Comparator.comparingDouble(PlayerEntry::distanceSquared).reversed()
         );
         double viewerX = viewer.getX();
+        double viewerY = viewer.getEyeY();
         double viewerZ = viewer.getZ();
 
         for (ServerPlayer otherPlayer : players) {
@@ -54,8 +59,26 @@ public final class PlayerLocatorBroadcaster {
                 if (distanceSquared >= closestEntries.peek().distanceSquared()) continue;
                 closestEntries.poll();
             }
+
+            double transmittedX;
+            double transmittedY;
+            double transmittedZ;
+            if (distanceSquared > REALLY_FAR_DISTANCE_SQUARED) {
+                double distance = Math.sqrt(distanceSquared);
+                double quantizedDistance = Math.max(REALLY_FAR_DISTANCE, Math.round(distance / DISTANCE_QUANTIZATION_BLOCKS) * DISTANCE_QUANTIZATION_BLOCKS);
+                double angle = Math.atan2(dz, dx);
+                double quantizedAngle = Math.round(angle / AZIMUTH_QUANTIZATION_RAD) * AZIMUTH_QUANTIZATION_RAD;
+                transmittedX = viewerX + Math.cos(quantizedAngle) * quantizedDistance;
+                transmittedY = viewerY;
+                transmittedZ = viewerZ + Math.sin(quantizedAngle) * quantizedDistance;
+            } else {
+                transmittedX = otherPlayer.getX();
+                transmittedY = otherPlayer.getEyeY();
+                transmittedZ = otherPlayer.getZ();
+            }
+
             closestEntries.add(new PlayerEntry(
-                    new PlayerLocatorPayload.Entry(otherPlayer.getUUID(), otherPlayer.getX(), otherPlayer.getZ()),
+                    new PlayerLocatorPayload.Entry(otherPlayer.getUUID(), transmittedX, transmittedY, transmittedZ),
                     distanceSquared
             ));
         }

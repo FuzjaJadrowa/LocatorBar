@@ -9,6 +9,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 //?}
 import pl.fuzjajadrowa.locatorbar.client.ClassicExperienceBarState;
 
+//? if >=1.21.11 {
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+//?}
 //? if >=1.21.11 && fabric {
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import net.minecraft.client.gui.Font;
@@ -35,6 +38,16 @@ import net.minecraft.client.gui.GuiGraphics;
 @Mixin(Gui.class)
 *///?}
 public abstract class ExperienceLevelMixin {
+    //? if >=1.21.11 {
+    @ModifyExpressionValue(
+            method = "nextContextualInfoState",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/waypoints/ClientWaypointManager;hasWaypoints()Z")
+    )
+    private boolean locatorbar$disableVanillaLocatorContextualState(boolean original) {
+        return false;
+    }
+    //?}
+
     //? if >=26.2 {
     //? if fabric {
     @WrapWithCondition(method = "extractHotbarAndDecorations", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/contextualbar/ContextualBar;extractExperienceLevel(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/gui/Font;I)V"))

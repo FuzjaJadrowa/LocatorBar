@@ -46,7 +46,7 @@ public final class ClassicLocatorBarHudRenderer {
         }
         *///?}
 
-        float halfViewAngle = 45.0F;
+        float halfViewAngle = 60.0F;
         int directionMarkerSize = Math.max(
                 4,
                 Math.round(BASE_DIRECTION_MARKER_SIZE * LocatorBarConfig.getWorldDirectionsScale() * CLASSIC_DIRECTIONS_DEFAULT_SCALE)
@@ -62,6 +62,7 @@ public final class ClassicLocatorBarHudRenderer {
         int waypointTopOverflow = Math.round(waypointMarkerSize * (8.0F / WAYPOINT_TEXTURE_SIZE));
         int waypointBottomOverflow = Math.round(waypointMarkerSize * (4.0F / WAYPOINT_TEXTURE_SIZE));
         int directionOverflow = Math.max(BASE_DIRECTION_OVERFLOW, ((directionMarkerSize - BAR_TEXTURE_HEIGHT) / 2) + BASE_DIRECTION_OVERFLOW);
+        int arrowExtraOverflow = Math.max(4, Math.round(5.0F * (playerHeadMarkerSize / 8.0F))) + Math.max(1, Math.round(playerHeadMarkerSize / 8.0F)) + 1;
         int playerHeadOverflow = Math.max(BASE_PLAYER_HEAD_OVERFLOW, ((playerHeadMarkerSize - BAR_TEXTURE_HEIGHT) / 2) + BASE_PLAYER_HEAD_OVERFLOW);
 
         int screenWidth = minecraft.getWindow().getGuiScaledWidth();
@@ -79,13 +80,13 @@ public final class ClassicLocatorBarHudRenderer {
             return;
         }
 
-        float yaw = LocatorBarUtils.wrapTo180(player.getYRot());
+        float yaw = LocatorBarUtils.wrapTo180(LocatorBarUtils.getCameraView(minecraft, player).yaw());
         float centerX = BAR_TEXTURE_WIDTH / 2.0F;
-        int directionMarkerY = -directionOverflow + ((BAR_TEXTURE_HEIGHT + (directionOverflow * 2) - directionMarkerSize) / 2);
-        int headMarkerY = -playerHeadOverflow + ((BAR_TEXTURE_HEIGHT + (playerHeadOverflow * 2) - playerHeadMarkerSize) / 2);
+        float directionMarkerY = (BAR_TEXTURE_HEIGHT - directionMarkerSize) / 2.0F;
+        float headMarkerY = (BAR_TEXTURE_HEIGHT - playerHeadMarkerSize) / 2.0F;
         int waypointMarkerY = -waypointTopOverflow - WAYPOINT_Y_OFFSET;
         int scissorOverflow = Math.max(
-                Math.max(directionOverflow, playerHeadOverflow),
+                Math.max(directionOverflow, playerHeadOverflow + arrowExtraOverflow),
                 Math.max(waypointTopOverflow + WAYPOINT_Y_OFFSET, waypointBottomOverflow)
         );
 

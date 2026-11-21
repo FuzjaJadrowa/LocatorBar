@@ -1,16 +1,61 @@
 package pl.fuzjajadrowa.locatorbar.util;
 
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.util.Mth;
 
 import java.util.UUID;
 
 public final class LocatorBarUtils {
+    public static final int BLACK_TEAM_REPLACEMENT_RGB = 0x303030;
+
+    public record CameraView(Entity entity, double x, double y, double z, float yaw, float pitch) {
+    }
+
     private LocatorBarUtils() {
+    }
+
+    public static CameraView getCameraView(Minecraft minecraft, Player fallbackPlayer) {
+        if (minecraft != null && minecraft.gameRenderer != null) {
+            //? if >=26.2 {
+            Camera camera = minecraft.gameRenderer.mainCamera();
+            //?} else {
+            /*Camera camera = minecraft.gameRenderer.getMainCamera();
+            *///?}
+            if (camera != null && camera.isInitialized()) {
+                //? if >=1.21.11 {
+                Vec3 pos = camera.position();
+                float yaw = camera.yRot();
+                float pitch = camera.xRot();
+                Entity entity = camera.entity() != null ? camera.entity() : fallbackPlayer;
+                //?} else {
+                /*Vec3 pos = camera.getPosition();
+                float yaw = camera.getYRot();
+                float pitch = camera.getXRot();
+                Entity entity = camera.getEntity() != null ? camera.getEntity() : fallbackPlayer;
+                *///?}
+                return new CameraView(entity, pos.x, pos.y, pos.z, yaw, pitch);
+            }
+        }
+        return new CameraView(
+                fallbackPlayer,
+                fallbackPlayer.getX(),
+                fallbackPlayer.getEyeY(),
+                fallbackPlayer.getZ(),
+                fallbackPlayer.getYRot(),
+                fallbackPlayer.getXRot()
+        );
+    }
+
+    public static int normalizeTeamColor(int rgb) {
+        return (rgb & 0x00FFFFFF) == 0 ? BLACK_TEAM_REPLACEMENT_RGB : (rgb & 0x00FFFFFF);
     }
 
     public static float wrapTo180(float degrees) {
@@ -31,6 +76,15 @@ public final class LocatorBarUtils {
 
     public static boolean shouldHidePlayerHead(Player observer, Player target) {
         if (!target.level().dimension().equals(observer.level().dimension())) {
+            return true;
+        }
+        if (!observer.isSpectator() && target.isSpectator()) {
+            return true;
+        }
+        if (target.isInvisible() || target.isInvisibleTo(observer)) {
+            return true;
+        }
+        if (observer.isPassenger() && observer.getRootVehicle() == target.getRootVehicle()) {
             return true;
         }
         if (target.isCrouching()) {

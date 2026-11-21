@@ -29,7 +29,7 @@ public record PlayerLocatorPayload(List<Entry> entries) implements CustomPacketP
         validateEntryCount(size);
         List<Entry> entries = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
-            entries.add(new Entry(buffer.readUUID(), buffer.readDouble(), buffer.readDouble()));
+            entries.add(new Entry(buffer.readUUID(), buffer.readDouble(), buffer.readDouble(), buffer.readDouble()));
         }
         return new PlayerLocatorPayload(List.copyOf(entries));
     }
@@ -39,6 +39,7 @@ public record PlayerLocatorPayload(List<Entry> entries) implements CustomPacketP
         for (Entry entry : entries) {
             buffer.writeUUID(entry.playerId());
             buffer.writeDouble(entry.x());
+            buffer.writeDouble(entry.y());
             buffer.writeDouble(entry.z());
         }
     }
@@ -55,6 +56,6 @@ public record PlayerLocatorPayload(List<Entry> entries) implements CustomPacketP
         }
     }
 
-    public record Entry(UUID playerId, double x, double z) {
+    public record Entry(UUID playerId, double x, double y, double z) {
     }
 }

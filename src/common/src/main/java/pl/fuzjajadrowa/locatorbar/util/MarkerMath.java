@@ -1,7 +1,69 @@
 package pl.fuzjajadrowa.locatorbar.util;
 
 public final class MarkerMath {
+    public static final float BASE_HUD_FOV = 70.0F;
+
+    public enum PitchDirection {
+        NONE,
+        UP,
+        DOWN
+    }
+
     private MarkerMath() {}
+
+    public static PitchDirection calculatePitchDirection(
+            double dx,
+            double dy,
+            double dz,
+            float cameraYaw,
+            float cameraPitch,
+            float fov
+    ) {
+        double yawRad = Math.toRadians(cameraYaw);
+        double pitchRad = Math.toRadians(cameraPitch);
+
+        double forwardHoriz = -dx * Math.sin(yawRad) + dz * Math.cos(yawRad);
+        double viewY = dy * Math.cos(pitchRad) + forwardHoriz * Math.sin(pitchRad);
+        double viewDepth = forwardHoriz * Math.cos(pitchRad) - dy * Math.sin(pitchRad);
+
+        double tanHalfFov = Math.tan(Math.toRadians(Math.max(1.0F, fov) / 2.0D));
+        if (viewDepth <= 1.0E-4D) {
+            if (viewY > 0.0D) {
+                return PitchDirection.UP;
+            }
+            if (viewY < 0.0D) {
+                return PitchDirection.DOWN;
+            }
+            return PitchDirection.NONE;
+        }
+
+        double normalizedY = viewY / (viewDepth * tanHalfFov);
+        if (normalizedY < -1.0D) {
+            return PitchDirection.DOWN;
+        }
+        if (normalizedY > 1.0D) {
+            return PitchDirection.UP;
+        }
+        return PitchDirection.NONE;
+    }
+
+    public static PitchDirection calculateHorizonPitchDirection(float cameraPitch, float fov) {
+        if (cameraPitch <= -90.0F) {
+            return PitchDirection.DOWN;
+        }
+        if (cameraPitch >= 90.0F) {
+            return PitchDirection.UP;
+        }
+        double tanHalfFov = Math.tan(Math.toRadians(Math.max(1.0F, fov) / 2.0D));
+        double horizonY = Math.tan(Math.toRadians(cameraPitch)) / tanHalfFov;
+        if (horizonY < -1.0D) {
+            return PitchDirection.DOWN;
+        }
+        if (horizonY > 1.0D) {
+            return PitchDirection.UP;
+        }
+        return PitchDirection.NONE;
+    }
 
     public static float wrapTo180(float degrees) {
         float wrapped = degrees % 360.0F;

@@ -129,6 +129,7 @@ public final class LocatorBarForgeNetworking {
             for (PlayerLocatorPayload.Entry entry : msg.entries) {
                 buffer.writeUUID(entry.playerId());
                 buffer.writeDouble(entry.x());
+                buffer.writeDouble(entry.y());
                 buffer.writeDouble(entry.z());
             }
         }
@@ -138,7 +139,7 @@ public final class LocatorBarForgeNetworking {
             PlayerLocatorPayload.validateEntryCount(count);
             List<PlayerLocatorPayload.Entry> entries = new ArrayList<>(count);
             for (int idx = 0; idx < count; ++idx) {
-                entries.add(new PlayerLocatorPayload.Entry(buffer.readUUID(), buffer.readDouble(), buffer.readDouble()));
+                entries.add(new PlayerLocatorPayload.Entry(buffer.readUUID(), buffer.readDouble(), buffer.readDouble(), buffer.readDouble()));
             }
             return new PlayerLocatorPacket(entries);
         }

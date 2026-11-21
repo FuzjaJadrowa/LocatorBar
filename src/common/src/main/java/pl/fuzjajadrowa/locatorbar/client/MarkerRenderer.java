@@ -8,6 +8,7 @@ import pl.fuzjajadrowa.locatorbar.LocatorBar;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarConfig;
 import pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType;
 import pl.fuzjajadrowa.locatorbar.util.LocatorBarUtils;
+import pl.fuzjajadrowa.locatorbar.util.MarkerMath.PitchDirection;
 
 import java.util.List;
 
@@ -37,17 +38,31 @@ final class MarkerRenderer {
             LocatorBar.MOD_ID,
             "textures/gui/death_waypoint.png"
     );
+    private static final Identifier ARROW_UP = Identifier.fromNamespaceAndPath(
+            LocatorBar.MOD_ID,
+            "textures/gui/locator_bar_arrow_up.png"
+    );
+    private static final Identifier ARROW_DOWN = Identifier.fromNamespaceAndPath(
+            LocatorBar.MOD_ID,
+            "textures/gui/locator_bar_arrow_down.png"
+    );
+    private static final int ARROW_TEXTURE_WIDTH = 7;
+    private static final int ARROW_FRAME_HEIGHT = 5;
+    private static final int ARROW_TEXTURE_HEIGHT = 10;
     private static final int ICON_TEXTURE_SIZE = 36;
     private static final int ICON_MARGIN = 4;
     private static final int ICON_DOT_SIZE = 28;
+    private static final int DOT_TEXTURE_SIZE = 9;
+    private static final int DOT_MARGIN = 1;
+    private static final int DOT_REGION_SIZE = 7;
     private static final int WAYPOINT_TEXTURE_SIZE = 36;
     private static final Identifier DOT_TEXTURE = Identifier.fromNamespaceAndPath(LocatorBar.MOD_ID, "textures/gui/locator_bar_dot.png");
 
     record Layout(int barHeight, int baseWaypointSize, float waypointTextScale, int deathOffset) {}
 
     static void render(GuiGraphicsExtractor guiGraphics, Player player, float yaw, float halfViewAngle,
-                       float centerX, int directionMarkerY, int directionMarkerSize, int waypointMarkerY,
-                       int waypointMarkerSize, int headMarkerY, int playerHeadMarkerSize, Layout layout) {
+                       float centerX, float directionMarkerY, int directionMarkerSize, int waypointMarkerY,
+                       int waypointMarkerSize, float headMarkerY, int playerHeadMarkerSize, Layout layout) {
         if (LocatorBarConfig.isShowWorldDirections()) {
             renderDirectionMarker(guiGraphics, NORTH, 180.0F, yaw, halfViewAngle, centerX, directionMarkerY, directionMarkerSize);
             renderDirectionMarker(guiGraphics, SOUTH, 0.0F, yaw, halfViewAngle, centerX, directionMarkerY, directionMarkerSize);
@@ -90,7 +105,7 @@ final class MarkerRenderer {
         if (markerType != PlayerMarkerType.OFF) {
             List<PlayerLocatorClient.Marker> markers = LocatorBarHudHelper.collectPlayerMarkers(player);
             int maxVisible = Math.min(markers.size(), LocatorBarConfig.getMaxVisiblePlayers());
-            for (int i = 0; i < maxVisible; i++) {
+            for (int i = maxVisible - 1; i >= 0; i--) {
                 renderPlayerMarker(
                         guiGraphics,
                         markers.get(i),
@@ -113,7 +128,7 @@ final class MarkerRenderer {
             float playerYaw,
             float halfViewAngle,
             float centerX,
-            int markerY,
+            float markerY,
             int directionMarkerSize
     ) {
         float relative = LocatorBarUtils.wrapTo180(directionYaw - playerYaw);
@@ -209,7 +224,7 @@ final class MarkerRenderer {
             float playerYaw,
             float halfViewAngle,
             float centerX,
-            int markerY,
+            float markerY,
             int markerSize,
             boolean outline, PlayerMarkerType markerType
     ) {
@@ -227,15 +242,23 @@ final class MarkerRenderer {
         int alpha = Math.max(0, Math.min(255, Math.round(marker.alpha() * 255.0F)));
 
         if (markerType == PlayerMarkerType.DOTS) {
-            Identifier dotTexture = DOT_TEXTURE;
             int playerColor = marker.teamColor() != null ? marker.teamColor() : LocatorBarUtils.colorFromPlayerId(marker.playerId());
             int tint = (alpha << 24) | (playerColor & 0x00FFFFFF);
-            int dotSize = Math.round(markerSize * 1.5F);
-            float offset = (markerSize - dotSize) / 2.0F;
-            RenderCompat.push(guiGraphics);
-            RenderCompat.translate(guiGraphics, offset, offset);
-            RenderCompat.blitTinted(guiGraphics, dotTexture, 0, 0, 0, 0, dotSize, dotSize, 8, 8, 8, 8, tint);
-            RenderCompat.pop(guiGraphics);
+            RenderCompat.blitTinted(
+                    guiGraphics,
+                    DOT_TEXTURE,
+                    0,
+                    0,
+                    DOT_MARGIN,
+                    DOT_MARGIN,
+                    markerSize,
+                    markerSize,
+                    DOT_REGION_SIZE,
+                    DOT_REGION_SIZE,
+                    DOT_TEXTURE_SIZE,
+                    DOT_TEXTURE_SIZE,
+                    tint
+            );
         } else {
             int drawOffset = 0;
             int drawSize = markerSize;
@@ -248,6 +271,39 @@ final class MarkerRenderer {
             int tint = (alpha << 24) | 0x00FFFFFF;
             RenderCompat.blitPlayerHead(guiGraphics, marker.skinTexture(), drawOffset, drawOffset, drawSize, tint);
         }
+
+        PitchDirection pitchDirection = marker.pitchDirection();
+        if (pitchDirection != null && pitchDirection != PitchDirection.NONE) {
+            float arrowScale = markerSize / 8.0F;
+            int arrowWidth = Math.max(5, Math.round(ARROW_TEXTURE_WIDTH * arrowScale));
+            int arrowHeight = Math.max(4, Math.round(ARROW_FRAME_HEIGHT * arrowScale));
+            int gap = Math.max(1, Math.round(1.0F * arrowScale));
+            float arrowX = (markerSize - arrowWidth) / 2.0F;
+            int arrowY = pitchDirection == PitchDirection.UP ? (-arrowHeight - gap) : (markerSize + gap);
+            Identifier arrowTexture = pitchDirection == PitchDirection.UP ? ARROW_UP : ARROW_DOWN;
+            int frameV = ((System.currentTimeMillis() / 50L) % 14L) >= 10L ? ARROW_FRAME_HEIGHT : 0;
+            int arrowTint = (alpha << 24) | 0x00FFFFFF;
+
+            RenderCompat.push(guiGraphics);
+            RenderCompat.translate(guiGraphics, arrowX, arrowY);
+            RenderCompat.blitTinted(
+                    guiGraphics,
+                    arrowTexture,
+                    0,
+                    0,
+                    0,
+                    frameV,
+                    arrowWidth,
+                    arrowHeight,
+                    ARROW_TEXTURE_WIDTH,
+                    ARROW_FRAME_HEIGHT,
+                    ARROW_TEXTURE_WIDTH,
+                    ARROW_TEXTURE_HEIGHT,
+                    arrowTint
+            );
+            RenderCompat.pop(guiGraphics);
+        }
+
         RenderCompat.pop(guiGraphics);
     }
 }

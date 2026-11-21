@@ -20,20 +20,22 @@ public final class LocatorBarHudHelper {
     }
 
     public static List<WaypointMarker> collectWaypointMarkers(Player localPlayer) {
+        Minecraft mc = Minecraft.getInstance();
+        LocatorBarUtils.CameraView camera = LocatorBarUtils.getCameraView(mc, localPlayer);
         List<WaypointMarker> markers = new ArrayList<>();
         java.util.Set<UUID> seenWaypointIds = new java.util.HashSet<>();
         String currentDimension = localPlayer.level().dimension().identifier().toString();
 
         for (CompassWaypoint compass : ClientWaypointInventory.waypoints(localPlayer)) {
-            addWaypointMarker(markers, seenWaypointIds, compass, localPlayer, currentDimension);
+            addWaypointMarker(markers, seenWaypointIds, compass, camera, currentDimension);
         }
 
         if (LocatorBarConfig.isShowDeathWaypoint()) {
             if (hasRecoveryCompass(localPlayer)) {
                 GlobalPos lastDeath = localPlayer.getLastDeathLocation().orElse(null);
                 if (lastDeath != null && lastDeath.dimension().equals(localPlayer.level().dimension())) {
-                    double dx = lastDeath.pos().getX() + 0.5D - localPlayer.getX();
-                    double dz = lastDeath.pos().getZ() + 0.5D - localPlayer.getZ();
+                    double dx = lastDeath.pos().getX() + 0.5D - camera.x();
+                    double dz = lastDeath.pos().getZ() + 0.5D - camera.z();
                     if (dx * dx + dz * dz >= 1.0E-6D) {
                         float directionYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
                         markers.add(new WaypointMarker(
@@ -50,27 +52,22 @@ public final class LocatorBarHudHelper {
         }
 
         //? if >=26.2 {
-        Minecraft mc = Minecraft.getInstance();
         if (mc.getConnection() != null) {
             var waypointManager = mc.getConnection().getWaypointManager();
             if (waypointManager != null) {
                 float partialTicks = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-                net.minecraft.world.waypoints.TrackedWaypoint.Camera camera = new net.minecraft.world.waypoints.TrackedWaypoint.Camera() {
-                    @Override
-                    public float yaw() { return localPlayer.getYRot(); }
-                    @Override
-                    public net.minecraft.world.phys.Vec3 position() { return localPlayer.getEyePosition(partialTicks); }
-                };
+                var mainCamera = mc.gameRenderer.mainCamera();
+                var cameraEntity = camera.entity();
 
-                waypointManager.forEachWaypoint(localPlayer, trackedWaypoint -> {
+                waypointManager.forEachWaypoint(cameraEntity, trackedWaypoint -> {
                     trackedWaypoint.id().right().ifPresent(name -> {
-                        double yawRad = trackedWaypoint.yawAngleToCamera(localPlayer.level(), camera, entity -> partialTicks);
-                        float directionYaw = (float) Math.toDegrees(yawRad);
+                        double yawDiffDeg = trackedWaypoint.yawAngleToCamera(localPlayer.level(), mainCamera, entity -> partialTicks);
+                        float directionYaw = LocatorBarUtils.wrapTo180(camera.yaw() + (float) yawDiffDeg);
 
                         int color = 0xFFFFFF;
                         var icon = trackedWaypoint.icon();
                         if (icon != null && icon.color != null && icon.color.isPresent()) {
-                            color = icon.color.get();
+                            color = LocatorBarUtils.normalizeTeamColor(icon.color.get());
                         } else {
                             int argb = (255 << 24) | (name.hashCode() & 0x00FFFFFF);
                             color = LocatorBarUtils.setBrightness(argb, 0.9F);
@@ -110,15 +107,15 @@ public final class LocatorBarHudHelper {
             List<WaypointMarker> markers,
             java.util.Set<UUID> seenWaypointIds,
             CompassWaypoint compass,
-            Player localPlayer,
+            LocatorBarUtils.CameraView camera,
             String currentDimension
     ) {
         if (compass == null || !compass.dimensionId().equals(currentDimension)) {
             return;
         }
 
-        double dx = compass.pos().getX() + 0.5D - localPlayer.getX();
-        double dz = compass.pos().getZ() + 0.5D - localPlayer.getZ();
+        double dx = compass.pos().getX() + 0.5D - camera.x();
+        double dz = compass.pos().getZ() + 0.5D - camera.z();
         if (dx * dx + dz * dz < 1.0E-6D) {
             return;
         }
@@ -164,5 +161,16 @@ public final class LocatorBarHudHelper {
 
     public static boolean hasRecoveryCompass(Player player) {
         return ClientWaypointInventory.hasRecoveryCompass(player);
+    }
+
+    public static boolean hasAnyBarElements(Player player) {
+        if (LocatorBarConfig.isShowWorldDirections()) {
+            return true;
+        }
+        if (LocatorBarConfig.getPlayerMarkerType() != pl.fuzjajadrowa.locatorbar.config.LocatorBarEnums.PlayerMarkerType.OFF
+                && !collectPlayerMarkers(player).isEmpty()) {
+            return true;
+        }
+        return LocatorBarConfig.isShowWaypoints() && !collectWaypointMarkers(player).isEmpty();
     }
 }
