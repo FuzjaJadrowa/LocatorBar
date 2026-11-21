@@ -2,7 +2,8 @@ package pl.fuzjajadrowa.locatorbar.forge;
 
 import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.client.event.RenderGuiEvent;
+import net.minecraftforge.client.event.RenderGuiOverlayEvent;
+import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.ModLoadingContext;
 import pl.fuzjajadrowa.locatorbar.LocatorBar;
@@ -29,8 +30,10 @@ public final class LocatorBarForgeClient {
         });
     }
 
-    private static void onRenderGui(RenderGuiEvent.Post event) {
-        LocatorBarHudRenderer.render(event.getGuiGraphics());
+    private static void onRenderGui(RenderGuiOverlayEvent.Pre event) {
+        if (VanillaGuiOverlay.PLAYER_LIST.type().equals(event.getOverlay())) {
+            LocatorBarHudRenderer.render(event.getGuiGraphics());
+        }
     }
 
     private static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {

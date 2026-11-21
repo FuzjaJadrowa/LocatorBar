@@ -26,6 +26,42 @@ public final class LocatorBarForge {
             );
         });
 
+        pl.fuzjajadrowa.locatorbar.waypoint.WaypointInventory.registerPlatformContainerSupport(
+                (stack, consumer) -> {
+                    stack.getCapability(net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER).ifPresent(handler -> {
+                        for (int i = 0; i < handler.getSlots(); i++) {
+                            net.minecraft.world.item.ItemStack inner = handler.getStackInSlot(i);
+                            if (!inner.isEmpty()) {
+                                consumer.accept(inner);
+                            }
+                        }
+                    });
+                },
+                (stack, updater) -> {
+                    var opt = stack.getCapability(net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER);
+                    if (!opt.isPresent()) {
+                        return false;
+                    }
+                    var handler = opt.orElseThrow(IllegalStateException::new);
+                    boolean modified = false;
+                    for (int i = 0; i < handler.getSlots(); i++) {
+                        net.minecraft.world.item.ItemStack inner = handler.getStackInSlot(i);
+                        if (!inner.isEmpty()) {
+                            net.minecraft.world.item.ItemStack copy = inner.copy();
+                            if (updater.test(copy)) {
+                                if (handler instanceof net.minecraftforge.items.IItemHandlerModifiable modifiable) {
+                                    modifiable.setStackInSlot(i, copy);
+                                    modified = true;
+                                } else if (updater.test(inner)) {
+                                    modified = true;
+                                }
+                            }
+                        }
+                    }
+                    return modified;
+                }
+        );
+
         if (FMLEnvironment.dist == Dist.CLIENT) {
             LocatorBarForgeClient.init();
         }

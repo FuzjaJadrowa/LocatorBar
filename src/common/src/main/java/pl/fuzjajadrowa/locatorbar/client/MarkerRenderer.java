@@ -58,7 +58,11 @@ final class MarkerRenderer {
     private static final int WAYPOINT_TEXTURE_SIZE = 36;
     private static final Identifier DOT_TEXTURE = Identifier.fromNamespaceAndPath(LocatorBar.MOD_ID, "textures/gui/locator_bar_dot.png");
 
-    record Layout(int barHeight, int baseWaypointSize, float waypointTextScale, int deathOffset) {}
+    record Layout(int barHeight, int baseWaypointSize, float waypointTextScale, int deathOffset, boolean flipUpArrowWhenOffscreen, int barScreenY, float barScale) {
+        Layout(int barHeight, int baseWaypointSize, float waypointTextScale, int deathOffset) {
+            this(barHeight, baseWaypointSize, waypointTextScale, deathOffset, false, 0, 1.0F);
+        }
+    }
 
     static void render(GuiGraphicsExtractor guiGraphics, Player player, float yaw, float halfViewAngle,
                        float centerX, float directionMarkerY, int directionMarkerSize, int waypointMarkerY,
@@ -114,7 +118,7 @@ final class MarkerRenderer {
                         centerX,
                         headMarkerY,
                         playerHeadMarkerSize,
-                        outline, markerType
+                        outline, markerType, layout
                 );
             }
         }
@@ -226,7 +230,7 @@ final class MarkerRenderer {
             float centerX,
             float markerY,
             int markerSize,
-            boolean outline, PlayerMarkerType markerType
+            boolean outline, PlayerMarkerType markerType, Layout layout
     ) {
         float relative = LocatorBarUtils.wrapTo180(marker.directionYaw() - playerYaw);
         if (Math.abs(relative) > halfViewAngle) {
@@ -277,9 +281,12 @@ final class MarkerRenderer {
             float arrowScale = markerSize / 8.0F;
             int arrowWidth = Math.max(5, Math.round(ARROW_TEXTURE_WIDTH * arrowScale));
             int arrowHeight = Math.max(4, Math.round(ARROW_FRAME_HEIGHT * arrowScale));
-            int gap = Math.max(1, Math.round(1.0F * arrowScale));
+            int gap = layout.flipUpArrowWhenOffscreen() ? 1 : Math.max(1, Math.round(1.0F * arrowScale));
             float arrowX = (markerSize - arrowWidth) / 2.0F;
-            int arrowY = pitchDirection == PitchDirection.UP ? (-arrowHeight - gap) : (markerSize + gap);
+            int upArrowY = -arrowHeight - gap;
+            boolean placeBelow = pitchDirection == PitchDirection.DOWN
+                    || (layout.flipUpArrowWhenOffscreen() && (layout.barScreenY() + (markerY + upArrowY) * layout.barScale() < 0.0F));
+            int arrowY = placeBelow ? (markerSize + gap) : upArrowY;
             Identifier arrowTexture = pitchDirection == PitchDirection.UP ? ARROW_UP : ARROW_DOWN;
             int frameV = ((System.currentTimeMillis() / 50L) % 14L) >= 10L ? ARROW_FRAME_HEIGHT : 0;
             int arrowTint = (alpha << 24) | 0x00FFFFFF;

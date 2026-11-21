@@ -40,15 +40,27 @@ public final class ClientWaypointInventory {
             return;
         }
         List<CompassWaypoint> snapshot = new ArrayList<>();
-        WaypointInventory.forEachLeaf(player, stack -> {
-            if (stack.is(Items.RECOVERY_COMPASS)) {
-                recoveryCompass = true;
-            }
-            CompassWaypoint compass = WaypointData.readCompass(stack);
-            if (compass != null && !unlinkedIds.contains(compass.id())) {
-                snapshot.add(compass);
-            }
-        });
+        WaypointInventory.forEachLeaf(
+                player,
+                stack -> {
+                    if (stack.is(Items.RECOVERY_COMPASS)) {
+                        recoveryCompass = true;
+                    }
+                    CompassWaypoint compass = WaypointData.readCompass(stack);
+                    if (compass != null && !unlinkedIds.contains(compass.id())) {
+                        snapshot.add(compass);
+                    }
+                },
+                tag -> {
+                    if (WaypointData.isRecoveryCompassTag(tag)) {
+                        recoveryCompass = true;
+                    }
+                    CompassWaypoint compass = WaypointData.readCompassFromTag(tag);
+                    if (compass != null && !unlinkedIds.contains(compass.id())) {
+                        snapshot.add(compass);
+                    }
+                }
+        );
         waypoints = List.copyOf(snapshot);
     }
 

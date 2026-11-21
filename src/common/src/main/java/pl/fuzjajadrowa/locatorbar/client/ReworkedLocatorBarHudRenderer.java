@@ -88,20 +88,13 @@ public final class ReworkedLocatorBarHudRenderer {
                 Math.max(waypointTopOverflow, waypointBottomOverflow)
         );
 
-        int scissorTop = y - Math.round(scissorOverflow * scale);
+        int scissorTop = Math.max(0, y - Math.round(scissorOverflow * scale));
         int scissorBottom = y + Math.round((BAR_TEXTURE_HEIGHT + scissorOverflow) * scale);
-        guiGraphics.enableScissor(x, scissorTop, x + scaledBarWidth, scissorBottom);
-        RenderCompat.push(guiGraphics);
-        RenderCompat.translate(guiGraphics, x, y);
-        RenderCompat.scale(guiGraphics, scale, scale);
+        //? if <1.21.11 {
+        /*guiGraphics.flush();
+        com.mojang.blaze3d.systems.RenderSystem.disableDepthTest();
+        *///?}
 
-        RenderCompat.blit(guiGraphics, LOCATOR_BAR_BACKGROUND, 0, 0, 0, 0, BAR_TEXTURE_WIDTH, BAR_TEXTURE_HEIGHT, BAR_TEXTURE_WIDTH, BAR_TEXTURE_HEIGHT);
-        MarkerRenderer.render(guiGraphics, player, yaw, halfViewAngle, centerX,
-                directionMarkerY, directionMarkerSize, waypointMarkerY, waypointMarkerSize,
-                headMarkerY, playerHeadMarkerSize, MARKER_LAYOUT);
-
-        RenderCompat.pop(guiGraphics);
-        guiGraphics.disableScissor();
         if (LocatorBarConfig.isShowCoordinates() || LocatorBarConfig.isShowDays()) {
             renderInfoText(
                     guiGraphics,
@@ -111,6 +104,33 @@ public final class ReworkedLocatorBarHudRenderer {
                     scale
             );
         }
+
+        MarkerRenderer.Layout layout = new MarkerRenderer.Layout(
+                MARKER_LAYOUT.barHeight(),
+                MARKER_LAYOUT.baseWaypointSize(),
+                MARKER_LAYOUT.waypointTextScale(),
+                MARKER_LAYOUT.deathOffset(),
+                true,
+                y,
+                scale
+        );
+
+        guiGraphics.enableScissor(x, scissorTop, x + scaledBarWidth, scissorBottom);
+        RenderCompat.push(guiGraphics);
+        RenderCompat.translate(guiGraphics, x, y);
+        RenderCompat.scale(guiGraphics, scale, scale);
+
+        RenderCompat.blit(guiGraphics, LOCATOR_BAR_BACKGROUND, 0, 0, 0, 0, BAR_TEXTURE_WIDTH, BAR_TEXTURE_HEIGHT, BAR_TEXTURE_WIDTH, BAR_TEXTURE_HEIGHT);
+        MarkerRenderer.render(guiGraphics, player, yaw, halfViewAngle, centerX,
+                directionMarkerY, directionMarkerSize, waypointMarkerY, waypointMarkerSize,
+                headMarkerY, playerHeadMarkerSize, layout);
+
+        RenderCompat.pop(guiGraphics);
+        guiGraphics.disableScissor();
+        //? if <1.21.11 {
+        /*com.mojang.blaze3d.systems.RenderSystem.enableDepthTest();
+        guiGraphics.flush();
+        *///?}
     }
 
     private static void renderInfoText(GuiGraphicsExtractor guiGraphics, Player player, float centerX, int startY, float scale) {

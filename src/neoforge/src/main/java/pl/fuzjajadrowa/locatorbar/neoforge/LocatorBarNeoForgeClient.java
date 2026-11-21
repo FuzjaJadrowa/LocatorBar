@@ -5,8 +5,9 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
-import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 import pl.fuzjajadrowa.locatorbar.LocatorBar;
 import pl.fuzjajadrowa.locatorbar.client.LocatorBarConfigScreen;
@@ -29,8 +30,10 @@ public final class LocatorBarNeoForgeClient {
         });
     }
 
-    private static void onRenderGui(RenderGuiEvent.Post event) {
-        LocatorBarHudRenderer.render(event.getGuiGraphics());
+    private static void onRenderGui(RenderGuiLayerEvent.Pre event) {
+        if (VanillaGuiLayers.TAB_LIST.equals(event.getName())) {
+            LocatorBarHudRenderer.render(event.getGuiGraphics());
+        }
     }
 
     private static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {

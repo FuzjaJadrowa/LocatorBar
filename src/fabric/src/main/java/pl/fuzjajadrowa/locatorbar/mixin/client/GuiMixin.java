@@ -19,17 +19,17 @@ import pl.fuzjajadrowa.locatorbar.client.LocatorBarHudRenderer;
 *///?}
 public abstract class GuiMixin {
     //? if >=26.2 {
-    @Inject(method = "extractRenderState", at = @At("TAIL"))
+    @Inject(method = "extractTabList", at = @At("HEAD"))
     private void locatorbar$renderHud(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
         LocatorBarHudRenderer.render(guiGraphics);
     }
     //?} elif >=26.1 {
-    @Inject(method = "extractRenderState", at = @At("TAIL"))
+    @Inject(method = "extractTabList", at = @At("HEAD"))
     private void locatorbar$renderHud(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
         LocatorBarHudRenderer.render(guiGraphics);
     }
     //?} else {
-    /*@Inject(method = "render", at = @At("TAIL"))
+    /*@Inject(method = "renderTabList", at = @At("HEAD"))
     private void locatorbar$renderHud(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
         LocatorBarHudRenderer.render(guiGraphics);
     }

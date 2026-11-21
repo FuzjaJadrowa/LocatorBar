@@ -21,6 +21,70 @@ public final class LocatorBarNeoForge {
         NeoForge.EVENT_BUS.addListener(LocatorBarNeoForge::onRegisterCommands);
 
         LocatorBar.setBroadcaster(LocatorBarNeoForgeNetworking::broadcastConfig);
+        registerContainerSupport();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void registerContainerSupport() {
+        try {
+            Class<?> capsClass = Class.forName("net.neoforged.neoforge.capabilities.Capabilities$ItemHandler");
+            Object itemCap = capsClass.getField("ITEM").get(null);
+            java.lang.reflect.Method getCapMethod = net.minecraft.world.item.ItemStack.class.getMethod(
+                    "getCapability",
+                    Class.forName("net.neoforged.neoforge.capabilities.ItemCapability")
+            );
+            Class<?> handlerClass = Class.forName("net.neoforged.neoforge.items.IItemHandler");
+            java.lang.reflect.Method getSlotsMethod = handlerClass.getMethod("getSlots");
+            java.lang.reflect.Method getStackMethod = handlerClass.getMethod("getStackInSlot", int.class);
+            Class<?> modifiableClass = Class.forName("net.neoforged.neoforge.items.IItemHandlerModifiable");
+            java.lang.reflect.Method setStackMethod = modifiableClass.getMethod("setStackInSlot", int.class, net.minecraft.world.item.ItemStack.class);
+
+            pl.fuzjajadrowa.locatorbar.waypoint.WaypointInventory.registerPlatformContainerSupport(
+                    (stack, consumer) -> {
+                        try {
+                            Object handler = getCapMethod.invoke(stack, itemCap);
+                            if (handler != null) {
+                                int slots = (int) getSlotsMethod.invoke(handler);
+                                for (int i = 0; i < slots; i++) {
+                                    net.minecraft.world.item.ItemStack inner = (net.minecraft.world.item.ItemStack) getStackMethod.invoke(handler, i);
+                                    if (inner != null && !inner.isEmpty()) {
+                                        consumer.accept(inner);
+                                    }
+                                }
+                            }
+                        } catch (Throwable ignored) {
+                        }
+                    },
+                    (stack, updater) -> {
+                        try {
+                            Object handler = getCapMethod.invoke(stack, itemCap);
+                            if (handler == null) {
+                                return false;
+                            }
+                            int slots = (int) getSlotsMethod.invoke(handler);
+                            boolean modified = false;
+                            for (int i = 0; i < slots; i++) {
+                                net.minecraft.world.item.ItemStack inner = (net.minecraft.world.item.ItemStack) getStackMethod.invoke(handler, i);
+                                if (inner != null && !inner.isEmpty()) {
+                                    net.minecraft.world.item.ItemStack copy = inner.copy();
+                                    if (updater.test(copy)) {
+                                        if (modifiableClass.isInstance(handler)) {
+                                            setStackMethod.invoke(handler, i, copy);
+                                            modified = true;
+                                        } else if (updater.test(inner)) {
+                                            modified = true;
+                                        }
+                                    }
+                                }
+                            }
+                            return modified;
+                        } catch (Throwable ignored) {
+                            return false;
+                        }
+                    }
+            );
+        } catch (Throwable ignored) {
+        }
     }
 
     public static void onRegisterCommands(net.neoforged.neoforge.event.RegisterCommandsEvent event) {

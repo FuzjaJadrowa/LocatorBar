@@ -302,6 +302,179 @@ public final class WaypointData {
         *///?}
     }
 
+    public static CompassWaypoint readCompassFromTag(CompoundTag tag) {
+        if (tag == null || tag.isEmpty()) {
+            return null;
+        }
+        //? if >=1.20.5 {
+        CompoundTag components = readCompound(tag, "components");
+        if (components == null) {
+            return null;
+        }
+        CompoundTag trackerTag = readCompound(components, "minecraft:lodestone_tracker");
+        if (trackerTag == null) {
+            trackerTag = readCompound(components, "lodestone_tracker");
+        }
+        if (trackerTag == null) {
+            return null;
+        }
+        CompoundTag targetTag = readCompound(trackerTag, "target");
+        if (targetTag == null) {
+            return null;
+        }
+        String dimensionId = readString(targetTag, "dimension");
+        BlockPos targetPos = readBlockPos(targetTag, "pos");
+        if (dimensionId == null || dimensionId.isEmpty() || targetPos == null) {
+            return null;
+        }
+        CompoundTag customData = readCompound(components, "minecraft:custom_data");
+        if (customData == null) {
+            customData = readCompound(components, "custom_data");
+        }
+        //?} else {
+        /*CompoundTag stackTag = readCompound(tag, "tag");
+        if (stackTag == null) {
+            stackTag = tag;
+        }
+        if (!stackTag.contains("LodestonePos") || !stackTag.contains("LodestoneDimension")) {
+            return null;
+        }
+        CompoundTag posTag = stackTag.getCompound("LodestonePos");
+        BlockPos targetPos = net.minecraft.nbt.NbtUtils.readBlockPos(posTag);
+        String dimensionId = stackTag.getString("LodestoneDimension");
+        if (dimensionId == null || dimensionId.isEmpty()) {
+            return null;
+        }
+        CompoundTag customData = stackTag;
+        *///?}
+
+        if (customData != null && readBoolean(customData, UNLINKED_TAG)) {
+            return null;
+        }
+        UUID id = readUuid(customData, ID_TAG);
+        if (id == null) {
+            id = deriveDeterministicId(dimensionId, targetPos);
+        }
+        int index = readInt(customData, INDEX_TAG, -1);
+        Integer customColor = readNullableInt(customData, COLOR_TAG);
+        String symbol = readSymbol(customData);
+        boolean hidden = readBoolean(customData, HIDDEN_TAG);
+        return new CompassWaypoint(id, dimensionId, targetPos, index, customColor, symbol, hidden);
+    }
+
+    public static boolean isRecoveryCompassTag(CompoundTag tag) {
+        if (tag == null || tag.isEmpty()) {
+            return false;
+        }
+        String itemId = readString(tag, "id");
+        if (itemId == null) {
+            itemId = readString(tag, "Item");
+        }
+        return "minecraft:recovery_compass".equals(itemId) || "recovery_compass".equals(itemId);
+    }
+
+    public static boolean updateCompassInTag(CompoundTag tag, UUID targetWaypointId) {
+        CompassWaypoint waypoint = readCompassFromTag(tag);
+        if (waypoint == null || !targetWaypointId.equals(waypoint.id())) {
+            return false;
+        }
+        //? if >=1.20.5 {
+        CompoundTag components = readCompound(tag, "components");
+        if (components == null) {
+            return false;
+        }
+        String customDataKey = components.contains("custom_data") && !components.contains("minecraft:custom_data")
+                ? "custom_data"
+                : "minecraft:custom_data";
+        CompoundTag customData = readCompound(components, customDataKey);
+        if (customData == null) {
+            customData = new CompoundTag();
+        }
+        clearLocatorBarDataTag(customData);
+        components.put(customDataKey, customData);
+        tag.put("components", components);
+        return true;
+        //?} else {
+        /*CompoundTag stackTag = readCompound(tag, "tag");
+        if (stackTag != null) {
+            clearLocatorBarDataTag(stackTag);
+            tag.put("tag", stackTag);
+            return true;
+        } else if (tag.contains("LodestonePos")) {
+            clearLocatorBarDataTag(tag);
+            return true;
+        }
+        return false;
+        *///?}
+    }
+
+    private static void clearLocatorBarDataTag(CompoundTag tag) {
+        tag.remove(OWNER_TAG);
+        tag.remove(ID_TAG);
+        tag.remove(INDEX_TAG);
+        tag.remove(HIDDEN_TAG);
+        tag.remove(COLOR_TAG);
+        tag.remove(SYMBOL_TAG);
+        tag.putBoolean(UNLINKED_TAG, true);
+    }
+
+    private static CompoundTag readCompound(CompoundTag tag, String key) {
+        if (tag == null || !tag.contains(key)) {
+            return null;
+        }
+        //? if >=1.21.11 {
+        return tag.getCompound(key).orElse(null);
+        //?} else {
+        /*return tag.contains(key, Tag.TAG_COMPOUND) ? tag.getCompound(key) : null;
+        *///?}
+    }
+
+    private static String readString(CompoundTag tag, String key) {
+        if (tag == null || !tag.contains(key)) {
+            return null;
+        }
+        //? if >=1.21.11 {
+        return tag.getString(key).orElse(null);
+        //?} else {
+        /*return tag.contains(key, Tag.TAG_STRING) ? tag.getString(key) : null;
+        *///?}
+    }
+
+    private static BlockPos readBlockPos(CompoundTag tag, String key) {
+        if (tag == null || !tag.contains(key)) {
+            return null;
+        }
+        //? if >=1.21.11 {
+        int[] coords = tag.getIntArray(key).orElse(null);
+        if (coords != null && coords.length == 3) {
+            return new BlockPos(coords[0], coords[1], coords[2]);
+        }
+        CompoundTag posCompound = tag.getCompound(key).orElse(null);
+        if (posCompound != null && posCompound.contains("X") && posCompound.contains("Y") && posCompound.contains("Z")) {
+            return new BlockPos(
+                    posCompound.getInt("X").orElse(0),
+                    posCompound.getInt("Y").orElse(0),
+                    posCompound.getInt("Z").orElse(0)
+            );
+        }
+        return null;
+        //?} else {
+        /*if (tag.contains(key, Tag.TAG_INT_ARRAY)) {
+            int[] coords = tag.getIntArray(key);
+            if (coords.length == 3) {
+                return new BlockPos(coords[0], coords[1], coords[2]);
+            }
+        }
+        if (tag.contains(key, Tag.TAG_COMPOUND)) {
+            CompoundTag posCompound = tag.getCompound(key);
+            if (posCompound.contains("X") && posCompound.contains("Y") && posCompound.contains("Z")) {
+                return new BlockPos(posCompound.getInt("X"), posCompound.getInt("Y"), posCompound.getInt("Z"));
+            }
+        }
+        return null;
+        *///?}
+    }
+
     private static UUID readUuid(CompoundTag tag, String key) {
         //? if >=1.21.11 {
         return tag == null ? null : getUuid(tag, key);
